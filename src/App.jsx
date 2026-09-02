@@ -11,8 +11,22 @@ import Parties from './pages/Parties.jsx'
 import PartyDetail from './pages/PartyDetail.jsx'
 import Settings from './pages/Settings.jsx'
 
+function BootScreen() {
+  return (
+    <div className="gate">
+      <div className="gate-bg" aria-hidden="true" />
+      <div className="card gate-card">
+        <img className="bell" src="/brand/bell.jpg" alt="" />
+        <div className="eyebrow">First Bell</div>
+        <h1>Opening the house…</h1>
+      </div>
+    </div>
+  )
+}
+
 function Protected({ children }) {
-  const { entered } = useBell()
+  const { entered, ready } = useBell()
+  if (!ready) return <BootScreen />
   if (!entered) return <Navigate to="/enter" replace />
   return children
 }

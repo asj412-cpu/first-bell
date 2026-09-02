@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { EVENTS, PARTY } from '../data/seed.js'
 import { countdownCopy, formatLongDate, formatTimeRange, greeting, todayLabel } from '../lib/format.js'
+import { hostDisplayName } from '../lib/rsvps.js'
 import { useBell } from '../lib/store.jsx'
 import { IconArrow } from '../components/Icons.jsx'
 
@@ -9,12 +10,14 @@ export default function Home() {
   const openRsvps = state.guests.filter((g) => g.status === 'none').length
   const inboxN = state.messages.filter((m) => m.folder === 'inbox' && m.attention).length
   const next = [...EVENTS].sort((a, b) => a.date.localeCompare(b.date))[0]
+  const leila = state.guests.find((g) => g.child.trim().toLowerCase() === 'leila')
+  const leilaYes = !leila || leila.status === 'yes'
 
   return (
     <div>
       <div className="kicker">{todayLabel()}</div>
       <h1>
-        {greeting()}, Andrew
+        {greeting()}, {hostDisplayName(state.session)}
       </h1>
       <p className="lede">Household ops at a glance. Chloe’s party is the live event.</p>
 
@@ -31,7 +34,9 @@ export default function Home() {
           </p>
           <div className="meta-row">
             <span className="chip gold">{PARTY.venue.package} · paid</span>
-            <span className="chip yes">Leila · Yes</span>
+            <span className={`chip ${leilaYes ? 'yes' : 'wait'}`}>
+              {leila ? `Leila · ${leila.status === 'none' ? 'waiting' : leila.status}` : 'Leila · Yes'}
+            </span>
             <span className="chip wait">{openRsvps} waiting</span>
           </div>
           <div className="row-between">
@@ -74,7 +79,9 @@ export default function Home() {
           <span className="dot rose" />
           <div>
             <strong>{openRsvps} families still haven’t RSVP’d</strong>
-            <div className="dim">Leila is in as Yes. Nudge the rest from the board.</div>
+            <div className="dim">
+              {leilaYes ? 'Leila is in as Yes. ' : ''}Nudge the rest from the board.
+            </div>
           </div>
         </Link>
         <Link to="/inbox">
