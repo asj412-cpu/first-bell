@@ -1,0 +1,21 @@
+{
+  "name": "first-bell",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "First Bell — household ops for parents. Party planning is the wedge.",
+  "scripts": {
+    "dev": "vite --host --port 5173",
+    "build": "vite build",
+    "preview": "vite preview --host --port 4173"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.30.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.7.0",
+    "vite": "^6.3.5"
+  }
+}
