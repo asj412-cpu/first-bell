@@ -91,7 +91,10 @@ export default function PartyDetail() {
 
       <div className="section-head">
         <h2>RSVP board</h2>
-        <span className="dim">{state.guests.length} invited</span>
+        <span className="dim">
+          {state.guests.length} invited
+          {state.backend === 'live' ? ' · live' : ''}
+        </span>
       </div>
       <div className="rsvp-summary">
         {STATUSES.map((s) => (

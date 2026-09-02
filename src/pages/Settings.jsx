@@ -1,14 +1,23 @@
 import { HOUSEHOLD } from '../data/seed.js'
+import { hostDisplayName } from '../lib/rsvps.js'
 import { useBell } from '../lib/store.jsx'
 
 export default function Settings() {
-  const { state, signOut, resetDemo } = useBell()
+  const { state, signOut, resetDemo, configured } = useBell()
+  const live = state.backend === 'live'
+  const name = hostDisplayName(state.session)
 
   return (
     <div>
       <div className="kicker">Settings</div>
       <h1>Household</h1>
-      <p className="lede">Demo mode is on. Nothing leaves this browser.</p>
+      <p className="lede">
+        {live
+          ? 'Hosts sign in with email. Guest RSVPs sync here from every phone.'
+          : configured
+            ? 'Backend is configured but unreachable. This device is on the local seed until Supabase is back.'
+            : 'Demo mode is on. Nothing leaves this browser until Vercel has Supabase env vars.'}
+      </p>
 
       <div className="card pad" style={{ marginTop: 16 }}>
         <div className="settings-list">
@@ -18,7 +27,21 @@ export default function Settings() {
           </div>
           <div className="row">
             <span>Signed in as</span>
-            <strong>{state.session?.name || 'Andrew'} (demo)</strong>
+            <strong>
+              {name}
+              {state.session?.email ? (
+                <>
+                  <br />
+                  <span className="dim">{state.session.email}</span>
+                </>
+              ) : (
+                ' (demo)'
+              )}
+            </strong>
+          </div>
+          <div className="row">
+            <span>Role</span>
+            <strong>{state.memberRole || (state.session?.demo ? 'demo host' : 'host')}</strong>
           </div>
           <div className="row">
             <span>Time zone</span>
@@ -31,6 +54,10 @@ export default function Settings() {
               <br />
               {HOUSEHOLD.contact.email}
             </strong>
+          </div>
+          <div className="row">
+            <span>RSVP sync</span>
+            <strong>{live ? 'Supabase · live' : state.backend === 'offline' ? 'Offline seed' : 'This browser only'}</strong>
           </div>
         </div>
       </div>
@@ -62,11 +89,13 @@ export default function Settings() {
       </div>
 
       <div className="meta-row" style={{ marginTop: 18 }}>
-        <button className="btn" onClick={resetDemo}>
-          Reset seed
-        </button>
-        <button className="btn ghost" onClick={signOut}>
-          Sign out of demo
+        {!live && (
+          <button className="btn" onClick={resetDemo}>
+            Reset seed
+          </button>
+        )}
+        <button className="btn ghost" onClick={() => signOut()}>
+          {live ? 'Sign out' : 'Sign out of demo'}
         </button>
       </div>
     </div>

@@ -1,4 +1,6 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { useBell } from '../lib/store.jsx'
+import BackendBanner from './BackendBanner.jsx'
 import { IconCal, IconGear, IconHome, IconInbox, IconParty } from './Icons.jsx'
 
 const LINKS = [
@@ -23,7 +25,10 @@ function Brand() {
 
 export default function AppShell() {
   const loc = useLocation()
+  const { state } = useBell()
   const title = LINKS.find((l) => (l.end ? loc.pathname === '/' : loc.pathname.startsWith(l.to)))?.label || 'First Bell'
+  const modeLabel =
+    state.backend === 'live' ? 'Live' : state.backend === 'offline' ? 'Offline' : 'Demo'
 
   return (
     <div className="app-shell">
@@ -38,9 +43,10 @@ export default function AppShell() {
       </nav>
       <header className="topbar">
         <Brand />
-        <div className="topbar-meta">Demo · {title}</div>
+        <div className="topbar-meta">{modeLabel} · {title}</div>
       </header>
       <main className="page">
+        <BackendBanner />
         <Outlet />
       </main>
       <nav className="bottom-nav" aria-label="Primary">
