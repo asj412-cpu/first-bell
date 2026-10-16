@@ -4,8 +4,10 @@ import Avatar from '../components/Avatar.jsx'
 import { turnsLabel } from '../lib/birthdays.js'
 import { eventWhenLabel, isFinished, splitEvents } from '../lib/events.js'
 import { formatShortDate, greeting, parseLocalDate } from '../lib/format.js'
+import { ordinal } from '../lib/milestones.js'
+import { addDaysIso } from '../lib/time.js'
 import { motifFor } from '../lib/motifs.js'
-import { buildNextUp } from '../lib/nextup.js'
+import { buildNextUp, MILESTONE_CHECKLIST } from '../lib/nextup.js'
 import { useBell } from '../lib/store.jsx'
 import { IconArrow } from '../components/Icons.jsx'
 
@@ -23,8 +25,63 @@ function planLabel(item) {
   return eventWhenLabel(item)
 }
 
+function countdownCopy(days) {
+  if (days === 0) return 'Today'
+  if (days === 1) return 'Tomorrow'
+  return `${days} days`
+}
+
+function MilestoneCard({ group, events, onStep }) {
+  const { lead, milestones, companions, days, countdownOpen, date } = group
+  const opens = addDaysIso(date, -90)
+  return (
+    <article className={`milestone-hero ${countdownOpen ? 'open' : ''}`}>
+      <div className="confetti" aria-hidden="true">
+        <span /><span /><span /><span /><span /><span /><span />
+      </div>
+      <div className="milestone-copy">
+        <span className="milestone-badge">Milestone</span>
+        {milestones.map((person) => (
+          <h2 key={person.key}>{person.who}’s {ordinal(person.turns)}</h2>
+        ))}
+        <p className="when">{weekdayDate(date)}</p>
+        <p className="milestone-count">{countdownCopy(days)}</p>
+        <p className="milestone-window">
+          {countdownOpen
+            ? 'Countdown is on for the 90 days before.'
+            : `The 90-day countdown starts ${weekdayDate(opens)}.`}
+        </p>
+        {companions.length > 0 && (
+          <p className="shared-day">
+            {companions.map((person) => `${person.who} turns ${person.turns}`).join(' and ')} the same day.
+          </p>
+        )}
+        <div className="milestone-actions">
+          {milestones.map((person) => {
+            const plan = events.find((event) => event.id === `plan-${person.key}`)
+            return MILESTONE_CHECKLIST.map((step) => {
+              const done = plan?.checklist?.some((item) => item.id === step.id && item.done)
+              return (
+                <button
+                  key={`${person.key}-${step.id}`}
+                  className={`btn small ${done ? 'done' : ''}`}
+                  type="button"
+                  onClick={() => onStep({ ...person, milestone: true, milestoneTitle: `${person.who}’s ${ordinal(person.turns)}` }, step.id)}
+                >
+                  {done ? `${step.text} · on the calendar` : step.text}
+                </button>
+              )
+            })
+          })}
+        </div>
+      </div>
+      <img src={motifFor(lead)} alt="" />
+    </article>
+  )
+}
+
 export default function Home() {
-  const { state, planSuggestion } = useBell()
+  const { state, planSuggestion, markMilestoneStep } = useBell()
   const openRsvps = state.guests.filter((guest) => guest.status === 'none').length
   const inboxN = state.messages.filter((message) => message.folder === 'inbox' && message.attention).length
   const { upcoming, history } = splitEvents(state.events)
@@ -40,6 +97,19 @@ export default function Home() {
     <div>
       <h1 className="casa-greet">{greeting()}, Johnsons</h1>
       <div className="casa-hero" role="img" aria-label="The house at dusk" />
+
+      {nextUp.milestones?.length > 0 && (
+        <section className="milestone-list" aria-label="Milestone birthdays">
+          {nextUp.milestones.map((group) => (
+            <MilestoneCard
+              key={group.date}
+              group={group}
+              events={state.events}
+              onStep={markMilestoneStep}
+            />
+          ))}
+        </section>
+      )}
 
       {!connected && (
         <div className="banner">

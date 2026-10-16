@@ -1,6 +1,7 @@
 import { holidaysForYear } from '../data/holidays.js'
 import { upcomingBirthdays } from './birthdays.js'
 import { isFinished, wallEvent } from './events.js'
+import { milestoneSpotlight } from './milestones.js'
 import { chicagoParts } from './time.js'
 
 function holidaySuggestion(holiday) {
@@ -56,9 +57,12 @@ export function buildNextUp({ imports = [], profiles = [], now = new Date(), lim
     .sort((a, b) => String(a.startsAt).localeCompare(String(b.startsAt)) || String(a.title).localeCompare(String(b.title)))
   const soon = merged.slice(0, limit)
   const soonKeys = new Set(soon.map((item) => item.key))
+  const milestones = milestoneSpotlight(birthdays, now)
+  const milestoneKeys = new Set(milestones.flatMap((group) => group.people.map((person) => person.key)))
   return {
-    soon,
-    birthdays: birthdays.filter((item) => !soonKeys.has(item.key)),
+    soon: soon.filter((item) => !milestoneKeys.has(item.key)),
+    birthdays: birthdays.filter((item) => !soonKeys.has(item.key) && !milestoneKeys.has(item.key)),
+    milestones,
   }
 }
 
@@ -66,4 +70,10 @@ export const PLAN_CHECKLIST = [
   { id: 'when', text: 'Pick a time', done: false },
   { id: 'who', text: 'Decide who’s coming', done: false },
   { id: 'need', text: 'List what we need', done: false },
+]
+
+export const MILESTONE_CHECKLIST = [
+  { id: 'party', text: 'Plan the party', done: false },
+  { id: 'venue', text: 'Book the venue', done: false },
+  { id: 'invites', text: 'Send invites', done: false },
 ]

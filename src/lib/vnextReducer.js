@@ -1,6 +1,6 @@
 import { cloneGiftLists } from './gifts.js'
 import { mergeEvents, seedCalendarEvents, wallEvent } from './events.js'
-import { PLAN_CHECKLIST } from './nextup.js'
+import { MILESTONE_CHECKLIST, PLAN_CHECKLIST } from './nextup.js'
 import { mergeProfiles } from '../data/profiles.js'
 import { groceryFromSlots, mergeChecks, suggestWeek, swapInPool } from './planner.js'
 
@@ -93,22 +93,45 @@ export function vnextReducer(state, action) {
       const suggestion = action.suggestion
       const id = `plan-${suggestion.key}`
       if (state.events.some((event) => event.id === id)) return state
+      const milestone = Boolean(suggestion.milestone)
       const event = wallEvent({
         id,
-        title: suggestion.title,
+        title: suggestion.milestoneTitle || suggestion.title,
         kind: 'plan',
         date: suggestion.date,
         allDay: true,
         place: suggestion.location || '',
-        notes:
-          suggestion.source === 'import'
-            ? 'Planned from the family calendar.'
-            : 'Planned from the holiday list.',
+        notes: milestone
+          ? 'Milestone birthday. Plan the party, book the venue, and send invites.'
+          : suggestion.source === 'birthday'
+            ? 'Planned from a family birthday.'
+            : suggestion.source === 'import'
+              ? 'Planned from the family calendar.'
+              : 'Planned from the holiday list.',
         draft: true,
-        checklist: PLAN_CHECKLIST.map((item) => ({ ...item })),
+        checklist: (milestone ? MILESTONE_CHECKLIST : PLAN_CHECKLIST).map((item) => ({ ...item })),
         source: 'plan',
       })
       return { ...state, events: [...state.events, event] }
+    }
+    case 'mark-milestone-step': {
+      const suggestion = action.suggestion
+      const id = `plan-${suggestion.key}`
+      const withPlan = state.events.some((event) => event.id === id)
+        ? state
+        : vnextReducer(state, { type: 'plan-suggestion', suggestion: { ...suggestion, milestone: true } })
+      return {
+        ...withPlan,
+        events: withPlan.events.map((event) => {
+          if (event.id !== id) return event
+          return {
+            ...event,
+            checklist: (event.checklist || []).map((item) =>
+              item.id === action.stepId ? { ...item, done: true } : item,
+            ),
+          }
+        }),
+      }
     }
     case 'toggle-checklist':
       return {
