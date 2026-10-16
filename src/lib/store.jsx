@@ -351,6 +351,9 @@ export function BellProvider({ children }) {
       planSuggestion(suggestion) {
         applyVnext({ type: 'plan-suggestion', suggestion })
       },
+      markMilestoneStep(suggestion, stepId) {
+        applyVnext({ type: 'mark-milestone-step', suggestion, stepId })
+      },
       toggleChecklist(eventId, checkId) {
         applyVnext({ type: 'toggle-checklist', eventId, checkId })
       },
