@@ -80,6 +80,7 @@ export function fromDbItem(row) {
     addedBy: row.added_by || 'parent',
     category: row.category || '',
     audio: row.audio || '',
+    catalogId: row.catalog_id || '',
   }
 }
 

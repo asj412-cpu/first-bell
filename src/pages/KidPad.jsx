@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { BackArt, CameraArt, CategoryArt, GiftArt, HeartArt, LockArt, MicArt, PicturesArt, SpeakerArt } from '../components/KidArt.jsx'
+import { BackArt, CameraArt, CategoryArt, ClothesArt, GiftArt, HeartArt, LearningArt, LockArt, MicArt, SpeakerArt, ToysArt } from '../components/KidArt.jsx'
+import { CATALOG_TABS, catalogForKid, normalizeCatalogItem } from '../lib/catalog.js'
 import {
-  KID_CATEGORIES,
   KID_PROMPTS,
   blobToDataUrl,
   chime,
@@ -14,8 +14,15 @@ import {
   shrinkImage,
   speak,
 } from '../lib/kidGifts.js'
+import { ageInYears } from '../lib/planner.js'
 import { useBell } from '../lib/store.jsx'
 import { supabase } from '../lib/supabase.js'
+
+const TAB_ART = {
+  toys: ToysArt,
+  clothes: ClothesArt,
+  learning: LearningArt,
+}
 
 const BURST = [
   ['-80px', '-120px', '#C8643B'],
@@ -86,8 +93,10 @@ export default function KidPad() {
   const { state, entered, addKidWish, checkKidPin } = useBell()
   const demoList = supabase ? null : findKidList(state.giftLists, secret)
   const [remote, setRemote] = useState(null)
+  const [remoteCatalog, setRemoteCatalog] = useState([])
   const [loading, setLoading] = useState(Boolean(supabase))
   const [panel, setPanel] = useState('home')
+  const [tab, setTab] = useState('toys')
   const [burst, setBurst] = useState(false)
   const [shake, setShake] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -98,8 +107,7 @@ export default function KidPad() {
   const lock = useRef(false)
 
   const list = supabase ? remote : demoList
-  const prompt =
-    panel === 'pictures' ? KID_PROMPTS.pictures : panel === 'pin' ? KID_PROMPTS.pin : listening ? KID_PROMPTS.mic : list ? KID_PROMPTS.home(list.displayName) : KID_PROMPTS.missing
+  const prompt = panel === 'pin' ? KID_PROMPTS.pin : listening ? KID_PROMPTS.mic : list ? KID_PROMPTS.home(list.displayName) : KID_PROMPTS.missing
 
   useEffect(() => {
     if (!list) return undefined
@@ -132,10 +140,15 @@ export default function KidPad() {
     }
     let cancelled = false
     setLoading(true)
-    supabase.rpc('get_kid_gift_list', { p_secret: secret }).then(({ data, error }) => {
+    Promise.all([
+      supabase.rpc('get_kid_gift_list', { p_secret: secret }),
+      supabase.rpc('get_kid_catalog', { p_secret: secret }),
+    ]).then(([listRes, catRes]) => {
       if (cancelled) return
-      if (error || !data) setRemote(null)
-      else setRemote(payloadToKidList(data))
+      if (listRes.error || !listRes.data) setRemote(null)
+      else setRemote(payloadToKidList(listRes.data))
+      const rows = Array.isArray(catRes.data) ? catRes.data : []
+      setRemoteCatalog(rows.map((row, index) => normalizeCatalogItem(row, index)))
       setLoading(false)
     })
     return () => {
@@ -151,13 +164,13 @@ export default function KidPad() {
     if (data) setRemote(payloadToKidList(data))
   }
 
-  function celebrate() {
+  function celebrate(phrase) {
     try {
       chime()
     } catch {
       /* sound is a bonus */
     }
-    speak(KID_PROMPTS.saved)
+    speak(phrase || KID_PROMPTS.saved)
     setBurst(true)
     window.setTimeout(() => setBurst(false), 900)
   }
@@ -169,22 +182,30 @@ export default function KidPad() {
     window.setTimeout(() => setShake(false), 480)
   }
 
-  async function saveWish(fields) {
+  async function saveWish(fields, phrase) {
     if (lock.current) return
     lock.current = true
     setBusy(true)
     try {
       await addKidWish(secret, fields)
       await refresh()
-      setPanel('home')
       setListening(false)
-      celebrate()
+      celebrate(phrase)
     } catch (error) {
       stumble(error)
     } finally {
       lock.current = false
       setBusy(false)
     }
+  }
+
+  async function onHeart(product) {
+    const picked = items.some((item) => item.catalogId === product.id)
+    if (picked) {
+      celebrate(product.name)
+      return
+    }
+    await saveWish({ kind: 'catalog', catalogId: product.id }, product.name)
   }
 
   async function onPhoto(event) {
@@ -319,6 +340,10 @@ export default function KidPad() {
   }
 
   const items = kidVisibleItems(list)
+  const years = ageInYears(state.profiles.find((profile) => profile.memberKey === list.kidKey)?.birthDate)
+  const products = supabase
+    ? remoteCatalog.filter((item) => item.category === tab)
+    : catalogForKid(state.catalog, years, tab)
 
   return (
     <div className={`kid-pad ${shake ? 'shake' : ''}`} data-panel={panel}>
@@ -360,54 +385,51 @@ export default function KidPad() {
             <BackArt />
           </button>
         </div>
-      ) : panel === 'pictures' ? (
-        <div className="kid-pictures">
-          <button className="kid-icon-btn" type="button" aria-label="Back" onClick={() => setPanel('home')}>
-            <BackArt />
-          </button>
-          <div className="kid-grid">
-            {KID_CATEGORIES.map((category) => (
-              <button
-                key={category.id}
-                type="button"
-                className="kid-tile"
-                aria-label={category.speak}
-                disabled={busy}
-                onClick={() => saveWish({ kind: 'picture', category: category.id })}
-              >
-                <CategoryArt id={category.id} />
-              </button>
-            ))}
-          </div>
-        </div>
       ) : (
         <>
-          <div className="kid-actions">
-            <button
-              type="button"
-              className={`kid-action mic ${listening ? 'listening' : ''}`}
-              aria-label="Microphone"
-              aria-pressed={listening}
-              disabled={busy && !listening}
-              onClick={() => (listening ? stopMic.current?.() : startMic())}
-            >
-              <MicArt />
-            </button>
-            <label className="kid-action cam">
-              <CameraArt />
-              <input type="file" accept="image/*" capture="environment" aria-label="Camera" onChange={onPhoto} />
-            </label>
-            <button
-              type="button"
-              className="kid-action pics"
-              aria-label="Pictures"
-              onClick={() => {
-                setPanel('pictures')
-                speak(KID_PROMPTS.pictures)
-              }}
-            >
-              <PicturesArt />
-            </button>
+          <div className="kid-tabs" role="tablist" aria-label="Pictures">
+            {CATALOG_TABS.map((entry) => {
+              const Art = TAB_ART[entry.id]
+              return (
+                <button
+                  key={entry.id}
+                  type="button"
+                  role="tab"
+                  className={`kid-tab ${tab === entry.id ? 'on' : ''}`}
+                  aria-label={entry.speak}
+                  aria-selected={tab === entry.id}
+                  onClick={() => {
+                    setTab(entry.id)
+                    speak(entry.speak)
+                  }}
+                >
+                  <Art />
+                </button>
+              )
+            })}
+          </div>
+          <div className="kid-catalog">
+            {products.map((product) => {
+              const image = safeMedia(product.image, 'image')
+              const picked = items.some((item) => item.catalogId === product.id)
+              return (
+                <article className="kid-product" key={product.id}>
+                  <button type="button" className="kid-photo-btn" aria-label={product.name} onClick={() => speak(product.name)}>
+                    {image ? <img src={image} alt="" /> : <CategoryArt id={product.category} />}
+                  </button>
+                  <button
+                    type="button"
+                    className="kid-heart-btn"
+                    aria-label={`Save ${product.name}`}
+                    aria-pressed={picked}
+                    disabled={busy}
+                    onClick={() => onHeart(product)}
+                  >
+                    <HeartArt filled={picked} />
+                  </button>
+                </article>
+              )
+            })}
           </div>
           {items.length > 0 && (
             <div className="kid-wishes">
@@ -434,6 +456,22 @@ export default function KidPad() {
               })}
             </div>
           )}
+          <div className="kid-secondary">
+            <button
+              type="button"
+              className={`kid-side mic ${listening ? 'listening' : ''}`}
+              aria-label="Microphone"
+              aria-pressed={listening}
+              disabled={busy && !listening}
+              onClick={() => (listening ? stopMic.current?.() : startMic())}
+            >
+              <MicArt />
+            </button>
+            <label className="kid-side cam">
+              <CameraArt />
+              <input type="file" accept="image/*" capture="environment" aria-label="Camera" onChange={onPhoto} />
+            </label>
+          </div>
         </>
       )}
 

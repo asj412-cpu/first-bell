@@ -1,3 +1,4 @@
+import { cloneCatalog } from './catalog.js'
 import { cloneGiftLists } from './gifts.js'
 import { mergeEvents, seedCalendarEvents, wallEvent } from './events.js'
 import { PLAN_CHECKLIST } from './nextup.js'
@@ -207,6 +208,17 @@ export function vnextReducer(state, action) {
       }
     case 'replace-gifts':
       return { ...state, giftLists: action.giftLists }
+    case 'replace-catalog':
+      return { ...state, catalog: action.catalog }
+    case 'save-catalog-item':
+      return {
+        ...state,
+        catalog: state.catalog.some((item) => item.id === action.item.id)
+          ? state.catalog.map((item) => (item.id === action.item.id ? { ...item, ...action.item } : item))
+          : [...state.catalog, action.item],
+      }
+    case 'delete-catalog-item':
+      return { ...state, catalog: state.catalog.filter((item) => item.id !== action.id) }
     default:
       return state
   }
@@ -217,6 +229,7 @@ export function initialVnext() {
     events: seedCalendarEvents(),
     imports: [],
     giftLists: cloneGiftLists(),
+    catalog: cloneCatalog(),
     profiles: mergeProfiles(null),
     mealPlans: {},
     grocery: {},
@@ -234,6 +247,7 @@ export function hydrateVnext(saved) {
     events: mergeEvents(saved.events),
     imports: Array.isArray(saved.imports) ? saved.imports : [],
     giftLists: Array.isArray(saved.giftLists) ? saved.giftLists : base.giftLists,
+    catalog: Array.isArray(saved.catalog) ? saved.catalog : base.catalog,
     profiles: mergeProfiles(saved.profiles),
     mealPlans: saved.mealPlans && typeof saved.mealPlans === 'object' ? saved.mealPlans : {},
     grocery: saved.grocery && typeof saved.grocery === 'object' ? saved.grocery : {},

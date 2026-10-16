@@ -1,0 +1,98 @@
+[
+  {
+    "id": "66666666-6666-4666-8666-666666666601",
+    "name": "Wooden train",
+    "category": "toys",
+    "age_fit": "2-6",
+    "retailer": "Target",
+    "price": 28,
+    "url": "https://www.target.com/s?searchTerm=wooden+train",
+    "image": "/catalog/train.jpg",
+    "active": true,
+    "sort": 0
+  },
+  {
+    "id": "66666666-6666-4666-8666-666666666602",
+    "name": "Dollhouse",
+    "category": "toys",
+    "age_fit": "4-8",
+    "retailer": "Target",
+    "price": 45,
+    "url": "https://www.target.com/s?searchTerm=dollhouse",
+    "image": "/catalog/dollhouse.jpg",
+    "active": true,
+    "sort": 1
+  },
+  {
+    "id": "66666666-6666-4666-8666-666666666603",
+    "name": "Baby rattle",
+    "category": "toys",
+    "age_fit": "0-1",
+    "retailer": "Target",
+    "price": 8,
+    "url": "https://www.target.com/s?searchTerm=baby+rattle",
+    "image": "/catalog/rattle.jpg",
+    "active": true,
+    "sort": 2
+  },
+  {
+    "id": "66666666-6666-4666-8666-666666666604",
+    "name": "Rain boots",
+    "category": "clothes",
+    "age_fit": "4-8",
+    "retailer": "Target",
+    "price": 22,
+    "url": "https://www.target.com/s?searchTerm=kids+rain+boots",
+    "image": "/catalog/boots.jpg",
+    "active": true,
+    "sort": 3
+  },
+  {
+    "id": "66666666-6666-4666-8666-666666666605",
+    "name": "Soft sleeper",
+    "category": "clothes",
+    "age_fit": "0-1",
+    "retailer": "Target",
+    "price": 16,
+    "url": "https://www.target.com/s?searchTerm=baby+sleeper",
+    "image": "/catalog/sleeper.jpg",
+    "active": true,
+    "sort": 4
+  },
+  {
+    "id": "66666666-6666-4666-8666-666666666606",
+    "name": "Picture book",
+    "category": "learning",
+    "age_fit": "3-7",
+    "retailer": "Barnes & Noble",
+    "price": 12,
+    "url": "https://www.barnesandnoble.com/s/picture+book",
+    "image": "/catalog/picture-book.jpg",
+    "active": true,
+    "sort": 5
+  },
+  {
+    "id": "66666666-6666-4666-8666-666666666607",
+    "name": "First reader",
+    "category": "learning",
+    "age_fit": "6-8",
+    "retailer": "Barnes & Noble",
+    "price": 10,
+    "url": "https://www.barnesandnoble.com/s/first+reader",
+    "image": "/catalog/reader.jpg",
+    "active": true,
+    "sort": 6
+  },
+  {
+    "id": "66666666-6666-4666-8666-666666666608",
+    "name": "Sticker book",
+    "category": "learning",
+    "age_fit": "4-5",
+    "retailer": "Barnes & Noble",
+    "price": 7,
+    "url": "https://www.barnesandnoble.com/s/sticker+book",
+    "image": "/catalog/stickers.jpg",
+    "active": true,
+    "sort": 7
+  }
+]

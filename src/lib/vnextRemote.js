@@ -1,3 +1,4 @@
+import { fromDbCatalog } from './catalog.js'
 import { fromDbList } from './gifts.js'
 import { attachKidLink } from './kidGifts.js'
 
@@ -89,6 +90,10 @@ export async function pullVnext(client, householdId) {
     if (!linksRes.error) linkRows = linksRes.data || []
   }
 
+  let catalog = null
+  const catalogRes = await client.from('gift_catalog').select('*').eq('household_id', householdId).order('sort')
+  if (!catalogRes.error) catalog = (catalogRes.data || []).map(fromDbCatalog)
+
   const mealPlans = {}
   for (const row of plansRes.data || []) mealPlans[row.week_start] = row.slots || {}
 
@@ -109,6 +114,7 @@ export async function pullVnext(client, householdId) {
     available: true,
     imports: importsRes.data || [],
     giftLists: (listsRes.data || []).map((list) => attachKidLink(fromDbList(list, itemRows), linkRows)),
+    catalog,
     profiles: (profilesRes.data || []).map(mapProfile),
     mealPlans,
     grocery,
@@ -127,6 +133,7 @@ function itemToRow(item, listId) {
     image: item.image || null,
     audio: item.audio || null,
     category: item.category || null,
+    catalog_id: item.catalogId || null,
     availability: item.availability || null,
     sort: item.sort ?? 0,
     claimed_by_name: item.claimedByName || null,
@@ -168,6 +175,30 @@ export async function mirrorVnext(client, action, snapshot) {
         { onConflict: 'household_id,member_key' },
       ),
     )
+  }
+
+  if (action.type === 'save-catalog-item') {
+    const item = snapshot.catalog.find((row) => row.id === action.item.id)
+    if (!item) return
+    await quiet(
+      client.from('gift_catalog').upsert({
+        id: item.id,
+        household_id: householdId,
+        name: item.name || 'Picture',
+        category: item.category,
+        age_fit: item.ageFit,
+        retailer: item.retailer || null,
+        price: item.price,
+        url: item.url || null,
+        image: item.image || null,
+        active: item.active !== false,
+        sort: item.sort ?? 0,
+      }),
+    )
+  }
+
+  if (action.type === 'delete-catalog-item') {
+    await quiet(client.from('gift_catalog').delete().eq('id', action.id).eq('household_id', householdId))
   }
 
   if (action.type === 'update-gift-item' || action.type === 'release-claim' || action.type === 'move-gift-item') {

@@ -84,10 +84,46 @@ export function GiftArt() {
   )
 }
 
-export function HeartArt() {
+export function HeartArt({ filled = true }) {
   return (
     <Art>
-      <path d="M60 100 20 58a22 22 0 0 1 32-30l8 8 8-8a22 22 0 0 1 32 30z" fill="#C8643B" />
+      <path
+        d="M60 100 20 58a22 22 0 0 1 32-30l8 8 8-8a22 22 0 0 1 32 30z"
+        fill={filled ? '#C8643B' : 'none'}
+        stroke="#C8643B"
+        strokeWidth="6"
+      />
+    </Art>
+  )
+}
+
+export function ToysArt() {
+  return (
+    <Art>
+      <circle cx="60" cy="60" r="54" fill="#F3D7C8" />
+      <rect x="34" y="58" width="52" height="22" rx="6" fill="#C8643B" />
+      <circle cx="46" cy="82" r="8" fill="#3A2A22" />
+      <circle cx="74" cy="82" r="8" fill="#3A2A22" />
+      <rect x="48" y="40" width="18" height="16" rx="4" fill="#F2B544" />
+    </Art>
+  )
+}
+
+export function ClothesArt() {
+  return (
+    <Art>
+      <circle cx="60" cy="60" r="54" fill="#E5EFE2" />
+      <path d="M40 42 60 54 80 42l8 16-16 8v28H48V66L32 58z" fill="#7A9A74" />
+    </Art>
+  )
+}
+
+export function LearningArt() {
+  return (
+    <Art>
+      <circle cx="60" cy="60" r="54" fill="#F8E7C0" />
+      <path d="M18 48c14 8 22 8 42 0v36c-20 8-28 8-42 0z" fill="#C8643B" />
+      <path d="M102 48c-14 8-22 8-42 0v36c20 8 28 8 42 0z" fill="#F2B544" />
     </Art>
   )
 }
@@ -205,6 +241,9 @@ const TILES = {
   outdoors: Outdoors,
   dressup: DressUp,
   stuffed: Stuffed,
+  toys: ToysArt,
+  clothes: ClothesArt,
+  learning: LearningArt,
 }
 
 export function CategoryArt({ id }) {

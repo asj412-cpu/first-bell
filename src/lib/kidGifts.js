@@ -1,3 +1,4 @@
+import { moneyLabel } from './catalog.js'
 import { safeHttp } from './gifts.js'
 
 export const KID_CATEGORIES = [
@@ -12,7 +13,7 @@ export const KID_CATEGORIES = [
 ]
 
 export const KID_PROMPTS = {
-  home: (name) => `Hi ${name}. Tap a big picture.`,
+  home: (name) => `Hi ${name}. Tap a heart.`,
   mic: 'Tap and say what you want.',
   camera: 'Take a picture of the toy.',
   pictures: 'Pick a picture.',
@@ -112,6 +113,29 @@ export function makeKidItem(list, fields) {
     claimedAt: null,
     reviewStatus: 'pending',
     addedBy: 'kid',
+    catalogId: '',
+  }
+}
+
+export function makeCatalogItem(list, product) {
+  const sort = (list.items || []).reduce((max, item) => Math.max(max, item.sort ?? 0), -1) + 1
+  const price = moneyLabel(product.price)
+  return {
+    id: crypto.randomUUID(),
+    title: product.name,
+    notes: [product.retailer, price].filter(Boolean).join(' · '),
+    url: product.url || '',
+    urlSecondary: '',
+    image: product.image || '',
+    audio: '',
+    category: product.category || '',
+    catalogId: product.id,
+    availability: '',
+    sort,
+    claimedByName: '',
+    claimedAt: null,
+    reviewStatus: 'pending',
+    addedBy: 'kid',
   }
 }
 
@@ -133,6 +157,7 @@ export function safeMedia(url, kind) {
   if (!value) return ''
   if (kind === 'image' && value.startsWith('data:image/')) return value
   if (kind === 'audio' && value.startsWith('data:audio/')) return value
+  if (kind === 'image' && value.startsWith('/') && !value.startsWith('//') && !value.includes('..')) return value
   if (kind === 'image') return safeHttp(value)
   return ''
 }
@@ -155,6 +180,7 @@ export function payloadToKidList(payload) {
       sort: row.sort ?? 0,
       reviewStatus: row.review_status || 'approved',
       addedBy: row.added_by || 'kid',
+      catalogId: row.catalog_id || '',
       claimedAt: null,
       claimedByName: '',
     })),

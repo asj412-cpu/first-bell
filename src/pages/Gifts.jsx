@@ -11,6 +11,7 @@ export default function Gifts() {
       <h1>Gift lists</h1>
       <p className="lede">One list per kid. Share a family link, or open a private iPad link for that kid. Kid mode hides anything already claimed.</p>
       <div className="meta-row" style={{ margin: '14px 0' }}>
+        <Link to="/gifts/catalog" className="btn small">Picture catalog</Link>
         <button className={`btn small ${state.kidMode ? 'primary' : ''}`} aria-pressed={state.kidMode} onClick={toggleKidMode}>
           {state.kidMode ? 'Kid mode on' : 'Kid mode'}
         </button>
