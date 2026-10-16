@@ -7,13 +7,14 @@ import { greeting, todayLabel } from '../lib/format.js'
 import { buildNextUp } from '../lib/nextup.js'
 import { hostDisplayName } from '../lib/rsvps.js'
 import { useBell } from '../lib/store.jsx'
+import { useVault } from '../lib/vault/VaultProvider.jsx'
 import { IconArrow } from '../components/Icons.jsx'
 
 function Suggestion({ item, planned, onPlan }) {
   return (
     <div className="card pad next-card">
       <div className="row-between">
-        <span className={`chip ${item.source === 'birthday' ? 'rose' : item.source === 'import' ? 'teal' : 'gold'}`}>
+        <span className={`chip ${item.source === 'birthday' ? 'rose' : item.source === 'import' ? 'teal' : item.source === 'vault' ? 'vault' : 'gold'}`}>
           {item.sourceLabel}
         </span>
         <span className="dim">{formatShortDate(item.date)}</span>
@@ -23,7 +24,11 @@ function Suggestion({ item, planned, onPlan }) {
         {item.source === 'birthday' ? turnsLabel(item.turns) : item.allDay ? 'All day' : eventWhenLabel(item)}
         {item.location ? ` · ${item.location}` : ''}
       </p>
-      {planned ? (
+      {item.source === 'vault' ? (
+        <Link to="/vault" className="btn small" style={{ marginTop: 12 }}>
+          Open vault
+        </Link>
+      ) : planned ? (
         <Link to="/calendar" className="btn small" style={{ marginTop: 12 }}>
           On the calendar
         </Link>
@@ -38,10 +43,15 @@ function Suggestion({ item, planned, onPlan }) {
 
 export default function Home() {
   const { state, planSuggestion } = useBell()
+  const vault = useVault()
   const openRsvps = state.guests.filter((guest) => guest.status === 'none').length
   const inboxN = state.messages.filter((message) => message.folder === 'inbox' && message.attention).length
   const { upcoming, history } = splitEvents(state.events)
-  const nextUp = buildNextUp({ imports: state.imports, profiles: state.profiles })
+  const nextUp = buildNextUp({
+    imports: state.imports,
+    profiles: state.profiles,
+    reminders: vault.reminders,
+  })
   const party = state.events.find((event) => event.partyId === PARTY.id)
   const partyDone = party ? isFinished(party) : true
   const nextEvent = upcoming[0]
@@ -74,6 +84,19 @@ export default function Home() {
           />
         ))}
       </div>
+
+      {nextUp.renewals?.length > 0 && (
+        <>
+          <div className="section-head">
+            <h2>Renewals</h2>
+          </div>
+          <div className="next-strip">
+            {nextUp.renewals.map((item) => (
+              <Suggestion key={item.key} item={item} planned={false} onPlan={() => {}} />
+            ))}
+          </div>
+        </>
+      )}
 
       {nextUp.birthdays.length > 0 && (
         <>

@@ -15,6 +15,7 @@ import Parties from './pages/Parties.jsx'
 import PartyDetail from './pages/PartyDetail.jsx'
 import PublicGift from './pages/PublicGift.jsx'
 import Settings from './pages/Settings.jsx'
+import Vault from './pages/Vault.jsx'
 
 function BootScreen() {
   return (
@@ -69,6 +70,7 @@ export default function App() {
         <Route path="/gifts" element={<Gifts />} />
         <Route path="/gifts/:kidKey" element={<GiftDetail />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/vault" element={<Vault />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

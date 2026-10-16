@@ -816,4 +816,37 @@ h3 { font-size: 18px; }
   .bottom-nav, .side-nav, .topbar, .no-print, .cal-toolbar, .meta-row { display: none !important; }
   body { background: white; color: #1a120c; }
   .card { box-shadow: none; background: white; }
+  .vault-page form .field, .vault-page .btn, .audit-list { display: none !important; }
+  .vault-kit { display: block !important; }
 }
+
+.check-row { display: flex; gap: 10px; align-items: flex-start; margin: 12px 0; }
+.secret {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  text-align: left;
+  background: rgba(16,12,10,.4);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-family: ui-monospace, monospace;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+}
+.secret.shown { border-color: var(--line-strong); }
+.vault-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.vault-list h2 { font-size: 22px; margin: 8px 0; }
+.vault-details { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin: 12px 0 0; }
+.vault-details dt { color: var(--gold); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
+.kit-line {
+  border-bottom: 1px solid var(--line-strong);
+  min-height: 36px;
+  margin: 10px 0;
+  color: var(--muted);
+}
+.audit-list { list-style: none; padding: 0; margin: 0; }
+.audit-list li { display: flex; gap: 10px; flex-wrap: wrap; padding: 8px 0; border-top: 1px solid var(--line); }
+.chip.vault { color: var(--teal); border-color: rgba(120, 190, 180, 0.45); }

@@ -1,7 +1,8 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useBell } from '../lib/store.jsx'
 import BackendBanner from './BackendBanner.jsx'
-import { IconCal, IconGear, IconGift, IconHome, IconInbox, IconMeal, IconParty } from './Icons.jsx'
+import { IconCal, IconGear, IconGift, IconHome, IconInbox, IconLock, IconMeal, IconParty } from './Icons.jsx'
+import { useVault } from '../lib/vault/VaultProvider.jsx'
 
 const LINKS = [
   { to: '/', label: 'Home', icon: IconHome, end: true },
@@ -28,7 +29,9 @@ function Brand() {
 export default function AppShell() {
   const loc = useLocation()
   const { state } = useBell()
-  const title = LINKS.find((l) => (l.end ? loc.pathname === '/' : loc.pathname.startsWith(l.to)))?.label || 'First Bell'
+  const vault = useVault()
+  const links = vault.canUse ? [...LINKS.slice(0, 5), { to: '/vault', label: 'Vault', icon: IconLock }, ...LINKS.slice(5)] : LINKS
+  const title = links.find((l) => (l.end ? loc.pathname === '/' : loc.pathname.startsWith(l.to)))?.label || 'First Bell'
   const modeLabel =
     state.backend === 'live' ? 'Live' : state.backend === 'offline' ? 'Offline' : 'Demo'
 
@@ -36,7 +39,7 @@ export default function AppShell() {
     <div className="app-shell">
       <nav className="side-nav" aria-label="Primary">
         <Brand />
-        {LINKS.map((l) => (
+        {links.map((l) => (
           <NavLink
             key={l.to}
             to={l.to}
@@ -57,7 +60,7 @@ export default function AppShell() {
         <Outlet />
       </main>
       <nav className="bottom-nav" aria-label="Primary">
-        {LINKS.map((l) => (
+        {links.map((l) => (
           <NavLink
             key={l.to}
             to={l.to}

@@ -46,12 +46,12 @@ export function importSuggestion(row) {
   }
 }
 
-export function buildNextUp({ imports = [], profiles = [], now = new Date(), limit = 5 } = {}) {
+export function buildNextUp({ imports = [], profiles = [], reminders = [], now = new Date(), limit = 5 } = {}) {
   const year = chicagoParts(now).year
   const holidays = [...holidaysForYear(year), ...holidaysForYear(year + 1)].map(holidaySuggestion)
   const imported = (imports || []).filter((row) => row && row.title && (row.starts_at || row.startsAt)).map(importSuggestion)
   const birthdays = upcomingBirthdays(profiles, now)
-  const merged = [...holidays, ...imported, ...birthdays]
+  const merged = [...holidays, ...imported, ...birthdays, ...reminders]
     .filter((item) => !isFinished(item, now))
     .sort((a, b) => String(a.startsAt).localeCompare(String(b.startsAt)) || String(a.title).localeCompare(String(b.title)))
   const soon = merged.slice(0, limit)
@@ -59,6 +59,7 @@ export function buildNextUp({ imports = [], profiles = [], now = new Date(), lim
   return {
     soon,
     birthdays: birthdays.filter((item) => !soonKeys.has(item.key)),
+    renewals: reminders.filter((item) => !soonKeys.has(item.key)),
   }
 }
 
