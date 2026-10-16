@@ -1,4 +1,5 @@
 import { fromDbList } from './gifts.js'
+import { attachKidLink } from './kidGifts.js'
 
 function missing(error) {
   if (!error) return false
@@ -79,6 +80,15 @@ export async function pullVnext(client, householdId) {
     itemRows = itemsRes.data || []
   }
 
+  let linkRows = []
+  if (listIds.length) {
+    const linksRes = await client
+      .from('gift_kid_links')
+      .select('list_id, revoked_at, created_at')
+      .in('list_id', listIds)
+    if (!linksRes.error) linkRows = linksRes.data || []
+  }
+
   const mealPlans = {}
   for (const row of plansRes.data || []) mealPlans[row.week_start] = row.slots || {}
 
@@ -98,11 +108,31 @@ export async function pullVnext(client, householdId) {
   return {
     available: true,
     imports: importsRes.data || [],
-    giftLists: (listsRes.data || []).map((list) => fromDbList(list, itemRows)),
+    giftLists: (listsRes.data || []).map((list) => attachKidLink(fromDbList(list, itemRows), linkRows)),
     profiles: (profilesRes.data || []).map(mapProfile),
     mealPlans,
     grocery,
     events: (eventsRes.data || []).map(mapEvent),
+  }
+}
+
+function itemToRow(item, listId) {
+  return {
+    id: item.id,
+    list_id: listId,
+    title: (item.title || 'Wish').slice(0, 160),
+    notes: item.notes || null,
+    url: item.url || null,
+    url_secondary: item.urlSecondary || null,
+    image: item.image || null,
+    audio: item.audio || null,
+    category: item.category || null,
+    availability: item.availability || null,
+    sort: item.sort ?? 0,
+    claimed_by_name: item.claimedByName || null,
+    claimed_at: item.claimedAt,
+    review_status: item.reviewStatus === 'pending' ? 'pending' : 'approved',
+    added_by: item.addedBy === 'kid' ? 'kid' : 'parent',
   }
 }
 
@@ -144,21 +174,7 @@ export async function mirrorVnext(client, action, snapshot) {
     const list = snapshot.giftLists.find((row) => row.id === action.listId)
     if (!list) return
     await quiet(
-      client.from('gift_items').upsert(
-        list.items.map((item) => ({
-          id: item.id,
-          list_id: list.id,
-          title: item.title || 'Wish',
-          notes: item.notes || null,
-          url: item.url || null,
-          url_secondary: item.urlSecondary || null,
-          image: item.image || null,
-          availability: item.availability || null,
-          sort: item.sort ?? 0,
-          claimed_by_name: item.claimedByName || null,
-          claimed_at: item.claimedAt,
-        })),
-      ),
+      client.from('gift_items').upsert(list.items.map((item) => itemToRow(item, list.id))),
     )
   }
 
@@ -167,13 +183,7 @@ export async function mirrorVnext(client, action, snapshot) {
     const item = list?.items[list.items.length - 1]
     if (!list || !item) return
     await quiet(
-      client.from('gift_items').insert({
-        id: item.id,
-        list_id: list.id,
-        title: item.title || 'New wish',
-        notes: item.notes || null,
-        sort: item.sort ?? list.items.length - 1,
-      }),
+      client.from('gift_items').insert(itemToRow(item, list.id)),
     )
   }
 

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { CategoryArt } from '../components/KidArt.jsx'
 import { findListBySlug, publicPayloadToList, safeHttp, visibleItems } from '../lib/gifts.js'
+import { safeMedia } from '../lib/kidGifts.js'
 import { useBell } from '../lib/store.jsx'
 import { supabase } from '../lib/supabase.js'
 
@@ -101,6 +103,12 @@ export default function PublicGift() {
         <div className="gift-public">
           {items.map((item) => (
             <article key={item.id} className="wish">
+              {(safeMedia(item.image, 'image') || item.category) && (
+                <div className="wish-art">
+                  {safeMedia(item.image, 'image') ? <img src={safeMedia(item.image, 'image')} alt="" /> : <CategoryArt id={item.category} />}
+                </div>
+              )}
+              {safeMedia(item.audio, 'audio') && <audio controls src={safeMedia(item.audio, 'audio')} />}
               <h3>{item.title}</h3>
               {item.notes && <p className="muted">{item.notes}</p>}
               <div className="meta-row">

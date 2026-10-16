@@ -5,6 +5,19 @@ import { mergeEvents } from './events.js'
 import { fromDbRsvp, hostDisplayName, toDbStatus } from './rsvps.js'
 import { isSupabaseConfigured, supabase } from './supabase.js'
 import { hydrateVnext, vnextReducer } from './vnextReducer.js'
+import {
+  clearPinFail,
+  findKidList,
+  forgetKidSecret,
+  localPinOk,
+  makeKidItem,
+  notePinFail,
+  pinBlocked,
+  randomSecret,
+  rememberKidSecret,
+  sha256,
+  wishAllowed,
+} from './kidGifts.js'
 import { mirrorVnext, pullVnext } from './vnextRemote.js'
 
 const KEY = 'first-bell.v1'
@@ -347,6 +360,73 @@ export function BellProvider({ children }) {
       },
       releaseClaim(listId, itemId) {
         applyVnext({ type: 'release-claim', listId, itemId })
+      },
+      async issueKidLink(listId, pin) {
+        if (!/^\d{4}$/.test(pin || '')) throw new Error('Use 4 numbers.')
+        const secret = randomSecret()
+        const pinHash = await sha256(`${secret}:${pin}`)
+        if (live) {
+          const { error } = await supabase.rpc('create_kid_link', {
+            p_list_id: listId,
+            p_secret: secret,
+            p_pin: pin,
+          })
+          if (error) throw error
+        }
+        rememberKidSecret(listId, secret)
+        applyVnext({ type: 'set-kid-link', listId, secret, pinHash })
+        return secret
+      },
+      async revokeKidLink(listId) {
+        if (live) {
+          const { error } = await supabase.rpc('revoke_kid_link', { p_list_id: listId })
+          if (error) throw error
+        }
+        forgetKidSecret(listId)
+        applyVnext({ type: 'revoke-kid-link', listId })
+      },
+      async addKidWish(secret, fields) {
+        if (supabase) {
+          const { data, error } = await supabase.rpc('add_kid_wish', {
+            p_secret: secret,
+            p_kind: fields.kind,
+            p_label: fields.label || '',
+            p_image: fields.image || '',
+            p_audio: fields.audio || '',
+            p_category: fields.category || '',
+          })
+          if (error) throw error
+          return data
+        }
+        if (!wishAllowed(secret)) throw new Error('Slow down')
+        const list = findKidList(state.giftLists, secret)
+        if (!list) throw new Error('List not found')
+        const item = makeKidItem(list, fields)
+        applyVnext({ type: 'add-kid-wish', secret, item })
+        return item
+      },
+      async checkKidPin(secret, pin) {
+        if (supabase) {
+          const { data, error } = await supabase.rpc('check_kid_pin', { p_secret: secret, p_pin: pin })
+          if (error) return false
+          return data === true
+        }
+        if (pinBlocked(secret)) return false
+        const list = findKidList(state.giftLists, secret)
+        if (!list) {
+          notePinFail(secret)
+          return false
+        }
+        const ok = await localPinOk(list.kidLink, secret, pin)
+        if (!ok) notePinFail(secret)
+        else clearPinFail(secret)
+        return ok
+      },
+      async reloadGifts() {
+        if (!live || !state.householdId) return
+        const result = await pullVnext(supabase, state.householdId)
+        if (!result.available || !result.giftLists?.length) return
+        applyVnext({ type: 'replace-gifts', giftLists: result.giftLists })
       },
       planSuggestion(suggestion) {
         applyVnext({ type: 'plan-suggestion', suggestion })

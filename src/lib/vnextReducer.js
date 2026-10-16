@@ -17,6 +17,10 @@ export function blankItem(sort) {
     sort,
     claimedByName: '',
     claimedAt: null,
+    reviewStatus: 'approved',
+    addedBy: 'parent',
+    category: '',
+    audio: '',
   }
 }
 
@@ -89,6 +93,31 @@ export function vnextReducer(state, action) {
           item.id === action.itemId ? { ...item, claimedByName: '', claimedAt: null } : item,
         ),
       }))
+    case 'set-kid-link':
+      return mapList(state, action.listId, (list) => ({
+        ...list,
+        kidLink: {
+          secret: action.secret,
+          pinHash: action.pinHash || '',
+          revokedAt: null,
+          active: true,
+        },
+      }))
+    case 'revoke-kid-link':
+      return mapList(state, action.listId, (list) => ({
+        ...list,
+        kidLink: list.kidLink
+          ? { ...list.kidLink, secret: '', pinHash: '', revokedAt: new Date().toISOString(), active: false }
+          : null,
+      }))
+    case 'add-kid-wish':
+      return {
+        ...state,
+        giftLists: state.giftLists.map((list) => {
+          if (!list.kidLink || list.kidLink.revokedAt || list.kidLink.secret !== action.secret) return list
+          return { ...list, items: [...list.items, action.item] }
+        }),
+      }
     case 'plan-suggestion': {
       const suggestion = action.suggestion
       const id = `plan-${suggestion.key}`

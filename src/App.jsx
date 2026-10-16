@@ -8,6 +8,7 @@ import GiftDetail from './pages/GiftDetail.jsx'
 import Gifts from './pages/Gifts.jsx'
 import GuestRsvp from './pages/GuestRsvp.jsx'
 import History from './pages/History.jsx'
+import KidPad from './pages/KidPad.jsx'
 import Home from './pages/Home.jsx'
 import Inbox from './pages/Inbox.jsx'
 import Meals from './pages/Meals.jsx'
@@ -52,6 +53,7 @@ export default function App() {
       <Route path="/enter" element={<Gate />} />
       <Route path="/r/:slug" element={<GuestRsvp />} />
       <Route path="/g/:slug" element={<PublicGift />} />
+      <Route path="/k/:secret" element={<KidPad />} />
       <Route
         element={
           <Protected>
