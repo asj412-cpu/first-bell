@@ -1,56 +1,134 @@
 import { Link } from 'react-router-dom'
-import { EVENTS, PARTY } from '../data/seed.js'
-import { countdownCopy, formatLongDate, formatTimeRange, greeting, todayLabel } from '../lib/format.js'
-import { hostDisplayName } from '../lib/rsvps.js'
+import { PARTY } from '../data/seed.js'
+import Avatar from '../components/Avatar.jsx'
+import { turnsLabel } from '../lib/birthdays.js'
+import { eventWhenLabel, isFinished, splitEvents } from '../lib/events.js'
+import { formatShortDate, greeting, parseLocalDate } from '../lib/format.js'
+import { motifFor } from '../lib/motifs.js'
+import { buildNextUp } from '../lib/nextup.js'
 import { useBell } from '../lib/store.jsx'
 import { IconArrow } from '../components/Icons.jsx'
 
+function weekdayDate(iso) {
+  return parseLocalDate(iso).toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  })
+}
+
+function planLabel(item) {
+  if (item.source === 'birthday') return turnsLabel(item.turns)
+  if (item.allDay) return 'All day'
+  return eventWhenLabel(item)
+}
+
 export default function Home() {
-  const { state } = useBell()
-  const openRsvps = state.guests.filter((g) => g.status === 'none').length
-  const inboxN = state.messages.filter((m) => m.folder === 'inbox' && m.attention).length
-  const next = [...EVENTS].sort((a, b) => a.date.localeCompare(b.date))[0]
-  const leila = state.guests.find((g) => g.child.trim().toLowerCase() === 'leila')
-  const leilaYes = !leila || leila.status === 'yes'
+  const { state, planSuggestion } = useBell()
+  const openRsvps = state.guests.filter((guest) => guest.status === 'none').length
+  const inboxN = state.messages.filter((message) => message.folder === 'inbox' && message.attention).length
+  const { upcoming, history } = splitEvents(state.events)
+  const nextUp = buildNextUp({ imports: state.imports, profiles: state.profiles })
+  const party = state.events.find((event) => event.partyId === PARTY.id)
+  const partyDone = party ? isFinished(party) : true
+  const nextEvent = upcoming[0]
+  const connected = (state.imports || []).length > 0
+  const [featured, ...rest] = nextUp.soon
+  const featuredPlanned = featured ? state.events.some((event) => event.id === `plan-${featured.key}`) : false
 
   return (
     <div>
-      <div className="kicker">{todayLabel()}</div>
-      <h1>
-        {greeting()}, {hostDisplayName(state.session)}
-      </h1>
-      <p className="lede">Household ops at a glance. Chloe’s party is the live event.</p>
+      <h1 className="casa-greet">{greeting()}, Johnsons</h1>
+      <div className="casa-hero" role="img" aria-label="The house at dusk" />
 
-      <Link to={`/parties/${PARTY.id}`} className="card hero-party">
-        <img className="cover" src="/invites/chloe-mario.jpg" alt="" />
-        <div className="body">
-          <div className="kicker">Upcoming party · {countdownCopy(PARTY.date)}</div>
-          <h2>{PARTY.headline}</h2>
-          <p className="muted" style={{ margin: 0 }}>
-            {formatLongDate(PARTY.date)} · {formatTimeRange(PARTY.start, PARTY.end)}
-          </p>
-          <p className="muted" style={{ margin: '4px 0 0' }}>
-            {PARTY.venue.name} · {PARTY.venue.campus}
-          </p>
-          <div className="meta-row">
-            <span className="chip gold">{PARTY.venue.package} · paid</span>
-            <span className={`chip ${leilaYes ? 'yes' : 'wait'}`}>
-              {leila ? `Leila · ${leila.status === 'none' ? 'waiting' : leila.status}` : 'Leila · Yes'}
-            </span>
-            <span className="chip wait">{openRsvps} waiting</span>
-          </div>
-          <div className="row-between">
-            <span className="dim">Open the party desk</span>
-            <IconArrow style={{ width: 18, height: 18, color: 'var(--gold)' }} />
-          </div>
+      {!connected && (
+        <div className="banner">
+          Connect family calendar. Imported events show up here after the COO adds them. Nothing on this list is made up.
         </div>
-      </Link>
+      )}
+
+      {featured ? (
+        <article className="featured-next">
+          <img src={motifFor(featured)} alt="" />
+          <div>
+            <h2>{featured.title}</h2>
+            <p className="when">{weekdayDate(featured.date)}</p>
+          </div>
+          {featuredPlanned ? (
+            <Link to="/calendar" className="btn small">On the calendar</Link>
+          ) : (
+            <button className="btn small" type="button" onClick={() => planSuggestion(featured)}>
+              Plan this
+            </button>
+          )}
+        </article>
+      ) : (
+        <div className="card pad empty">
+          <p className="muted" style={{ margin: 0 }}>Connect family calendar</p>
+        </div>
+      )}
+
+      {rest.length > 0 && (
+        <div className="season-row">
+          {rest.map((item) => {
+            const planned = state.events.some((event) => event.id === `plan-${item.key}`)
+            return (
+              <button key={item.key} className="season-card" type="button" onClick={() => !planned && planSuggestion(item)}>
+                <img src={motifFor(item)} alt="" />
+                <strong>{item.title}</strong>
+                <span>{formatShortDate(item.date)} · {planned ? 'On the calendar' : planLabel(item)}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {nextUp.birthdays.length > 0 && (
+        <>
+          <div className="section-head">
+            <h2>Family birthdays</h2>
+          </div>
+          <div className="bday-row">
+            {nextUp.birthdays.map((item) => {
+              const planned = state.events.some((event) => event.id === `plan-${item.key}`)
+              return (
+                <button key={item.key} className="bday-chip" type="button" onClick={() => !planned && planSuggestion(item)}>
+                  <Avatar name={item.who || item.title} seed={item.memberKey || item.who} />
+                  <strong>{item.who || item.title}</strong>
+                  <span>{turnsLabel(item.turns)}{planned ? ' · planned' : ''}</span>
+                </button>
+              )
+            })}
+          </div>
+        </>
+      )}
+
+      {nextEvent && (
+        <Link to={nextEvent.partyId ? `/parties/${nextEvent.partyId}` : '/calendar'} className="card pad" style={{ marginTop: 14, display: 'block' }}>
+          <div className="kicker">On your calendar</div>
+          <h2 style={{ marginTop: 4 }}>{nextEvent.title}</h2>
+          <p className="muted" style={{ margin: '6px 0 0' }}>{eventWhenLabel(nextEvent)}</p>
+        </Link>
+      )}
+
+      {partyDone && (
+        <Link to="/history" className="card pad history-teaser">
+          <div className="kicker">History</div>
+          <div className="row-between">
+            <div>
+              <strong>Chloe’s party has moved to History</strong>
+              <div className="dim">RSVPs stay on the party desk. {history.length} finished.</div>
+            </div>
+            <IconArrow style={{ width: 18, height: 18, color: 'var(--terracotta)' }} />
+          </div>
+        </Link>
+      )}
 
       <div className="stats" style={{ marginTop: 14 }}>
         <Link to="/parties" className="card pad stat">
           <div className="kicker">Parties</div>
-          <div className="num">1</div>
-          <div className="lbl">Live this fall</div>
+          <div className="num">{partyDone ? history.filter((event) => event.partyId).length : upcoming.filter((event) => event.partyId).length}</div>
+          <div className="lbl">{partyDone ? 'In history' : 'Coming up'}</div>
         </Link>
         <Link to={`/parties/${PARTY.id}`} className="card pad stat">
           <div className="kicker">Open RSVPs</div>
@@ -65,9 +143,9 @@ export default function Home() {
         <Link to="/calendar" className="card pad stat">
           <div className="kicker">Next up</div>
           <div className="num" style={{ fontSize: 18, paddingTop: 6 }}>
-            Oct 10
+            {nextUp.soon[0] ? formatShortDate(nextUp.soon[0].date).replace(/^.+, /, '') : '—'}
           </div>
-          <div className="lbl">{next.title}</div>
+          <div className="lbl">{nextUp.soon[0]?.title || 'Connect family calendar'}</div>
         </Link>
       </div>
 
@@ -79,9 +157,7 @@ export default function Home() {
           <span className="dot rose" />
           <div>
             <strong>{openRsvps} families still haven’t RSVP’d</strong>
-            <div className="dim">
-              {leilaYes ? 'Leila is in as Yes. ' : ''}Nudge the rest from the board.
-            </div>
+            <div className="dim">The board is on the party desk, including Leila.</div>
           </div>
         </Link>
         <Link to="/inbox">
@@ -91,11 +167,11 @@ export default function Home() {
             <div className="dim">COO / agent files Bills, Shopping, and School. You confirm.</div>
           </div>
         </Link>
-        <Link to="/calendar">
+        <Link to="/meals">
           <span className="dot" />
           <div>
-            <strong>Next calendar item: {next.title}</strong>
-            <div className="dim">{formatLongDate(next.date)} · Family sync is next.</div>
+            <strong>This week’s meals</strong>
+            <div className="dim">School lunches on weekdays. Infants stay on baby foods.</div>
           </div>
         </Link>
       </div>

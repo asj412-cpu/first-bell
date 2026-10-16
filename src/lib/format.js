@@ -44,9 +44,9 @@ export function greeting(now = new Date()) {
   const hour = Number(
     new Intl.DateTimeFormat('en-US', { hour: 'numeric', hour12: false, timeZone: TZ }).format(now),
   )
-  if (hour < 12) return 'Good morning'
-  if (hour < 17) return 'Good afternoon'
-  return 'Good evening'
+  if (hour >= 5 && hour < 12) return 'Buenos días'
+  if (hour >= 12 && hour < 19) return 'Buenas tardes'
+  return 'Buenas noches'
 }
 
 export function todayLabel(now = new Date()) {

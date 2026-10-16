@@ -1,4 +1,4 @@
-# First Bell — ship
+# Mi Casa — ship
 
 America/Chicago. Household desk for Andrew Johnson Sr / ThreatRadar.
 
@@ -41,7 +41,11 @@ After saving env vars, trigger a new deployment. Existing builds will not pick t
 
 ## Apply the SQL migration
 
-File: `supabase/migrations/20260902120000_household_parties_rsvps.sql`
+Files, in order:
+
+- `supabase/migrations/20260902120000_household_parties_rsvps.sql`
+- `supabase/migrations/20260902133000_tighten_rsvp_grants.sql`
+- `supabase/migrations/20261016040000_vnext_calendar_gifts_meals.sql` (additive: calendar import, gift lists, meal plans, household profiles — not applied by the app)
 
 Creates `households`, `household_members`, `parties`, `rsvps`, RLS, guest RPC `submit_public_rsvp`, host RPC `ensure_host_membership`, and seeds Chloe’s party (Oct 10 2026 1:00–2:30 CT, Cypress Academy Kuykendahl, Amazon `L53W1XS578SM`, Leila Yes).
 
@@ -68,7 +72,7 @@ npx supabase db push --project-ref tzkxuinbpmoeyhzomvut
 **Email template** (Authentication → Email Templates → Magic Link) so both a code and a link work:
 
 ```html
-<h2>First Bell sign-in</h2>
+<h2>Mi Casa sign-in</h2>
 <p>Your code: <strong>{{ .Token }}</strong></p>
 <p><a href="{{ .ConfirmationURL }}">Or tap this magic link</a></p>
 ```
@@ -131,16 +135,16 @@ nginx: `try_files $uri $uri/ /index.html;`
 - [ ] Registry opens Amazon guest view `L53W1XS578SM`
 - [ ] Invite assets show both Mario-movie and Peach castle art
 - [ ] Inbox folders + 3 example cards; filing copy present
-- [ ] Calendar month/week; Oct 10 party + Oct 13 birthday
+- [ ] Calendar shows upcoming days; finished party and birthdays are on History. Birthdays are computed from Settings.
 - [ ] `/r/princess-chloe-5` is public (no host login)
 - [ ] With env + migration: guest RSVP from another device appears on the host board
 - [ ] With env missing: demo gate + banner; RSVPs local only
 
 ## Not in this slice (honest)
 
-- Inbox and calendar are scaffolds; **Family sync is next**.
-- No iCloud / Gmail passwords.
-- No meal planning. No venue B2B booking.
+- Family calendar rows come from the COO via `docs/CALENDAR-SYNC.md`. The app does not store an iCloud password.
+- Meal plans, gift lists, and History ship in the vNext migration. Apply that SQL before they sync across devices. Demo mode keeps them in this browser.
+- No venue B2B booking.
 
 ## Contacts (seed)
 

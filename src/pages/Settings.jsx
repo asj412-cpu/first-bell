@@ -1,9 +1,10 @@
 import { HOUSEHOLD } from '../data/seed.js'
+import { ageLabel } from '../lib/planner.js'
 import { hostDisplayName } from '../lib/rsvps.js'
 import { useBell } from '../lib/store.jsx'
 
 export default function Settings() {
-  const { state, signOut, resetDemo, configured } = useBell()
+  const { state, signOut, resetDemo, configured, updateProfile } = useBell()
   const live = state.backend === 'live'
   const name = hostDisplayName(state.session)
 
@@ -63,25 +64,50 @@ export default function Settings() {
       </div>
 
       <div className="section-head">
-        <h2>People</h2>
+        <h2>Birthdays and meals</h2>
       </div>
-      <div className="card pad">
-        <div className="settings-list">
-          {HOUSEHOLD.members.map((m) => (
-            <div className="row" key={m.id}>
-              <span>{m.role}</span>
-              <strong>{m.name}</strong>
-            </div>
-          ))}
+      <p className="dim">Ages update from the birth date. Allergies stay blank until you type them. Claire’s grade is open — kindergarten or 1st.</p>
+      {state.vnextNote && <div className="banner">{state.vnextNote}</div>}
+      {state.profiles.map((profile) => (
+        <div className="card pad kid-card" key={profile.memberKey}>
+          <div className="kicker">{profile.role === 'parent' ? 'Parent' : 'Kid'}</div>
+          <h3>{profile.fullName || profile.name}</h3>
+          <p className="muted" style={{ marginTop: 4 }}>{profile.birthDate ? ageLabel(profile.birthDate) : 'No birthday yet'}</p>
+          <label className="field">
+            <span>Birthday</span>
+            <input
+              type="date"
+              value={profile.birthDate || ''}
+              onChange={(event) => updateProfile(profile.memberKey, { birthDate: event.target.value || null })}
+            />
+          </label>
+          {profile.role === 'kid' && (
+            <label className="field">
+              <span>Grade</span>
+              <input
+                value={profile.grade || ''}
+                placeholder={profile.memberKey === 'claire' ? 'Kindergarten or 1st' : 'Leave blank if unknown'}
+                onChange={(event) => updateProfile(profile.memberKey, { grade: event.target.value || null })}
+              />
+            </label>
+          )}
+          <label className="field">
+            <span>Allergies and dislikes</span>
+            <textarea
+              value={profile.notes || ''}
+              placeholder="Unknown — leave blank"
+              onChange={(event) => updateProfile(profile.memberKey, { notes: event.target.value })}
+            />
+          </label>
         </div>
-      </div>
+      ))}
 
       <div className="section-head">
         <h2>What this is</h2>
       </div>
       <div className="card pad">
         <p className="muted" style={{ marginTop: 0 }}>
-          First Bell is household ops for parents. Party planning is the wedge, not the whole product. Inbox and calendar are in the shell now; Family sync is next. We never collect Apple or Google passwords.
+          Mi Casa is household ops for parents. Party planning is the wedge, not the whole product. Inbox and calendar are in the shell now; Family sync is next. We never collect Apple or Google passwords.
         </p>
         <p className="muted">
           This build is the Johnson household desk — Chloe’s fifth, Cypress Academy Kuykendahl, SNAP Package A paid.

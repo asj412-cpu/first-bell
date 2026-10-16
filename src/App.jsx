@@ -4,11 +4,16 @@ import AppShell from './components/AppShell.jsx'
 import { useBell } from './lib/store.jsx'
 import Calendar from './pages/Calendar.jsx'
 import Gate from './pages/Gate.jsx'
+import GiftDetail from './pages/GiftDetail.jsx'
+import Gifts from './pages/Gifts.jsx'
 import GuestRsvp from './pages/GuestRsvp.jsx'
+import History from './pages/History.jsx'
 import Home from './pages/Home.jsx'
 import Inbox from './pages/Inbox.jsx'
+import Meals from './pages/Meals.jsx'
 import Parties from './pages/Parties.jsx'
 import PartyDetail from './pages/PartyDetail.jsx'
+import PublicGift from './pages/PublicGift.jsx'
 import Settings from './pages/Settings.jsx'
 
 function BootScreen() {
@@ -16,8 +21,8 @@ function BootScreen() {
     <div className="gate">
       <div className="gate-bg" aria-hidden="true" />
       <div className="card gate-card">
-        <img className="bell" src="/brand/bell.jpg" alt="" />
-        <div className="eyebrow">First Bell</div>
+        <img className="bell" src="/icons/icon-192.png" alt="" />
+        <div className="eyebrow">Mi Casa</div>
         <h1>Opening the house…</h1>
       </div>
     </div>
@@ -46,6 +51,7 @@ export default function App() {
     <Routes>
       <Route path="/enter" element={<Gate />} />
       <Route path="/r/:slug" element={<GuestRsvp />} />
+      <Route path="/g/:slug" element={<PublicGift />} />
       <Route
         element={
           <Protected>
@@ -58,6 +64,10 @@ export default function App() {
         <Route path="/parties/:id" element={<PartyDetail />} />
         <Route path="/inbox" element={<Inbox />} />
         <Route path="/calendar" element={<Calendar />} />
+        <Route path="/history" element={<History />} />
+        <Route path="/meals" element={<Meals />} />
+        <Route path="/gifts" element={<Gifts />} />
+        <Route path="/gifts/:kidKey" element={<GiftDetail />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

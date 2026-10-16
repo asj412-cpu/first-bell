@@ -1,26 +1,32 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { mergeProfiles } from '../data/profiles.js'
 import { freshState, HOUSEHOLD, PARTY } from '../data/seed.js'
+import { mergeEvents } from './events.js'
 import { fromDbRsvp, hostDisplayName, toDbStatus } from './rsvps.js'
 import { isSupabaseConfigured, supabase } from './supabase.js'
+import { hydrateVnext, vnextReducer } from './vnextReducer.js'
+import { mirrorVnext, pullVnext } from './vnextRemote.js'
 
 const KEY = 'first-bell.v1'
 const CHLOE_SLUG = PARTY.slug
 const BellContext = createContext(null)
 
 function load() {
+  const base = { ...freshState(), ...hydrateVnext(null) }
   try {
     const raw = localStorage.getItem(KEY)
-    if (!raw) return freshState()
+    if (!raw) return base
     const parsed = JSON.parse(raw)
-    if (!parsed || parsed.version !== 1) return freshState()
+    if (!parsed || parsed.version !== 1) return base
     return {
-      ...freshState(),
-      ...parsed,
-      guests: Array.isArray(parsed.guests) ? parsed.guests : freshState().guests,
-      messages: Array.isArray(parsed.messages) ? parsed.messages : freshState().messages,
+      ...base,
+      ...hydrateVnext(parsed),
+      session: parsed.session ?? null,
+      guests: Array.isArray(parsed.guests) ? parsed.guests : base.guests,
+      messages: Array.isArray(parsed.messages) ? parsed.messages : base.messages,
     }
   } catch {
-    return freshState()
+    return base
   }
 }
 
@@ -50,7 +56,7 @@ export function BellProvider({ children }) {
     session: configured ? null : local.session,
     backend: configured ? 'connecting' : 'demo',
     backendMessage: configured
-      ? 'Connecting to First Bell…'
+      ? 'Connecting to Mi Casa…'
       : 'Demo mode — RSVPs stay in this browser until Supabase env vars are set.',
     partyUuid: null,
     householdId: null,
@@ -62,6 +68,7 @@ export function BellProvider({ children }) {
   }))
   const partyUuidRef = useRef(null)
   partyUuidRef.current = state.partyUuid
+  const pulledFor = useRef(null)
 
   const patch = useCallback((partial) => {
     setState((prev) => ({ ...prev, ...partial }))
@@ -78,8 +85,15 @@ export function BellProvider({ children }) {
       session: live ? null : state.session,
       guests: live ? load().guests : state.guests,
       messages: state.messages,
+      events: state.events,
+      imports: state.imports,
+      giftLists: state.giftLists,
+      profiles: state.profiles,
+      mealPlans: state.mealPlans,
+      grocery: state.grocery,
+      kidMode: state.kidMode,
     })
-  }, [state.session, state.guests, state.messages, state.backend])
+  }, [state.session, state.guests, state.messages, state.backend, state.events, state.imports, state.giftLists, state.profiles, state.mealPlans, state.grocery, state.kidMode])
 
   const loadRsvps = useCallback(async (partyUuid) => {
     if (!supabase || !partyUuid) return
@@ -186,6 +200,50 @@ export function BellProvider({ children }) {
     }
   }, [state.backend, state.partyUuid, state.householdId, loadRsvps])
 
+  useEffect(() => {
+    if (!supabase || state.backend !== 'live' || !state.householdId) return undefined
+    if (pulledFor.current === state.householdId) return undefined
+    pulledFor.current = state.householdId
+    let cancelled = false
+    pullVnext(supabase, state.householdId).then((result) => {
+      if (cancelled) return
+      if (!result.available) {
+        patch({
+          vnextReady: false,
+          vnextNote: result.missing
+            ? 'Calendar imports, gifts, and meals stay on this device until the new Supabase migration is applied.'
+            : result.message || 'Could not load the new tables.',
+        })
+        return
+      }
+      setState((prev) => ({
+        ...prev,
+        vnextReady: true,
+        vnextNote: '',
+        imports: result.imports,
+        giftLists: result.giftLists.length ? result.giftLists : prev.giftLists,
+        profiles: result.profiles.length ? mergeProfiles(result.profiles) : prev.profiles,
+        mealPlans: Object.keys(result.mealPlans).length ? { ...prev.mealPlans, ...result.mealPlans } : prev.mealPlans,
+        grocery: Object.keys(result.grocery).length ? { ...prev.grocery, ...result.grocery } : prev.grocery,
+        events: mergeEvents([...(prev.events || []), ...result.events]),
+      }))
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [state.backend, state.householdId, patch])
+
+  const applyVnext = useCallback((action) => {
+    let snapshot = null
+    update((prev) => {
+      snapshot = vnextReducer(prev, action)
+      return snapshot
+    })
+    queueMicrotask(() => {
+      if (snapshot) void mirrorVnext(supabase, action, snapshot)
+    })
+  }, [update])
+
   const api = useMemo(() => {
     const live = state.backend === 'live' && Boolean(supabase)
 
@@ -255,11 +313,58 @@ export function BellProvider({ children }) {
       },
       resetDemo() {
         if (live) return
-        const next = freshState()
-        next.session = state.session
-        next.backend = state.backend
-        next.backendMessage = state.backendMessage
-        setState((prev) => ({ ...prev, ...next, session: prev.session }))
+        const next = { ...freshState(), ...hydrateVnext(null) }
+        setState((prev) => ({
+          ...prev,
+          ...next,
+          session: prev.session,
+          backend: prev.backend,
+          backendMessage: prev.backendMessage,
+          vnextReady: prev.vnextReady,
+          vnextNote: prev.vnextNote,
+        }))
+      },
+      toggleKidMode() {
+        applyVnext({ type: 'toggle-kid-mode' })
+      },
+      updateProfile(memberKey, profilePatch) {
+        applyVnext({ type: 'update-profile', memberKey, patch: profilePatch })
+      },
+      addGiftItem(listId) {
+        applyVnext({ type: 'add-gift-item', listId })
+      },
+      updateGiftItem(listId, itemId, itemPatch) {
+        applyVnext({ type: 'update-gift-item', listId, itemId, patch: itemPatch })
+      },
+      deleteGiftItem(listId, itemId) {
+        applyVnext({ type: 'delete-gift-item', listId, itemId })
+      },
+      moveGiftItem(listId, itemId, dir) {
+        applyVnext({ type: 'move-gift-item', listId, itemId, dir })
+      },
+      claimGift({ slug, itemId, name }) {
+        applyVnext({ type: 'claim-gift', slug, itemId, name })
+      },
+      releaseClaim(listId, itemId) {
+        applyVnext({ type: 'release-claim', listId, itemId })
+      },
+      planSuggestion(suggestion) {
+        applyVnext({ type: 'plan-suggestion', suggestion })
+      },
+      toggleChecklist(eventId, checkId) {
+        applyVnext({ type: 'toggle-checklist', eventId, checkId })
+      },
+      suggestWeek(weekStart) {
+        applyVnext({ type: 'suggest-week', weekStart })
+      },
+      swapMeal(weekStart, date, slot) {
+        applyVnext({ type: 'swap-meal', weekStart, date, slot })
+      },
+      toggleMealLock(weekStart, date, slot) {
+        applyVnext({ type: 'toggle-lock', weekStart, date, slot })
+      },
+      toggleGrocery(weekStart, itemId) {
+        applyVnext({ type: 'toggle-grocery', weekStart, itemId })
       },
       async setRsvp(guestId, status) {
         update((s) => ({
@@ -343,7 +448,7 @@ export function BellProvider({ children }) {
         patch({ authStep: 'email', authError: null, pendingEmail: '' })
       },
     }
-  }, [state, ready, configured, update, patch, loadRsvps])
+  }, [state, ready, configured, update, patch, loadRsvps, applyVnext])
 
   return <BellContext.Provider value={api}>{children}</BellContext.Provider>
 }

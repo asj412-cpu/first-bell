@@ -1,4 +1,6 @@
-# First Bell
+# Mi Casa
+
+The product name is Mi Casa. The repo and the live URL stay `first-bell`.
 
 Household ops for parents. **Party planning is the wedge, not the whole product.**
 
@@ -8,7 +10,7 @@ Live: [https://first-bell-seven.vercel.app](https://first-bell-seven.vercel.app)
 
 ## What this ships
 
-1. **App shell** — Home / Parties / Inbox / Calendar / Settings (mobile bottom nav + desktop rail)
+1. **App shell** — Next up / Calendar / Gifts / Meals / History, plus Parties, Inbox, and Settings
 2. **Home** — upcoming party, open RSVPs, inbox attention count, next calendar item
 3. **Parties** — Chloe’s 5th (seeded), RSVP board Yes/No/Maybe/No response (Leila preloaded Yes), Amazon registry, invite assets
 4. **Inbox** — folders Inbox / Bills / Shopping / School / Trash · example cards · copy that the COO/agent files

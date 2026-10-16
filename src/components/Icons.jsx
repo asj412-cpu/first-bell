@@ -1,3 +1,13 @@
+export function IconHistory(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
+      <path d="M4.5 7.2h15V19a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1V7.2Z" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M8 7.2V5.6A1.6 1.6 0 0 1 9.6 4h4.8A1.6 1.6 0 0 1 16 5.6v1.6" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M8 12h8M8 15.4h5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export function IconHome(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
@@ -78,6 +88,26 @@ export function IconLink(props) {
       <path d="M10 13.5 8.8 14.7a3.2 3.2 0 1 1-4.5-4.5L6.5 8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
       <path d="M14 10.5l1.2-1.2a3.2 3.2 0 1 1 4.5 4.5L17.5 16" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
       <path d="M9.2 14.8 14.8 9.2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function IconMeal(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
+      <path d="M6 3.5v7M8.5 3.5v7M6 7.2h2.5M6 10.5c0 2.4.8 3.6 2.5 3.6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <path d="M7.2 14.1V20.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+      <path d="M16.2 3.5v17M16.2 8.5c1.8 0 3.2-1.4 3.2-3.2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+export function IconGift(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
+      <rect x="4" y="10" width="16" height="9.5" rx="1.6" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M4 14.2h16M12 10v9.5" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M12 10c-1.6-3.4-5.2-3.6-5.2-1.2S10.2 10 12 10c1.8 0 4-1 5.2-1.2 0-2.4-3.6-2.2-5.2 1.2Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
     </svg>
   )
 }
