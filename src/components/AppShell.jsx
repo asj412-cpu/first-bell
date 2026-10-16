@@ -1,13 +1,15 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useBell } from '../lib/store.jsx'
 import BackendBanner from './BackendBanner.jsx'
-import { IconCal, IconGear, IconHome, IconInbox, IconParty } from './Icons.jsx'
+import { IconCal, IconGear, IconGift, IconHome, IconInbox, IconMeal, IconParty } from './Icons.jsx'
 
 const LINKS = [
   { to: '/', label: 'Home', icon: IconHome, end: true },
   { to: '/parties', label: 'Parties', icon: IconParty },
+  { to: '/calendar', label: 'Calendar', icon: IconCal, also: '/history' },
+  { to: '/meals', label: 'Meals', icon: IconMeal },
+  { to: '/gifts', label: 'Gifts', icon: IconGift },
   { to: '/inbox', label: 'Inbox', icon: IconInbox },
-  { to: '/calendar', label: 'Calendar', icon: IconCal },
   { to: '/settings', label: 'Settings', icon: IconGear },
 ]
 
@@ -35,7 +37,12 @@ export default function AppShell() {
       <nav className="side-nav" aria-label="Primary">
         <Brand />
         {LINKS.map((l) => (
-          <NavLink key={l.to} to={l.to} end={l.end} className={({ isActive }) => (isActive ? 'active' : '')}>
+          <NavLink
+            key={l.to}
+            to={l.to}
+            end={l.end}
+            className={({ isActive }) => (isActive || (l.also && loc.pathname.startsWith(l.also)) ? 'active' : '')}
+          >
             <l.icon />
             {l.label}
           </NavLink>
@@ -51,7 +58,12 @@ export default function AppShell() {
       </main>
       <nav className="bottom-nav" aria-label="Primary">
         {LINKS.map((l) => (
-          <NavLink key={l.to} to={l.to} end={l.end} className={({ isActive }) => (isActive ? 'active' : '')}>
+          <NavLink
+            key={l.to}
+            to={l.to}
+            end={l.end}
+            className={({ isActive }) => (isActive || (l.also && loc.pathname.startsWith(l.also)) ? 'active' : '')}
+          >
             <l.icon />
             {l.label}
           </NavLink>

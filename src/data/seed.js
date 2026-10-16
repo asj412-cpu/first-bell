@@ -117,14 +117,6 @@ export const EVENTS = [
     place: 'Cypress Academy · Kuykendahl',
     partyId: 'chloe-5',
   },
-  {
-    id: 'evt-chloe-bday',
-    title: "Chloe’s 5th birthday",
-    kind: 'birthday',
-    date: '2026-10-13',
-    allDay: true,
-    place: 'Home',
-  },
 ]
 
 export const FOLDERS = [

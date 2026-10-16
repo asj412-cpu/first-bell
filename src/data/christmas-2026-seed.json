@@ -1,0 +1,132 @@
+{
+  "occasion": "Christmas 2026",
+  "lists": [
+    {
+      "id": "list-chloe",
+      "kidKey": "chloe",
+      "displayName": "Chloe",
+      "occasion": "Christmas 2026",
+      "shareSlug": "a8k2-chloe-xmas",
+      "items": [
+        {
+          "id": "item-chloe-1",
+          "title": "Washable markers and a big drawing pad",
+          "notes": "Starter wish — edit or replace. Not pulled from a store.",
+          "url": "",
+          "urlSecondary": "",
+          "image": "",
+          "availability": "",
+          "sort": 0
+        },
+        {
+          "id": "item-chloe-2",
+          "title": "Picture books to read together",
+          "notes": "Starter wish — edit or replace. Not pulled from a store.",
+          "url": "",
+          "urlSecondary": "",
+          "image": "",
+          "availability": "",
+          "sort": 1
+        },
+        {
+          "id": "item-chloe-3",
+          "title": "A dress-up crown",
+          "notes": "Starter wish — edit or replace. Not pulled from a store.",
+          "url": "",
+          "urlSecondary": "",
+          "image": "",
+          "availability": "",
+          "sort": 2
+        },
+        {
+          "id": "item-chloe-4",
+          "title": "Sidewalk chalk",
+          "notes": "Starter wish — edit or replace. Not pulled from a store.",
+          "url": "",
+          "urlSecondary": "",
+          "image": "",
+          "availability": "",
+          "sort": 3
+        }
+      ]
+    },
+    {
+      "id": "list-claire",
+      "kidKey": "claire",
+      "displayName": "Claire",
+      "occasion": "Christmas 2026",
+      "shareSlug": "m4p9-claire-xmas",
+      "items": [
+        {
+          "id": "item-claire-1",
+          "title": "A book Claire chooses",
+          "notes": "Starter wish — edit or replace. Not pulled from a store.",
+          "url": "",
+          "urlSecondary": "",
+          "image": "",
+          "availability": "",
+          "sort": 0
+        },
+        {
+          "id": "item-claire-2",
+          "title": "Cozy socks",
+          "notes": "Starter wish — edit or replace. Not pulled from a store.",
+          "url": "",
+          "urlSecondary": "",
+          "image": "",
+          "availability": "",
+          "sort": 1
+        },
+        {
+          "id": "item-claire-3",
+          "title": "Art paper and crayons",
+          "notes": "Starter wish — edit or replace. Not pulled from a store.",
+          "url": "",
+          "urlSecondary": "",
+          "image": "",
+          "availability": "",
+          "sort": 2
+        }
+      ]
+    },
+    {
+      "id": "list-drew",
+      "kidKey": "drew",
+      "displayName": "Drew",
+      "occasion": "Christmas 2026",
+      "shareSlug": "q1w6-drew-xmas",
+      "items": [
+        {
+          "id": "item-drew-1",
+          "title": "A soft bath book",
+          "notes": "Starter wish — edit or replace. Not pulled from a store.",
+          "url": "",
+          "urlSecondary": "",
+          "image": "",
+          "availability": "",
+          "sort": 0
+        },
+        {
+          "id": "item-drew-2",
+          "title": "A silicone spoon and bowl",
+          "notes": "Starter wish — edit or replace. Not pulled from a store.",
+          "url": "",
+          "urlSecondary": "",
+          "image": "",
+          "availability": "",
+          "sort": 1
+        },
+        {
+          "id": "item-drew-3",
+          "title": "A ball he can hold",
+          "notes": "Starter wish — edit or replace. Not pulled from a store.",
+          "url": "",
+          "urlSecondary": "",
+          "image": "",
+          "availability": "",
+          "sort": 2
+        }
+      ]
+    }
+  ]
+}
