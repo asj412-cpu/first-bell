@@ -50,6 +50,7 @@ function tokenCovers(token, kid) {
   if (floor) return /^\d+$/.test(kid) && Number(kid) >= Number(floor[1])
   const pair = size.match(/^(\d+)\/(\d+)$/)
   if (pair) return kid === pair[1] || kid === pair[2]
+  // 5T-6T covers toddler 5T and 6T. A number with no T does not cover a toddler size.
   const range = size.match(/^(\d+)(t)?-(\d+)(t)?$/)
   if (!range) return false
   const low = Math.min(Number(range[1]), Number(range[3]))
