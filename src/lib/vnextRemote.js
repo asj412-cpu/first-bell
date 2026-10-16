@@ -192,6 +192,9 @@ export async function mirrorVnext(client, action, snapshot) {
         url: item.url || null,
         image: item.image || null,
         active: item.active !== false,
+        in_stock: item.inStock !== false,
+        trending: Boolean(item.trending),
+        slug: item.slug || null,
         sort: item.sort ?? 0,
       }),
     )

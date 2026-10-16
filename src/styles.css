@@ -1107,8 +1107,8 @@ h3 { font-size: 18px; }
 .kid-back { align-self: flex-start; }
 .kid-tabs {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
   flex: none;
 }
 .kid-tab {
@@ -1167,6 +1167,21 @@ h3 { font-size: 18px; }
 }
 .kid-heart-btn svg { width: 100%; height: 100%; display: block; }
 .kid-heart-btn:active, .kid-tab:active, .kid-side:active { transform: scale(0.97); }
+.kid-ask {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  max-width: calc(100% - 20px);
+  padding: 6px 10px;
+  border-radius: 14px;
+  background: rgba(255, 250, 245, 0.94);
+  color: var(--terracotta);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.1;
+  pointer-events: none;
+  box-shadow: var(--shadow);
+}
 .kid-secondary {
   display: flex;
   gap: 14px;

@@ -128,6 +128,17 @@ export function LearningArt() {
   )
 }
 
+export function SparkleArt() {
+  return (
+    <Art>
+      <circle cx="60" cy="60" r="54" fill="#F8E7C0" />
+      <path d="M60 18 70 46 98 50 76 68 82 98 60 82 38 98 44 68 22 50 50 46Z" fill="#F2B544" />
+      <circle cx="26" cy="28" r="6" fill="#C8643B" />
+      <circle cx="94" cy="32" r="4" fill="#7A9A74" />
+    </Art>
+  )
+}
+
 function Dolls() {
   return (
     <Art>

@@ -1,24 +1,26 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { IconBack } from '../components/Icons.jsx'
-import { CATALOG_TABS, ageFits, moneyLabel, normalizeCatalogItem } from '../lib/catalog.js'
+import { CATALOG_CATEGORIES, ageFits, moneyLabel, normalizeCatalogItem } from '../lib/catalog.js'
 import { safeMedia } from '../lib/kidGifts.js'
 import { ageInYears, ageLabel, kidProfiles } from '../lib/planner.js'
 import { useBell } from '../lib/store.jsx'
 
-const AGE_FIT = /^\d+(-\d+)?$/
+const AGE_FIT = /^(both|\d+(-\d+)?)$/
 
 function blankPicture(sort) {
   return normalizeCatalogItem({
     id: crypto.randomUUID(),
     name: 'New picture',
     category: 'toys',
-    ageFit: '4-8',
+    ageFit: 'both',
     retailer: '',
     price: null,
     url: '',
     image: '',
     active: false,
+    inStock: true,
+    trending: false,
     sort,
   })
 }
@@ -41,7 +43,7 @@ function CatalogCard({ item, kids, onSave, onRemove }) {
       return
     }
     if (!AGE_FIT.test(next.ageFit)) {
-      setError('Age looks like 4 or 4-7.')
+      setError('Age looks like both, 5, or 6-7.')
       return
     }
     onSave(next)
@@ -58,6 +60,8 @@ function CatalogCard({ item, kids, onSave, onRemove }) {
           <h2 style={{ marginTop: 2 }}>{draft.name || 'Picture'}</h2>
           <p className="dim" style={{ margin: '4px 0 0' }}>
             {fits.length ? `Shows for ${fits.map((kid) => kid.name).join(', ')}` : 'Hidden by age'}
+            {draft.inStock === false ? ' · ask a grown-up' : ''}
+            {draft.trending ? ' · trending' : ''}
             {draft.active === false ? ' · off' : ''}
           </p>
         </div>
@@ -70,14 +74,14 @@ function CatalogCard({ item, kids, onSave, onRemove }) {
         <label className="field">
           <span>Category</span>
           <select value={draft.category} onChange={(event) => patch({ category: event.target.value })}>
-            {CATALOG_TABS.map((tab) => (
+            {CATALOG_CATEGORIES.map((tab) => (
               <option key={tab.id} value={tab.id}>{tab.speak}</option>
             ))}
           </select>
         </label>
         <label className="field">
           <span>Ages</span>
-          <input value={draft.ageFit} placeholder="4-7" onChange={(event) => patch({ ageFit: event.target.value.replace(/\s/g, '') })} />
+          <input value={draft.ageFit} placeholder="both, 5, or 6-7" onChange={(event) => patch({ ageFit: event.target.value.replace(/\s/g, '') })} />
         </label>
         <label className="field">
           <span>Store</span>
@@ -102,6 +106,12 @@ function CatalogCard({ item, kids, onSave, onRemove }) {
         <input value={draft.url} placeholder="https://" onChange={(event) => patch({ url: event.target.value })} />
       </label>
       <div className="meta-row">
+        <button className={`btn small ${draft.inStock ? 'primary' : ''}`} type="button" aria-pressed={draft.inStock !== false} onClick={() => patch({ inStock: draft.inStock === false })}>
+          {draft.inStock === false ? 'Ask a grown-up' : 'In stock'}
+        </button>
+        <button className={`btn small ${draft.trending ? 'primary' : ''}`} type="button" aria-pressed={Boolean(draft.trending)} onClick={() => patch({ trending: !draft.trending })}>
+          {draft.trending ? 'Trending' : 'Not trending'}
+        </button>
         <button className={`btn small ${draft.active ? 'primary' : ''}`} type="button" aria-pressed={draft.active} onClick={() => patch({ active: !draft.active })}>
           {draft.active ? 'On the iPads' : 'Off the iPads'}
         </button>

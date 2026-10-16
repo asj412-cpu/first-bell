@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { BackArt, CameraArt, CategoryArt, ClothesArt, GiftArt, HeartArt, LearningArt, LockArt, MicArt, SpeakerArt, ToysArt } from '../components/KidArt.jsx'
-import { CATALOG_TABS, catalogForKid, normalizeCatalogItem } from '../lib/catalog.js'
+import { BackArt, CameraArt, CategoryArt, ClothesArt, GiftArt, HeartArt, LearningArt, LockArt, MicArt, SparkleArt, SpeakerArt, ToysArt } from '../components/KidArt.jsx'
+import { CATALOG_TABS, catalogForKid, matchesCatalogTab, normalizeCatalogItem, spokenProduct } from '../lib/catalog.js'
 import {
   KID_PROMPTS,
   blobToDataUrl,
@@ -19,6 +19,7 @@ import { useBell } from '../lib/store.jsx'
 import { supabase } from '../lib/supabase.js'
 
 const TAB_ART = {
+  trending: SparkleArt,
   toys: ToysArt,
   clothes: ClothesArt,
   learning: LearningArt,
@@ -96,7 +97,7 @@ export default function KidPad() {
   const [remoteCatalog, setRemoteCatalog] = useState([])
   const [loading, setLoading] = useState(Boolean(supabase))
   const [panel, setPanel] = useState('home')
-  const [tab, setTab] = useState('toys')
+  const [tab, setTab] = useState('trending')
   const [burst, setBurst] = useState(false)
   const [shake, setShake] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -201,11 +202,12 @@ export default function KidPad() {
 
   async function onHeart(product) {
     const picked = items.some((item) => item.catalogId === product.id)
+    const phrase = spokenProduct(product)
     if (picked) {
-      celebrate(product.name)
+      celebrate(phrase)
       return
     }
-    await saveWish({ kind: 'catalog', catalogId: product.id }, product.name)
+    await saveWish({ kind: 'catalog', catalogId: product.id }, phrase)
   }
 
   async function onPhoto(event) {
@@ -342,7 +344,7 @@ export default function KidPad() {
   const items = kidVisibleItems(list)
   const years = ageInYears(state.profiles.find((profile) => profile.memberKey === list.kidKey)?.birthDate)
   const products = supabase
-    ? remoteCatalog.filter((item) => item.category === tab)
+    ? remoteCatalog.filter((item) => matchesCatalogTab(item, tab))
     : catalogForKid(state.catalog, years, tab)
 
   return (
@@ -412,11 +414,13 @@ export default function KidPad() {
             {products.map((product) => {
               const image = safeMedia(product.image, 'image')
               const picked = items.some((item) => item.catalogId === product.id)
+              const phrase = spokenProduct(product)
               return (
                 <article className="kid-product" key={product.id}>
-                  <button type="button" className="kid-photo-btn" aria-label={product.name} onClick={() => speak(product.name)}>
+                  <button type="button" className="kid-photo-btn" aria-label={product.name} onClick={() => speak(phrase)}>
                     {image ? <img src={image} alt="" /> : <CategoryArt id={product.category} />}
                   </button>
+                  {product.inStock === false && <span className="kid-ask">ask a grown-up</span>}
                   <button
                     type="button"
                     className="kid-heart-btn"
