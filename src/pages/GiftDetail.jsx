@@ -153,6 +153,12 @@ export default function GiftDetail() {
                   <input value={item.title} onChange={(event) => updateGiftItem(list.id, item.id, { title: event.target.value })} />
                 </label>
                 {item.notes && <p className="dim">{item.notes}</p>}
+                {(item.category === 'clothes' || item.clothingSize) && (
+                  <label className="field">
+                    <span>Size</span>
+                    <input value={item.clothingSize || ''} onChange={(event) => updateGiftItem(list.id, item.id, { clothingSize: event.target.value })} />
+                  </label>
+                )}
                 <label className="field">
                   <span>Link</span>
                   <input value={item.url} placeholder="https://" onChange={(event) => updateGiftItem(list.id, item.id, { url: event.target.value })} />
@@ -185,6 +191,12 @@ export default function GiftDetail() {
             <span>Notes</span>
             <textarea value={item.notes} onChange={(event) => updateGiftItem(list.id, item.id, { notes: event.target.value })} />
           </label>
+          {(item.category === 'clothes' || item.clothingSize) && (
+            <label className="field">
+              <span>Size</span>
+              <input value={item.clothingSize || ''} onChange={(event) => updateGiftItem(list.id, item.id, { clothingSize: event.target.value })} />
+            </label>
+          )}
           <label className="field">
             <span>Link</span>
             <input value={item.url} placeholder="https://" onChange={(event) => updateGiftItem(list.id, item.id, { url: event.target.value })} />

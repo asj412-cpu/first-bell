@@ -110,6 +110,7 @@ export default function PublicGift() {
               )}
               {safeMedia(item.audio, 'audio') && <audio controls src={safeMedia(item.audio, 'audio')} />}
               <h3>{item.title}</h3>
+              {item.clothingSize && <p className="muted">Size {item.clothingSize}</p>}
               {item.notes && <p className="muted">{item.notes}</p>}
               <div className="meta-row">
                 {safeHttp(item.url) && <a className="btn small ghost" href={safeHttp(item.url)} target="_blank" rel="noreferrer">Link</a>}

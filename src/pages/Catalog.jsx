@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { IconBack } from '../components/Icons.jsx'
-import { CATALOG_CATEGORIES, ageFits, moneyLabel, normalizeCatalogItem } from '../lib/catalog.js'
+import { CATALOG_CATEGORIES, ageFits, moneyLabel, normalizeCatalogItem, sizeFits, sizeLabel } from '../lib/catalog.js'
 import { safeMedia } from '../lib/kidGifts.js'
 import { ageInYears, ageLabel, kidProfiles } from '../lib/planner.js'
 import { useBell } from '../lib/store.jsx'
@@ -29,7 +29,10 @@ function CatalogCard({ item, kids, onSave, onRemove }) {
   const [draft, setDraft] = useState(item)
   const [error, setError] = useState('')
   const image = safeMedia(draft.image, 'image')
-  const fits = kids.filter((kid) => ageFits(draft.ageFit, ageInYears(kid.birthDate)))
+  const ageHits = kids.filter((kid) => ageFits(draft.ageFit, ageInYears(kid.birthDate)))
+  const fits = ageHits.filter((kid) => draft.category !== 'clothes' || sizeFits(draft.sizes, kid.clothingSize))
+  const hidden = fits.length ? '' : ageHits.length && draft.category === 'clothes' ? 'Hidden by size' : 'Hidden by age'
+  const labeled = sizeLabel(draft.sizes)
 
   function patch(next) {
     setDraft((current) => ({ ...current, ...next }))
@@ -59,7 +62,8 @@ function CatalogCard({ item, kids, onSave, onRemove }) {
           <div className="kicker">{draft.category}</div>
           <h2 style={{ marginTop: 2 }}>{draft.name || 'Picture'}</h2>
           <p className="dim" style={{ margin: '4px 0 0' }}>
-            {fits.length ? `Shows for ${fits.map((kid) => kid.name).join(', ')}` : 'Hidden by age'}
+            {fits.length ? `Shows for ${fits.map((kid) => kid.name).join(', ')}` : hidden}
+            {labeled ? ` · ${labeled}` : ''}
             {draft.inStock === false ? ' · ask a grown-up' : ''}
             {draft.checkSize ? ' · check size' : ''}
             {draft.trending ? ' · trending' : ''}
@@ -88,6 +92,12 @@ function CatalogCard({ item, kids, onSave, onRemove }) {
           <span>Store</span>
           <input value={draft.retailer} onChange={(event) => patch({ retailer: event.target.value })} />
         </label>
+        {draft.category === 'clothes' && (
+          <label className="field">
+            <span>Sizes</span>
+            <input value={draft.sizes || ''} placeholder="5,6,7 or 5/6+" onChange={(event) => patch({ sizes: event.target.value })} />
+          </label>
+        )}
         <label className="field">
           <span>Price</span>
           <input
@@ -113,6 +123,9 @@ function CatalogCard({ item, kids, onSave, onRemove }) {
         <button className={`btn small ${draft.trending ? 'primary' : ''}`} type="button" aria-pressed={Boolean(draft.trending)} onClick={() => patch({ trending: !draft.trending })}>
           {draft.trending ? 'Trending' : 'Not trending'}
         </button>
+        <button className={`btn small ${draft.checkSize ? 'primary' : ''}`} type="button" aria-pressed={Boolean(draft.checkSize)} onClick={() => patch({ checkSize: !draft.checkSize })}>
+          Check size
+        </button>
         <button className={`btn small ${draft.active ? 'primary' : ''}`} type="button" aria-pressed={draft.active} onClick={() => patch({ active: !draft.active })}>
           {draft.active ? 'On the iPads' : 'Off the iPads'}
         </button>
@@ -134,9 +147,9 @@ export default function Catalog() {
       <Link to="/gifts" className="back-link"><IconBack /> Gift lists</Link>
       <div className="kicker">Christmas</div>
       <h1>Picture catalog</h1>
-      <p className="lede">These are the pictures on the kids’ iPads. Each kid only sees pictures that fit their age. A heart adds that picture to their list, with the store link already attached. You still approve it before the family link.</p>
+      <p className="lede">These are the pictures on the kids’ iPads. Each kid only sees pictures that fit their age, and clothes that come in their size. A heart adds that picture to their list, with the store link already attached. You still approve it before the family link.</p>
       <p className="dim">
-        {kids.map((kid) => `${kid.name} ${ageLabel(kid.birthDate)}`).join(' · ')}
+        {kids.map((kid) => `${kid.name} ${ageLabel(kid.birthDate)}${kid.clothingSize ? `, size ${kid.clothingSize}` : ''}`).join(' · ')}
       </p>
       {rows.map((item) => (
         <CatalogCard

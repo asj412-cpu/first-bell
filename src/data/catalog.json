@@ -12,7 +12,8 @@
     "active": true,
     "in_stock": false,
     "trending": true,
-    "sort": 0
+    "sort": 0,
+    "sizes": ""
   },
   {
     "id": "df9730f7-23ef-5bc7-86a2-0d743e442fa5",
@@ -27,7 +28,8 @@
     "active": true,
     "in_stock": false,
     "trending": true,
-    "sort": 1
+    "sort": 1,
+    "sizes": ""
   },
   {
     "id": "9a5933fc-af91-5ff4-97c6-7eae2356db0a",
@@ -42,7 +44,8 @@
     "active": true,
     "in_stock": true,
     "trending": true,
-    "sort": 2
+    "sort": 2,
+    "sizes": ""
   },
   {
     "id": "abcab1f6-2e4e-50dd-819e-1bf25ad761bd",
@@ -57,7 +60,8 @@
     "active": true,
     "in_stock": true,
     "trending": true,
-    "sort": 3
+    "sort": 3,
+    "sizes": ""
   },
   {
     "id": "a850df90-dd4b-50d0-9c2c-04a2dd18f46a",
@@ -72,7 +76,8 @@
     "active": true,
     "in_stock": true,
     "trending": true,
-    "sort": 4
+    "sort": 4,
+    "sizes": ""
   },
   {
     "id": "688b9e30-cd43-5297-86da-a71bec8097bf",
@@ -87,7 +92,8 @@
     "active": true,
     "in_stock": true,
     "trending": true,
-    "sort": 5
+    "sort": 5,
+    "sizes": ""
   },
   {
     "id": "ba5ea322-e691-5e93-a910-f41e9f2ef590",
@@ -102,7 +108,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 6
+    "sort": 6,
+    "sizes": ""
   },
   {
     "id": "fd87a7bb-cb8d-5901-be11-2f80967aee11",
@@ -117,7 +124,8 @@
     "active": true,
     "in_stock": true,
     "trending": true,
-    "sort": 7
+    "sort": 7,
+    "sizes": ""
   },
   {
     "id": "0033ff5e-5aae-5725-9747-70e080bbc317",
@@ -132,7 +140,8 @@
     "active": true,
     "in_stock": false,
     "trending": true,
-    "sort": 8
+    "sort": 8,
+    "sizes": ""
   },
   {
     "id": "0a9dcd57-7def-5751-844a-769d842726e4",
@@ -147,7 +156,8 @@
     "active": true,
     "in_stock": false,
     "trending": false,
-    "sort": 9
+    "sort": 9,
+    "sizes": ""
   },
   {
     "id": "45e3f308-0cd0-5cb3-a1cb-66e8628d9d08",
@@ -162,7 +172,8 @@
     "active": true,
     "in_stock": false,
     "trending": true,
-    "sort": 10
+    "sort": 10,
+    "sizes": ""
   },
   {
     "id": "90a19790-3fbe-5283-b341-c9a4a64d78cc",
@@ -177,7 +188,8 @@
     "active": true,
     "in_stock": false,
     "trending": false,
-    "sort": 11
+    "sort": 11,
+    "sizes": ""
   },
   {
     "id": "71475249-eafb-53d6-bd76-b9decc4d899c",
@@ -192,7 +204,8 @@
     "active": true,
     "in_stock": false,
     "trending": false,
-    "sort": 12
+    "sort": 12,
+    "sizes": ""
   },
   {
     "id": "cef104a1-2d1a-562a-8885-3eec205ba903",
@@ -207,7 +220,8 @@
     "active": true,
     "in_stock": false,
     "trending": false,
-    "sort": 13
+    "sort": 13,
+    "sizes": ""
   },
   {
     "id": "73023d2f-7952-575f-aaf6-e727d73f18bd",
@@ -222,7 +236,8 @@
     "active": true,
     "in_stock": false,
     "trending": false,
-    "sort": 14
+    "sort": 14,
+    "sizes": ""
   },
   {
     "id": "0894d4f6-88a7-549f-8103-ffb433afcdca",
@@ -237,7 +252,8 @@
     "active": true,
     "in_stock": false,
     "trending": false,
-    "sort": 15
+    "sort": 15,
+    "sizes": ""
   },
   {
     "id": "e38a6bf5-294e-5519-b6aa-b8054a672e9e",
@@ -252,7 +268,8 @@
     "active": true,
     "in_stock": false,
     "trending": false,
-    "sort": 16
+    "sort": 16,
+    "sizes": ""
   },
   {
     "id": "7de6b338-8a27-549a-9315-20e626102196",
@@ -267,7 +284,8 @@
     "active": true,
     "in_stock": false,
     "trending": true,
-    "sort": 17
+    "sort": 17,
+    "sizes": ""
   },
   {
     "id": "cb90dcae-af61-54ed-8b3b-581003657cef",
@@ -282,7 +300,8 @@
     "active": true,
     "in_stock": false,
     "trending": false,
-    "sort": 18
+    "sort": 18,
+    "sizes": ""
   },
   {
     "id": "59c47e81-2acb-53d4-89b0-3ac414cb87e4",
@@ -297,7 +316,8 @@
     "active": true,
     "in_stock": false,
     "trending": false,
-    "sort": 19
+    "sort": 19,
+    "sizes": ""
   },
   {
     "id": "05968a53-90f7-5caa-a692-459fc7047943",
@@ -312,7 +332,8 @@
     "active": true,
     "in_stock": true,
     "trending": true,
-    "sort": 20
+    "sort": 20,
+    "sizes": ""
   },
   {
     "id": "9a3e37bc-71f3-51c8-b1ec-95d892de85df",
@@ -327,7 +348,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 21
+    "sort": 21,
+    "sizes": ""
   },
   {
     "id": "d31459f4-090c-56b2-a791-25dfeaa44d61",
@@ -342,7 +364,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 22
+    "sort": 22,
+    "sizes": ""
   },
   {
     "id": "dcbb652c-fbd6-5dfa-b3f8-6a07669c23b8",
@@ -357,7 +380,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 23
+    "sort": 23,
+    "sizes": ""
   },
   {
     "id": "9e267419-f67f-57cd-8a1c-e6c0d08d9e90",
@@ -372,7 +396,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 24
+    "sort": 24,
+    "sizes": ""
   },
   {
     "id": "68cf0b9f-8b31-58e8-b210-316ccf077c36",
@@ -387,7 +412,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 25
+    "sort": 25,
+    "sizes": ""
   },
   {
     "id": "1ff53847-765a-5730-b826-1897d2b96f48",
@@ -402,7 +428,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 26
+    "sort": 26,
+    "sizes": ""
   },
   {
     "id": "1d792cef-beae-5e31-b931-c7bcdb8fcd30",
@@ -417,7 +444,8 @@
     "active": true,
     "in_stock": true,
     "trending": true,
-    "sort": 27
+    "sort": 27,
+    "sizes": ""
   },
   {
     "id": "5d51a0e6-5a0c-500e-b675-6898f3344bbb",
@@ -432,7 +460,8 @@
     "active": true,
     "in_stock": true,
     "trending": true,
-    "sort": 28
+    "sort": 28,
+    "sizes": ""
   },
   {
     "id": "9a844c05-ef92-5268-af78-8e583d496793",
@@ -447,7 +476,8 @@
     "active": true,
     "in_stock": true,
     "trending": true,
-    "sort": 29
+    "sort": 29,
+    "sizes": ""
   },
   {
     "id": "210440d4-b359-5170-a724-a8f468a20376",
@@ -462,7 +492,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 30
+    "sort": 30,
+    "sizes": ""
   },
   {
     "id": "f3191074-0099-5a41-895d-1a60f4e86a32",
@@ -477,7 +508,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 31
+    "sort": 31,
+    "sizes": ""
   },
   {
     "id": "dc7d13cc-246d-5206-84d5-a236689883aa",
@@ -492,7 +524,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 32
+    "sort": 32,
+    "sizes": "5,6,7"
   },
   {
     "id": "2c33daf1-8ae4-5b08-b232-a07f80ea83ed",
@@ -507,7 +540,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 33
+    "sort": 33,
+    "sizes": "5,6,7"
   },
   {
     "id": "ebd4d3b3-4e6c-5a28-a3fc-f49fdbd4c8ed",
@@ -522,7 +556,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 34
+    "sort": 34,
+    "sizes": "5,6,7"
   },
   {
     "id": "c8001d09-be2e-546d-81fa-c86ca0640bb5",
@@ -537,7 +572,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 35
+    "sort": 35,
+    "sizes": "5,6,7"
   },
   {
     "id": "cd13b988-3a9a-5d7b-a9f9-9a31fc17f2ad",
@@ -552,7 +588,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 36
+    "sort": 36,
+    "sizes": "5,6,7"
   },
   {
     "id": "28403d16-cb74-5482-b7f9-2e8d2b761c9c",
@@ -567,7 +604,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 37
+    "sort": 37,
+    "sizes": "5,6,7"
   },
   {
     "id": "6a386ee8-5ee5-5be3-ab24-ab70ee497288",
@@ -582,7 +620,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 38
+    "sort": 38,
+    "sizes": "5,6,7"
   },
   {
     "id": "04bca8b5-ce9c-520c-be91-4a4c2e7cef34",
@@ -597,7 +636,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 39
+    "sort": 39,
+    "sizes": "5,6,7"
   },
   {
     "id": "95860450-38bd-54e4-b1af-b9704ce1f692",
@@ -612,7 +652,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 40
+    "sort": 40,
+    "sizes": "5,6,7"
   },
   {
     "id": "625302d9-4a48-57d8-8688-eef5af20b012",
@@ -627,7 +668,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 41
+    "sort": 41,
+    "sizes": "5,6,7"
   },
   {
     "id": "cad85c14-bbeb-53e3-a45f-a6c132fdde4d",
@@ -642,7 +684,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 42
+    "sort": 42,
+    "sizes": "2T-5,6-10"
   },
   {
     "id": "36af5bb4-8843-59f4-ba05-0d67f7ef9c93",
@@ -657,7 +700,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 43
+    "sort": 43,
+    "sizes": "5,6-7"
   },
   {
     "id": "e354d62b-0484-5862-9aac-b97fba3e5255",
@@ -672,7 +716,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 44
+    "sort": 44,
+    "sizes": "5,6-7"
   },
   {
     "id": "ac170953-74ec-5a1a-a2e1-eec6dbf4b683",
@@ -687,7 +732,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 45
+    "sort": 45,
+    "sizes": "5,6-7"
   },
   {
     "id": "dc00eef4-21b5-5beb-9819-3dee407a3ed3",
@@ -702,7 +748,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 46
+    "sort": 46,
+    "sizes": "5,6-7"
   },
   {
     "id": "1414259d-32cd-597e-9db2-9df71dc273c1",
@@ -717,7 +764,8 @@
     "active": true,
     "in_stock": true,
     "trending": true,
-    "sort": 47
+    "sort": 47,
+    "sizes": ""
   },
   {
     "id": "a615b3cf-4dad-582d-8d7b-4c21e452c5a7",
@@ -732,7 +780,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 48
+    "sort": 48,
+    "sizes": ""
   },
   {
     "id": "bc4a19db-708c-5a1d-8f1e-21d108caf424",
@@ -747,7 +796,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 49
+    "sort": 49,
+    "sizes": ""
   },
   {
     "id": "2c905e14-0fe6-5f73-964c-d55805e3c28f",
@@ -762,7 +812,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 50
+    "sort": 50,
+    "sizes": ""
   },
   {
     "id": "86547f44-136a-54d4-80b8-b31bf405d871",
@@ -777,7 +828,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 51
+    "sort": 51,
+    "sizes": ""
   },
   {
     "id": "7d45b6a0-3c8a-53a2-819b-57e2663fd14b",
@@ -792,7 +844,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 52
+    "sort": 52,
+    "sizes": ""
   },
   {
     "id": "01c5cb2e-e2f9-5fc1-ad8a-9054773d9f0c",
@@ -807,7 +860,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 53
+    "sort": 53,
+    "sizes": ""
   },
   {
     "id": "3c1d1f1c-9801-56de-874b-ba2d16fd220f",
@@ -822,7 +876,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 54
+    "sort": 54,
+    "sizes": ""
   },
   {
     "id": "b751cfa8-6e04-5b3d-a3d4-7cd7a4e72a98",
@@ -837,7 +892,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 55
+    "sort": 55,
+    "sizes": ""
   },
   {
     "id": "112dcb0f-87f1-54f8-93a4-af50992af0e2",
@@ -852,7 +908,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 56
+    "sort": 56,
+    "sizes": ""
   },
   {
     "id": "43b4c633-f035-5fe3-b1da-1eca5a229763",
@@ -867,7 +924,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 57
+    "sort": 57,
+    "sizes": ""
   },
   {
     "id": "4c939fdd-054f-5040-bfa1-dd1290cfd9b6",
@@ -882,7 +940,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 58
+    "sort": 58,
+    "sizes": ""
   },
   {
     "id": "dcb4ae1c-ba5d-53c3-b4b2-9799a2eb4ba2",
@@ -897,7 +956,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 59
+    "sort": 59,
+    "sizes": ""
   },
   {
     "id": "68399767-88ca-52ca-98d2-f319a8317f7b",
@@ -912,7 +972,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 60
+    "sort": 60,
+    "sizes": ""
   },
   {
     "id": "38b7128c-94e0-5fea-832d-3c61ca21ce10",
@@ -927,7 +988,8 @@
     "active": true,
     "in_stock": true,
     "trending": false,
-    "sort": 61
+    "sort": 61,
+    "sizes": ""
   },
   {
     "id": "a4b8ff44-c231-580e-b603-71d341571fc8",
@@ -943,7 +1005,8 @@
     "in_stock": true,
     "trending": false,
     "check_size": true,
-    "sort": 62
+    "sort": 62,
+    "sizes": "5/6+"
   },
   {
     "id": "fe043094-2615-5af1-8228-457cd95b6c0b",
@@ -959,7 +1022,8 @@
     "in_stock": true,
     "trending": false,
     "check_size": true,
-    "sort": 63
+    "sort": 63,
+    "sizes": "5/6+"
   },
   {
     "id": "08952d84-61bc-5b2f-aef8-4a52d827ed74",
@@ -975,7 +1039,8 @@
     "in_stock": true,
     "trending": false,
     "check_size": true,
-    "sort": 64
+    "sort": 64,
+    "sizes": "5/6+"
   },
   {
     "id": "aa8e7ba7-0a61-5990-8478-b9461dfa4fcd",
@@ -991,7 +1056,8 @@
     "in_stock": true,
     "trending": false,
     "check_size": true,
-    "sort": 65
+    "sort": 65,
+    "sizes": "5/6+"
   },
   {
     "id": "7a2d4b5a-32eb-59b0-b0c4-b99ceca623a7",
@@ -1007,7 +1073,8 @@
     "in_stock": true,
     "trending": false,
     "check_size": true,
-    "sort": 66
+    "sort": 66,
+    "sizes": "5,6,7"
   },
   {
     "id": "f5624b2e-d311-5855-9725-d01b740f7118",
@@ -1023,7 +1090,8 @@
     "in_stock": true,
     "trending": false,
     "check_size": true,
-    "sort": 67
+    "sort": 67,
+    "sizes": "5,6,7"
   },
   {
     "id": "aadaf32c-3f93-59b8-abb4-f99cdcead68f",
@@ -1039,7 +1107,8 @@
     "in_stock": true,
     "trending": false,
     "check_size": true,
-    "sort": 68
+    "sort": 68,
+    "sizes": "5,6,7"
   },
   {
     "id": "4a061ae0-cc7b-53bf-a3df-8fa8845e538c",
@@ -1055,7 +1124,8 @@
     "in_stock": true,
     "trending": false,
     "check_size": true,
-    "sort": 69
+    "sort": 69,
+    "sizes": "5,6,7"
   },
   {
     "id": "07c5f4f5-3aca-5f29-80a2-0d0ee562aa0d",
@@ -1071,7 +1141,8 @@
     "in_stock": true,
     "trending": false,
     "check_size": true,
-    "sort": 70
+    "sort": 70,
+    "sizes": "5,6,7"
   },
   {
     "id": "acc9c88e-d223-5cb0-ac5c-07b40b21cd61",
@@ -1087,7 +1158,8 @@
     "in_stock": true,
     "trending": false,
     "check_size": true,
-    "sort": 71
+    "sort": 71,
+    "sizes": "5,6,7"
   },
   {
     "id": "a24d79ff-ceb3-5b7d-ac88-9cefb8822515",
@@ -1103,7 +1175,8 @@
     "in_stock": true,
     "trending": false,
     "check_size": false,
-    "sort": 72
+    "sort": 72,
+    "sizes": ""
   },
   {
     "id": "0bf69006-675c-5f0e-a2a3-3fc11c099bbc",
@@ -1119,7 +1192,8 @@
     "in_stock": true,
     "trending": false,
     "check_size": false,
-    "sort": 73
+    "sort": 73,
+    "sizes": ""
   },
   {
     "id": "b589ec19-d7f6-5aa8-847a-7bf1f9dc9778",
@@ -1135,7 +1209,8 @@
     "in_stock": true,
     "trending": false,
     "check_size": false,
-    "sort": 74
+    "sort": 74,
+    "sizes": ""
   },
   {
     "id": "ce6e8afa-31f8-532e-92a4-6e5222846ccc",
@@ -1151,6 +1226,7 @@
     "in_stock": true,
     "trending": false,
     "check_size": false,
-    "sort": 75
+    "sort": 75,
+    "sizes": ""
   }
 ]

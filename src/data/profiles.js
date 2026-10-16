@@ -30,6 +30,7 @@ export function defaultProfiles() {
       role: 'kid',
       birthDate: '2020-02-10',
       grade: null,
+      clothingSize: '7',
       notes: '',
     },
     {
@@ -39,6 +40,7 @@ export function defaultProfiles() {
       role: 'kid',
       birthDate: '2021-10-13',
       grade: 'Pre-K',
+      clothingSize: '5T',
       notes: '',
     },
     {
@@ -48,6 +50,7 @@ export function defaultProfiles() {
       role: 'kid',
       birthDate: '2026-02-10',
       grade: null,
+      clothingSize: '',
       notes: '',
     },
   ]
@@ -69,6 +72,7 @@ export function mergeProfiles(saved) {
         role: row.role || item.role,
         birthDate: Object.prototype.hasOwnProperty.call(row, 'birthDate') ? row.birthDate : item.birthDate,
         grade: Object.prototype.hasOwnProperty.call(row, 'grade') ? row.grade : item.grade,
+        clothingSize: Object.prototype.hasOwnProperty.call(row, 'clothingSize') ? row.clothingSize || '' : item.clothingSize || '',
         notes: row.notes ?? '',
       }
     }),

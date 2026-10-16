@@ -5,7 +5,7 @@ import { mergeEvents } from './events.js'
 import { fromDbRsvp, hostDisplayName, toDbStatus } from './rsvps.js'
 import { isSupabaseConfigured, supabase } from './supabase.js'
 import { hydrateVnext, vnextReducer } from './vnextReducer.js'
-import { ageFits } from './catalog.js'
+import { ageFits, sizeFits } from './catalog.js'
 import { ageInYears } from './planner.js'
 import {
   clearPinFail,
@@ -403,11 +403,15 @@ export function BellProvider({ children }) {
           const list = findKidList(state.giftLists, secret)
           const product = (state.catalog || []).find((row) => row.id === fields.catalogId && row.active !== false)
           if (!list || !product) throw new Error('Picture is not allowed')
-          const years = ageInYears(state.profiles.find((profile) => profile.memberKey === list.kidKey)?.birthDate)
+          const profile = state.profiles.find((row) => row.memberKey === list.kidKey)
+          const years = ageInYears(profile?.birthDate)
           if (!ageFits(product.ageFit, years)) throw new Error('Picture is not allowed')
+          if (product.category === 'clothes' && !sizeFits(product.sizes, profile?.clothingSize)) {
+            throw new Error('Picture is not allowed')
+          }
           if (list.items.some((item) => item.catalogId === product.id && !item.claimedAt)) return { already: true }
           if (!wishAllowed(secret)) throw new Error('Slow down')
-          const item = makeCatalogItem(list, product)
+          const item = makeCatalogItem(list, product, profile?.clothingSize)
           applyVnext({ type: 'add-kid-wish', secret, item })
           return item
         }

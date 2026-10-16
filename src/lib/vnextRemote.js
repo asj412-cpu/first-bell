@@ -22,6 +22,7 @@ function mapProfile(row) {
     role: row.role || 'kid',
     birthDate: row.birth_date,
     grade: row.grade,
+    clothingSize: row.clothing_size || '',
     notes: row.notes || '',
   }
 }
@@ -134,6 +135,7 @@ function itemToRow(item, listId) {
     audio: item.audio || null,
     category: item.category || null,
     catalog_id: item.catalogId || null,
+    clothing_size: item.clothingSize || null,
     availability: item.availability || null,
     sort: item.sort ?? 0,
     claimed_by_name: item.claimedByName || null,
@@ -170,6 +172,7 @@ export async function mirrorVnext(client, action, snapshot) {
           role: profile.role || 'kid',
           birth_date: profile.birthDate || null,
           grade: profile.grade || null,
+          clothing_size: profile.clothingSize || null,
           notes: profile.notes || null,
         },
         { onConflict: 'household_id,member_key' },
@@ -195,6 +198,7 @@ export async function mirrorVnext(client, action, snapshot) {
         in_stock: item.inStock !== false,
         trending: Boolean(item.trending),
         check_size: item.checkSize === true,
+        sizes: item.sizes || null,
         slug: item.slug || null,
         sort: item.sort ?? 0,
       }),

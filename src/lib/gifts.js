@@ -81,6 +81,7 @@ export function fromDbItem(row) {
     category: row.category || '',
     audio: row.audio || '',
     catalogId: row.catalog_id || '',
+    clothingSize: row.clothing_size || row.clothingSize || '',
   }
 }
 

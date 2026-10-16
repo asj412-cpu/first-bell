@@ -342,10 +342,11 @@ export default function KidPad() {
   }
 
   const items = kidVisibleItems(list)
-  const years = ageInYears(state.profiles.find((profile) => profile.memberKey === list.kidKey)?.birthDate)
+  const profile = state.profiles.find((row) => row.memberKey === list.kidKey)
+  const years = ageInYears(profile?.birthDate)
   const products = supabase
     ? remoteCatalog.filter((item) => matchesCatalogTab(item, tab))
-    : catalogForKid(state.catalog, years, tab)
+    : catalogForKid(state.catalog, years, tab, profile?.clothingSize)
 
   return (
     <div className={`kid-pad ${shake ? 'shake' : ''}`} data-panel={panel}>

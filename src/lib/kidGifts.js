@@ -117,7 +117,7 @@ export function makeKidItem(list, fields) {
   }
 }
 
-export function makeCatalogItem(list, product) {
+export function makeCatalogItem(list, product, clothingSize) {
   const sort = (list.items || []).reduce((max, item) => Math.max(max, item.sort ?? 0), -1) + 1
   const price = moneyLabel(product.price)
   return {
@@ -130,6 +130,7 @@ export function makeCatalogItem(list, product) {
     audio: '',
     category: product.category || '',
     catalogId: product.id,
+    clothingSize: product.category === 'clothes' ? String(clothingSize || '').trim() : '',
     availability: '',
     sort,
     claimedByName: '',
