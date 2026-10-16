@@ -194,6 +194,7 @@ export async function mirrorVnext(client, action, snapshot) {
         active: item.active !== false,
         in_stock: item.inStock !== false,
         trending: Boolean(item.trending),
+        check_size: item.checkSize === true,
         slug: item.slug || null,
         sort: item.sort ?? 0,
       }),

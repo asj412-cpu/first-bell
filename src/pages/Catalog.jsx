@@ -61,6 +61,7 @@ function CatalogCard({ item, kids, onSave, onRemove }) {
           <p className="dim" style={{ margin: '4px 0 0' }}>
             {fits.length ? `Shows for ${fits.map((kid) => kid.name).join(', ')}` : 'Hidden by age'}
             {draft.inStock === false ? ' · ask a grown-up' : ''}
+            {draft.checkSize ? ' · check size' : ''}
             {draft.trending ? ' · trending' : ''}
             {draft.active === false ? ' · off' : ''}
           </p>

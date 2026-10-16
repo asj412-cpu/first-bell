@@ -50,6 +50,7 @@ export function normalizeCatalogItem(row, index = 0) {
     active: row.active !== false,
     inStock: !out,
     trending: Boolean(row.trending),
+    checkSize: row.checkSize === true || row.check_size === true,
     sort: row.sort ?? index,
   }
 }
@@ -84,6 +85,7 @@ export function fromDbCatalog(row) {
     active: row.active,
     in_stock: row.in_stock,
     trending: row.trending,
+    check_size: row.check_size,
     sort: row.sort,
   })
 }
