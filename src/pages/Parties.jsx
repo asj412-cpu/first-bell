@@ -35,7 +35,7 @@ export default function Parties() {
 
       <div className="card pad empty" style={{ marginTop: 14 }}>
         <div className="kicker">Next party</div>
-        <h3 style={{ marginTop: 6 }}>When you’re ready, First Bell shortlists three venues.</h3>
+        <h3 style={{ marginTop: 6 }}>When you’re ready, Mi Casa shortlists three venues.</h3>
         <p className="muted">You pick. You pay the place. We run invites, RSVPs, and the wishlist.</p>
       </div>
     </div>

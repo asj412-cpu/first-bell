@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "First Bell — household ops for parents. Party planning is the wedge.",
+  "description": "Mi Casa — household ops for parents. Party planning is the wedge.",
   "scripts": {
     "dev": "vite --host --port 5173",
     "build": "vite build",

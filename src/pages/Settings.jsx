@@ -107,7 +107,7 @@ export default function Settings() {
       </div>
       <div className="card pad">
         <p className="muted" style={{ marginTop: 0 }}>
-          First Bell is household ops for parents. Party planning is the wedge, not the whole product. Inbox and calendar are in the shell now; Family sync is next. We never collect Apple or Google passwords.
+          Mi Casa is household ops for parents. Party planning is the wedge, not the whole product. Inbox and calendar are in the shell now; Family sync is next. We never collect Apple or Google passwords.
         </p>
         <p className="muted">
           This build is the Johnson household desk — Chloe’s fifth, Cypress Academy Kuykendahl, SNAP Package A paid.

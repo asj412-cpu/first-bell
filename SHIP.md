@@ -1,4 +1,4 @@
-# First Bell — ship
+# Mi Casa — ship
 
 America/Chicago. Household desk for Andrew Johnson Sr / ThreatRadar.
 
@@ -72,7 +72,7 @@ npx supabase db push --project-ref tzkxuinbpmoeyhzomvut
 **Email template** (Authentication → Email Templates → Magic Link) so both a code and a link work:
 
 ```html
-<h2>First Bell sign-in</h2>
+<h2>Mi Casa sign-in</h2>
 <p>Your code: <strong>{{ .Token }}</strong></p>
 <p><a href="{{ .ConfirmationURL }}">Or tap this magic link</a></p>
 ```

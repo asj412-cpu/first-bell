@@ -1,6 +1,6 @@
 # Family calendar sync
 
-First Bell does not store an Apple or Google password. The COO agent owns Family iCloud access and writes rows into `public.calendar_events_import`. The app only reads them.
+Mi Casa does not store an Apple or Google password. The COO agent owns Family iCloud access and writes rows into `public.calendar_events_import`. The app only reads them.
 
 Until those rows exist, Home shows the built-in holiday list and the line **Connect family calendar**. Do not invent family events. A concert, a festival, or a school date appears only when it is a real imported row.
 

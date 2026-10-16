@@ -21,8 +21,8 @@ function BootScreen() {
     <div className="gate">
       <div className="gate-bg" aria-hidden="true" />
       <div className="card gate-card">
-        <img className="bell" src="/brand/bell.jpg" alt="" />
-        <div className="eyebrow">First Bell</div>
+        <img className="bell" src="/icons/icon-192.png" alt="" />
+        <div className="eyebrow">Mi Casa</div>
         <h1>Opening the house…</h1>
       </div>
     </div>

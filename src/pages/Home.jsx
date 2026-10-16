@@ -1,39 +1,26 @@
 import { Link } from 'react-router-dom'
 import { PARTY } from '../data/seed.js'
+import Avatar from '../components/Avatar.jsx'
 import { turnsLabel } from '../lib/birthdays.js'
 import { eventWhenLabel, isFinished, splitEvents } from '../lib/events.js'
-import { formatShortDate } from '../lib/format.js'
-import { greeting, todayLabel } from '../lib/format.js'
+import { formatShortDate, greeting, parseLocalDate } from '../lib/format.js'
+import { motifFor } from '../lib/motifs.js'
 import { buildNextUp } from '../lib/nextup.js'
-import { hostDisplayName } from '../lib/rsvps.js'
 import { useBell } from '../lib/store.jsx'
 import { IconArrow } from '../components/Icons.jsx'
 
-function Suggestion({ item, planned, onPlan }) {
-  return (
-    <div className="card pad next-card">
-      <div className="row-between">
-        <span className={`chip ${item.source === 'birthday' ? 'rose' : item.source === 'import' ? 'teal' : 'gold'}`}>
-          {item.sourceLabel}
-        </span>
-        <span className="dim">{formatShortDate(item.date)}</span>
-      </div>
-      <h3 style={{ margin: '8px 0 4px' }}>{item.title}</h3>
-      <p className="muted" style={{ margin: 0 }}>
-        {item.source === 'birthday' ? turnsLabel(item.turns) : item.allDay ? 'All day' : eventWhenLabel(item)}
-        {item.location ? ` · ${item.location}` : ''}
-      </p>
-      {planned ? (
-        <Link to="/calendar" className="btn small" style={{ marginTop: 12 }}>
-          On the calendar
-        </Link>
-      ) : (
-        <button className="btn small" style={{ marginTop: 12 }} onClick={() => onPlan(item)}>
-          Plan this
-        </button>
-      )}
-    </div>
-  )
+function weekdayDate(iso) {
+  return parseLocalDate(iso).toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  })
+}
+
+function planLabel(item) {
+  if (item.source === 'birthday') return turnsLabel(item.turns)
+  if (item.allDay) return 'All day'
+  return eventWhenLabel(item)
 }
 
 export default function Home() {
@@ -46,49 +33,72 @@ export default function Home() {
   const partyDone = party ? isFinished(party) : true
   const nextEvent = upcoming[0]
   const connected = (state.imports || []).length > 0
+  const [featured, ...rest] = nextUp.soon
+  const featuredPlanned = featured ? state.events.some((event) => event.id === `plan-${featured.key}`) : false
 
   return (
     <div>
-      <div className="kicker">{todayLabel()}</div>
-      <h1>
-        {greeting()}, {hostDisplayName(state.session)}
-      </h1>
-      <p className="lede">Household ops at a glance. Holidays and birthdays are calculated. Family plans show up when the calendar is connected.</p>
+      <h1 className="casa-greet">{greeting()}, Johnsons</h1>
+      <div className="casa-hero" role="img" aria-label="The house at dusk" />
 
-      <div className="section-head">
-        <h2>Next up</h2>
-        <Link to="/calendar" className="dim">Calendar</Link>
-      </div>
       {!connected && (
         <div className="banner">
           Connect family calendar. Imported events show up here after the COO adds them. Nothing on this list is made up.
         </div>
       )}
-      <div className="next-strip">
-        {nextUp.soon.map((item) => (
-          <Suggestion
-            key={item.key}
-            item={item}
-            planned={state.events.some((event) => event.id === `plan-${item.key}`)}
-            onPlan={planSuggestion}
-          />
-        ))}
-      </div>
+
+      {featured ? (
+        <article className="featured-next">
+          <img src={motifFor(featured)} alt="" />
+          <div>
+            <h2>{featured.title}</h2>
+            <p className="when">{weekdayDate(featured.date)}</p>
+          </div>
+          {featuredPlanned ? (
+            <Link to="/calendar" className="btn small">On the calendar</Link>
+          ) : (
+            <button className="btn small" type="button" onClick={() => planSuggestion(featured)}>
+              Plan this
+            </button>
+          )}
+        </article>
+      ) : (
+        <div className="card pad empty">
+          <p className="muted" style={{ margin: 0 }}>Connect family calendar</p>
+        </div>
+      )}
+
+      {rest.length > 0 && (
+        <div className="season-row">
+          {rest.map((item) => {
+            const planned = state.events.some((event) => event.id === `plan-${item.key}`)
+            return (
+              <button key={item.key} className="season-card" type="button" onClick={() => !planned && planSuggestion(item)}>
+                <img src={motifFor(item)} alt="" />
+                <strong>{item.title}</strong>
+                <span>{formatShortDate(item.date)} · {planned ? 'On the calendar' : planLabel(item)}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
 
       {nextUp.birthdays.length > 0 && (
         <>
           <div className="section-head">
             <h2>Family birthdays</h2>
           </div>
-          <div className="next-strip">
-            {nextUp.birthdays.map((item) => (
-              <Suggestion
-                key={item.key}
-                item={item}
-                planned={state.events.some((event) => event.id === `plan-${item.key}`)}
-                onPlan={planSuggestion}
-              />
-            ))}
+          <div className="bday-row">
+            {nextUp.birthdays.map((item) => {
+              const planned = state.events.some((event) => event.id === `plan-${item.key}`)
+              return (
+                <button key={item.key} className="bday-chip" type="button" onClick={() => !planned && planSuggestion(item)}>
+                  <Avatar name={item.who || item.title} seed={item.memberKey || item.who} />
+                  <strong>{item.who || item.title}</strong>
+                  <span>{turnsLabel(item.turns)}{planned ? ' · planned' : ''}</span>
+                </button>
+              )
+            })}
           </div>
         </>
       )}
@@ -109,16 +119,10 @@ export default function Home() {
               <strong>Chloe’s party has moved to History</strong>
               <div className="dim">RSVPs stay on the party desk. {history.length} finished.</div>
             </div>
-            <IconArrow style={{ width: 18, height: 18, color: 'var(--gold)' }} />
+            <IconArrow style={{ width: 18, height: 18, color: 'var(--terracotta)' }} />
           </div>
         </Link>
       )}
-
-      <div className="meta-row" style={{ marginTop: 14 }}>
-        <Link className="btn small" to="/meals">Meal plan</Link>
-        <Link className="btn small" to="/gifts">Gift lists</Link>
-        <Link className="btn small ghost" to="/history">History</Link>
-      </div>
 
       <div className="stats" style={{ marginTop: 14 }}>
         <Link to="/parties" className="card pad stat">

@@ -48,7 +48,7 @@ export default function PublicGift() {
     return (
       <div className="guest-page">
         <div className="card guest-sheet">
-          <div className="kicker">First Bell</div>
+          <div className="kicker">Mi Casa</div>
           <h1>That list isn’t here</h1>
           <p className="lede">Check the link with the family.</p>
         </div>
@@ -87,7 +87,7 @@ export default function PublicGift() {
   return (
     <div className="guest-page">
       <div className="card guest-sheet">
-        <img className="bell" src="/brand/bell.jpg" alt="" style={{ width: 64, height: 64, borderRadius: '50%', marginBottom: 10 }} />
+        <img className="bell" src="/icons/icon-192.png" alt="" style={{ width: 64, height: 64, borderRadius: 16, marginBottom: 10 }} />
         <div className="kicker">{list.occasion}</div>
         <h1>{list.displayName}’s list</h1>
         <p className="lede">Take a wish if you want to be the one who gives it. A name is optional.</p>

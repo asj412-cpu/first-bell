@@ -56,7 +56,7 @@ export default function GuestRsvp() {
     return (
       <div className="gate">
         <div className="card gate-card">
-          <div className="eyebrow">First Bell</div>
+          <div className="eyebrow">Mi Casa</div>
           <h1>Opening the invite…</h1>
           <p className="lede">One moment.</p>
         </div>

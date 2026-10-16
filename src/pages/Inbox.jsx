@@ -13,10 +13,10 @@ export default function Inbox() {
     <div>
       <div className="kicker">Inbox</div>
       <h1>The agent files this.</h1>
-      <p className="lede">You don’t live in mail. First Bell’s COO / agent files Bills, Shopping, School, and Trash.</p>
+      <p className="lede">You don’t live in mail. Mi Casa’s COO / agent files Bills, Shopping, School, and Trash.</p>
 
       <div className="banner" style={{ marginTop: 16 }}>
-        Filing is a First Bell job. Suggested folders are already on each card — tap to confirm. Demo cards only; the live concierge still never asks for your password.
+        Filing is a Mi Casa job. Suggested folders are already on each card — tap to confirm. Demo cards only; the live concierge still never asks for your password.
       </div>
 
       <div className="folders" role="tablist" aria-label="Folders">

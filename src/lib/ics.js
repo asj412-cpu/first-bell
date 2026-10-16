@@ -10,10 +10,10 @@ export function partyIcs(party = PARTY) {
   const ics = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//First Bell//EN',
+    'PRODID:-//Mi Casa//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
-    'X-WR-CALNAME:First Bell',
+    'X-WR-CALNAME:Mi Casa',
     'X-WR-TIMEZONE:America/Chicago',
     'BEGIN:VEVENT',
     `UID:${uid}`,

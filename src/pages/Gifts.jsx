@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import Avatar from '../components/Avatar.jsx'
 import { visibleItems } from '../lib/gifts.js'
 import { useBell } from '../lib/store.jsx'
 
@@ -20,7 +21,7 @@ export default function Gifts() {
           const claimed = list.items.filter((item) => item.claimedAt).length
           return (
             <Link key={list.id} to={`/gifts/${list.kidKey}`} className="card pad gift-kid">
-              <div className="avatar" aria-hidden="true">{list.displayName.slice(0, 1)}</div>
+              <Avatar name={list.displayName} seed={list.kidKey} />
               <div>
                 <div className="kicker">{list.occasion}</div>
                 <h2 style={{ marginTop: 2 }}>{list.displayName}</h2>

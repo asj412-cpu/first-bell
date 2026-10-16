@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import Avatar from '../components/Avatar.jsx'
 import { mealById } from '../data/meals.js'
 import { HOUSEHOLD } from '../data/seed.js'
 import {
@@ -42,7 +43,7 @@ export default function Meals() {
   }, {})
 
   function shareList() {
-    const lines = [`First Bell grocery · week of ${formatShortDate(weekStart)}`, '']
+    const lines = [`Mi Casa grocery · week of ${formatShortDate(weekStart)}`, '']
     for (const [aisle, items] of Object.entries(grouped)) {
       lines.push(aisle)
       for (const item of items) {
@@ -52,7 +53,7 @@ export default function Meals() {
     }
     const text = lines.join('\n')
     if (navigator.share) {
-      navigator.share({ title: 'First Bell grocery', text }).catch(() => {})
+      navigator.share({ title: 'Mi Casa grocery', text }).catch(() => {})
       return
     }
     navigator.clipboard?.writeText(text)
@@ -77,7 +78,10 @@ export default function Meals() {
       <div className="card pad" style={{ marginTop: 14 }}>
         {note.kids.map((kid) => (
           <div className="row-between" key={kid.memberKey} style={{ marginBottom: 6 }}>
-            <strong>{kid.fullName}</strong>
+            <span className="kid-line">
+              <Avatar name={kid.name || kid.fullName} seed={kid.memberKey} />
+              <strong>{kid.fullName}</strong>
+            </span>
             <span className="dim">
               {kid.label || 'Birthday not set'}
               {kid.grade ? ` · ${kid.grade}` : ''}

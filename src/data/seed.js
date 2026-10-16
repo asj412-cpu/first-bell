@@ -99,7 +99,7 @@ export const MESSAGES = [
     from: 'School calendar',
     subject: 'Fall dates ready to file',
     snippet:
-      'Picture day and the fall newsletter are in. First Bell will place them on Family after you confirm calendar sync.',
+      'Picture day and the fall newsletter are in. Mi Casa will place them on Family after you confirm calendar sync.',
     suggested: 'school',
     when: '2026-09-01T07:05:00-05:00',
     attention: true,

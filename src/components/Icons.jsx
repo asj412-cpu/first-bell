@@ -1,3 +1,13 @@
+export function IconHistory(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
+      <path d="M4.5 7.2h15V19a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1V7.2Z" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M8 7.2V5.6A1.6 1.6 0 0 1 9.6 4h4.8A1.6 1.6 0 0 1 16 5.6v1.6" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M8 12h8M8 15.4h5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export function IconHome(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>

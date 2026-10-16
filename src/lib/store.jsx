@@ -56,7 +56,7 @@ export function BellProvider({ children }) {
     session: configured ? null : local.session,
     backend: configured ? 'connecting' : 'demo',
     backendMessage: configured
-      ? 'Connecting to First Bell…'
+      ? 'Connecting to Mi Casa…'
       : 'Demo mode — RSVPs stay in this browser until Supabase env vars are set.',
     partyUuid: null,
     householdId: null,
