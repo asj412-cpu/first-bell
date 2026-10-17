@@ -3,11 +3,13 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import AppShell from './components/AppShell.jsx'
 import { useBell } from './lib/store.jsx'
 import Calendar from './pages/Calendar.jsx'
+import Catalog from './pages/Catalog.jsx'
 import Gate from './pages/Gate.jsx'
 import GiftDetail from './pages/GiftDetail.jsx'
 import Gifts from './pages/Gifts.jsx'
 import GuestRsvp from './pages/GuestRsvp.jsx'
 import History from './pages/History.jsx'
+import KidPad from './pages/KidPad.jsx'
 import Home from './pages/Home.jsx'
 import Inbox from './pages/Inbox.jsx'
 import Meals from './pages/Meals.jsx'
@@ -52,6 +54,7 @@ export default function App() {
       <Route path="/enter" element={<Gate />} />
       <Route path="/r/:slug" element={<GuestRsvp />} />
       <Route path="/g/:slug" element={<PublicGift />} />
+      <Route path="/k/:secret" element={<KidPad />} />
       <Route
         element={
           <Protected>
@@ -67,6 +70,7 @@ export default function App() {
         <Route path="/history" element={<History />} />
         <Route path="/meals" element={<Meals />} />
         <Route path="/gifts" element={<Gifts />} />
+        <Route path="/gifts/catalog" element={<Catalog />} />
         <Route path="/gifts/:kidKey" element={<GiftDetail />} />
         <Route path="/settings" element={<Settings />} />
       </Route>

@@ -18,6 +18,10 @@ export function cloneGiftLists(seed = christmasSeed) {
       sort: item.sort ?? 0,
       claimedByName: item.claimedByName || '',
       claimedAt: item.claimedAt || null,
+      reviewStatus: item.reviewStatus || 'approved',
+      addedBy: item.addedBy || 'parent',
+      category: item.category || '',
+      audio: item.audio || '',
     })),
   }))
 }
@@ -39,7 +43,9 @@ export function safeHttp(url) {
 }
 
 export function visibleItems(list, kidMode) {
-  const items = [...(list?.items || [])].sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0))
+  const items = [...(list?.items || [])]
+    .filter((item) => item.reviewStatus !== 'pending')
+    .sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0))
   if (!kidMode) return items
   return items.filter((item) => !item.claimedAt)
 }
@@ -70,6 +76,12 @@ export function fromDbItem(row) {
     sort: row.sort ?? 0,
     claimedByName: row.claimed_by_name || '',
     claimedAt: row.claimed_at || null,
+    reviewStatus: row.review_status || 'approved',
+    addedBy: row.added_by || 'parent',
+    category: row.category || '',
+    audio: row.audio || '',
+    catalogId: row.catalog_id || '',
+    clothingSize: row.clothing_size || row.clothingSize || '',
   }
 }
 

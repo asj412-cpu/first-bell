@@ -5,6 +5,22 @@ import { mergeEvents } from './events.js'
 import { fromDbRsvp, hostDisplayName, toDbStatus } from './rsvps.js'
 import { isSupabaseConfigured, supabase } from './supabase.js'
 import { hydrateVnext, vnextReducer } from './vnextReducer.js'
+import { ageFits, sizeFits } from './catalog.js'
+import { ageInYears } from './planner.js'
+import {
+  clearPinFail,
+  findKidList,
+  forgetKidSecret,
+  localPinOk,
+  makeCatalogItem,
+  makeKidItem,
+  notePinFail,
+  pinBlocked,
+  randomSecret,
+  rememberKidSecret,
+  sha256,
+  wishAllowed,
+} from './kidGifts.js'
 import { mirrorVnext, pullVnext } from './vnextRemote.js'
 
 const KEY = 'first-bell.v1'
@@ -88,12 +104,13 @@ export function BellProvider({ children }) {
       events: state.events,
       imports: state.imports,
       giftLists: state.giftLists,
+      catalog: state.catalog,
       profiles: state.profiles,
       mealPlans: state.mealPlans,
       grocery: state.grocery,
       kidMode: state.kidMode,
     })
-  }, [state.session, state.guests, state.messages, state.backend, state.events, state.imports, state.giftLists, state.profiles, state.mealPlans, state.grocery, state.kidMode])
+  }, [state.session, state.guests, state.messages, state.backend, state.events, state.imports, state.giftLists, state.catalog, state.profiles, state.mealPlans, state.grocery, state.kidMode])
 
   const loadRsvps = useCallback(async (partyUuid) => {
     if (!supabase || !partyUuid) return
@@ -222,6 +239,7 @@ export function BellProvider({ children }) {
         vnextNote: '',
         imports: result.imports,
         giftLists: result.giftLists.length ? result.giftLists : prev.giftLists,
+        catalog: result.catalog || prev.catalog,
         profiles: result.profiles.length ? mergeProfiles(result.profiles) : prev.profiles,
         mealPlans: Object.keys(result.mealPlans).length ? { ...prev.mealPlans, ...result.mealPlans } : prev.mealPlans,
         grocery: Object.keys(result.grocery).length ? { ...prev.grocery, ...result.grocery } : prev.grocery,
@@ -347,6 +365,104 @@ export function BellProvider({ children }) {
       },
       releaseClaim(listId, itemId) {
         applyVnext({ type: 'release-claim', listId, itemId })
+      },
+      async issueKidLink(listId, pin) {
+        if (!/^\d{4}$/.test(pin || '')) throw new Error('Use 4 numbers.')
+        const secret = randomSecret()
+        const pinHash = await sha256(`${secret}:${pin}`)
+        if (live) {
+          const { error } = await supabase.rpc('create_kid_link', {
+            p_list_id: listId,
+            p_secret: secret,
+            p_pin: pin,
+          })
+          if (error) throw error
+        }
+        rememberKidSecret(listId, secret)
+        applyVnext({ type: 'set-kid-link', listId, secret, pinHash })
+        return secret
+      },
+      async revokeKidLink(listId) {
+        if (live) {
+          const { error } = await supabase.rpc('revoke_kid_link', { p_list_id: listId })
+          if (error) throw error
+        }
+        forgetKidSecret(listId)
+        applyVnext({ type: 'revoke-kid-link', listId })
+      },
+      async addKidWish(secret, fields) {
+        if (fields.kind === 'catalog') {
+          if (supabase) {
+            const { data, error } = await supabase.rpc('add_kid_catalog_wish', {
+              p_secret: secret,
+              p_catalog_id: fields.catalogId,
+            })
+            if (error) throw error
+            return data
+          }
+          const list = findKidList(state.giftLists, secret)
+          const product = (state.catalog || []).find((row) => row.id === fields.catalogId && row.active !== false)
+          if (!list || !product) throw new Error('Picture is not allowed')
+          const profile = state.profiles.find((row) => row.memberKey === list.kidKey)
+          const years = ageInYears(profile?.birthDate)
+          if (!ageFits(product.ageFit, years)) throw new Error('Picture is not allowed')
+          if (product.category === 'clothes' && !sizeFits(product.sizes, profile?.clothingSize)) {
+            throw new Error('Picture is not allowed')
+          }
+          if (list.items.some((item) => item.catalogId === product.id && !item.claimedAt)) return { already: true }
+          if (!wishAllowed(secret)) throw new Error('Slow down')
+          const item = makeCatalogItem(list, product, profile?.clothingSize)
+          applyVnext({ type: 'add-kid-wish', secret, item })
+          return item
+        }
+        if (supabase) {
+          const { data, error } = await supabase.rpc('add_kid_wish', {
+            p_secret: secret,
+            p_kind: fields.kind,
+            p_label: fields.label || '',
+            p_image: fields.image || '',
+            p_audio: fields.audio || '',
+            p_category: fields.category || '',
+          })
+          if (error) throw error
+          return data
+        }
+        if (!wishAllowed(secret)) throw new Error('Slow down')
+        const list = findKidList(state.giftLists, secret)
+        if (!list) throw new Error('List not found')
+        const item = makeKidItem(list, fields)
+        applyVnext({ type: 'add-kid-wish', secret, item })
+        return item
+      },
+      saveCatalogItem(item) {
+        applyVnext({ type: 'save-catalog-item', item })
+      },
+      removeCatalogItem(id) {
+        applyVnext({ type: 'delete-catalog-item', id })
+      },
+      async checkKidPin(secret, pin) {
+        if (supabase) {
+          const { data, error } = await supabase.rpc('check_kid_pin', { p_secret: secret, p_pin: pin })
+          if (error) return false
+          return data === true
+        }
+        if (pinBlocked(secret)) return false
+        const list = findKidList(state.giftLists, secret)
+        if (!list) {
+          notePinFail(secret)
+          return false
+        }
+        const ok = await localPinOk(list.kidLink, secret, pin)
+        if (!ok) notePinFail(secret)
+        else clearPinFail(secret)
+        return ok
+      },
+      async reloadGifts() {
+        if (!live || !state.householdId) return
+        const result = await pullVnext(supabase, state.householdId)
+        if (!result.available) return
+        if (result.giftLists?.length) applyVnext({ type: 'replace-gifts', giftLists: result.giftLists })
+        if (result.catalog) applyVnext({ type: 'replace-catalog', catalog: result.catalog })
       },
       planSuggestion(suggestion) {
         applyVnext({ type: 'plan-suggestion', suggestion })

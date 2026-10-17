@@ -9,8 +9,9 @@ export default function Gifts() {
     <div>
       <div className="kicker">Christmas</div>
       <h1>Gift lists</h1>
-      <p className="lede">One list per kid. Share a link, and family can claim a wish. Kid mode hides anything already claimed.</p>
+      <p className="lede">One list per kid. Share a family link, or open a private iPad link for that kid. Kid mode hides anything already claimed.</p>
       <div className="meta-row" style={{ margin: '14px 0' }}>
+        <Link to="/gifts/catalog" className="btn small">Picture catalog</Link>
         <button className={`btn small ${state.kidMode ? 'primary' : ''}`} aria-pressed={state.kidMode} onClick={toggleKidMode}>
           {state.kidMode ? 'Kid mode on' : 'Kid mode'}
         </button>
@@ -18,7 +19,8 @@ export default function Gifts() {
       <div className="gift-index">
         {state.giftLists.map((list) => {
           const shown = visibleItems(list, state.kidMode)
-          const claimed = list.items.filter((item) => item.claimedAt).length
+          const claimed = list.items.filter((item) => item.claimedAt && item.reviewStatus !== 'pending').length
+          const fresh = list.items.filter((item) => item.reviewStatus === 'pending').length
           return (
             <Link key={list.id} to={`/gifts/${list.kidKey}`} className="card pad gift-kid">
               <Avatar name={list.displayName} seed={list.kidKey} />
@@ -28,6 +30,7 @@ export default function Gifts() {
                 <p className="dim" style={{ margin: '4px 0 0' }}>
                   {shown.length} showing · {claimed} claimed
                 </p>
+                {fresh > 0 && <span className="chip wait">{fresh} new from {list.displayName}</span>}
               </div>
             </Link>
           )

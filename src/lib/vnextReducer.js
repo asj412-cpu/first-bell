@@ -1,3 +1,4 @@
+import { cloneCatalog } from './catalog.js'
 import { cloneGiftLists } from './gifts.js'
 import { mergeEvents, seedCalendarEvents, wallEvent } from './events.js'
 import { PLAN_CHECKLIST } from './nextup.js'
@@ -17,6 +18,10 @@ export function blankItem(sort) {
     sort,
     claimedByName: '',
     claimedAt: null,
+    reviewStatus: 'approved',
+    addedBy: 'parent',
+    category: '',
+    audio: '',
   }
 }
 
@@ -89,6 +94,31 @@ export function vnextReducer(state, action) {
           item.id === action.itemId ? { ...item, claimedByName: '', claimedAt: null } : item,
         ),
       }))
+    case 'set-kid-link':
+      return mapList(state, action.listId, (list) => ({
+        ...list,
+        kidLink: {
+          secret: action.secret,
+          pinHash: action.pinHash || '',
+          revokedAt: null,
+          active: true,
+        },
+      }))
+    case 'revoke-kid-link':
+      return mapList(state, action.listId, (list) => ({
+        ...list,
+        kidLink: list.kidLink
+          ? { ...list.kidLink, secret: '', pinHash: '', revokedAt: new Date().toISOString(), active: false }
+          : null,
+      }))
+    case 'add-kid-wish':
+      return {
+        ...state,
+        giftLists: state.giftLists.map((list) => {
+          if (!list.kidLink || list.kidLink.revokedAt || list.kidLink.secret !== action.secret) return list
+          return { ...list, items: [...list.items, action.item] }
+        }),
+      }
     case 'plan-suggestion': {
       const suggestion = action.suggestion
       const id = `plan-${suggestion.key}`
@@ -178,6 +208,17 @@ export function vnextReducer(state, action) {
       }
     case 'replace-gifts':
       return { ...state, giftLists: action.giftLists }
+    case 'replace-catalog':
+      return { ...state, catalog: action.catalog }
+    case 'save-catalog-item':
+      return {
+        ...state,
+        catalog: state.catalog.some((item) => item.id === action.item.id)
+          ? state.catalog.map((item) => (item.id === action.item.id ? { ...item, ...action.item } : item))
+          : [...state.catalog, action.item],
+      }
+    case 'delete-catalog-item':
+      return { ...state, catalog: state.catalog.filter((item) => item.id !== action.id) }
     default:
       return state
   }
@@ -188,6 +229,7 @@ export function initialVnext() {
     events: seedCalendarEvents(),
     imports: [],
     giftLists: cloneGiftLists(),
+    catalog: cloneCatalog(),
     profiles: mergeProfiles(null),
     mealPlans: {},
     grocery: {},
@@ -205,6 +247,7 @@ export function hydrateVnext(saved) {
     events: mergeEvents(saved.events),
     imports: Array.isArray(saved.imports) ? saved.imports : [],
     giftLists: Array.isArray(saved.giftLists) ? saved.giftLists : base.giftLists,
+    catalog: Array.isArray(saved.catalog) ? saved.catalog : base.catalog,
     profiles: mergeProfiles(saved.profiles),
     mealPlans: saved.mealPlans && typeof saved.mealPlans === 'object' ? saved.mealPlans : {},
     grocery: saved.grocery && typeof saved.grocery === 'object' ? saved.grocery : {},

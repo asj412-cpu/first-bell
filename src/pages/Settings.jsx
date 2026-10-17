@@ -66,7 +66,7 @@ export default function Settings() {
       <div className="section-head">
         <h2>Birthdays and meals</h2>
       </div>
-      <p className="dim">Ages update from the birth date. Allergies stay blank until you type them. Claire’s grade is open — kindergarten or 1st.</p>
+      <p className="dim">Ages update from the birth date. Clothing size filters the clothes on that kid’s iPad. Allergies stay blank until you type them. Claire’s grade is open — kindergarten or 1st.</p>
       {state.vnextNote && <div className="banner">{state.vnextNote}</div>}
       {state.profiles.map((profile) => (
         <div className="card pad kid-card" key={profile.memberKey}>
@@ -82,14 +82,24 @@ export default function Settings() {
             />
           </label>
           {profile.role === 'kid' && (
-            <label className="field">
-              <span>Grade</span>
-              <input
-                value={profile.grade || ''}
-                placeholder={profile.memberKey === 'claire' ? 'Kindergarten or 1st' : 'Leave blank if unknown'}
-                onChange={(event) => updateProfile(profile.memberKey, { grade: event.target.value || null })}
-              />
-            </label>
+            <>
+              <label className="field">
+                <span>Grade</span>
+                <input
+                  value={profile.grade || ''}
+                  placeholder={profile.memberKey === 'claire' ? 'Kindergarten or 1st' : 'Leave blank if unknown'}
+                  onChange={(event) => updateProfile(profile.memberKey, { grade: event.target.value || null })}
+                />
+              </label>
+              <label className="field">
+                <span>Clothing size</span>
+                <input
+                  value={profile.clothingSize || ''}
+                  placeholder={profile.memberKey === 'chloe' ? '5T' : profile.memberKey === 'claire' ? '7' : 'Leave blank'}
+                  onChange={(event) => updateProfile(profile.memberKey, { clothingSize: event.target.value })}
+                />
+              </label>
+            </>
           )}
           <label className="field">
             <span>Allergies and dislikes</span>
