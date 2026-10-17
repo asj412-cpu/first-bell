@@ -1122,7 +1122,27 @@ h3 { font-size: 18px; }
   touch-action: manipulation;
 }
 .kid-tab.on { border-color: var(--terracotta); background: #fffaf5; }
+.kid-tab.wide { grid-column: 1 / -1; height: 112px; background: #f3d7c8; }
+.kid-tab.wide.on { background: #fffaf5; }
 .kid-tab svg { width: 100%; height: 100%; display: block; }
+.kid-doll-filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  flex: none;
+}
+.kid-doll-chip {
+  height: 84px;
+  border: 4px solid transparent;
+  border-radius: 28px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  padding: 8px 18px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.kid-doll-chip.on { border-color: var(--terracotta); background: #fffaf5; }
+.kid-doll-chip svg { width: 100%; height: 100%; display: block; }
 .kid-catalog {
   flex: 1;
   min-height: 0;

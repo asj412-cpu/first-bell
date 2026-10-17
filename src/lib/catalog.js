@@ -4,6 +4,12 @@ export const CATALOG_CATEGORIES = [
   { id: 'toys', speak: 'Toys' },
   { id: 'clothes', speak: 'Clothes' },
   { id: 'learning', speak: 'Learning' },
+  { id: 'dolls', speak: 'Doll clothes' },
+]
+
+export const DOLL_FILTERS = [
+  { id: 'baby', speak: 'Baby doll' },
+  { id: 'toddler', speak: 'Bigger doll' },
 ]
 
 export const CATALOG_TABS = [
@@ -17,6 +23,9 @@ const CATEGORY_ALIASES = {
   clothes: 'clothes',
   educational: 'learning',
   learning: 'learning',
+  dolls: 'dolls',
+  'doll clothes': 'dolls',
+  dollclothes: 'dolls',
 }
 
 export function ageFits(ageFit, years) {
@@ -99,6 +108,8 @@ export function normalizeCatalogItem(row, index = 0) {
     trending: Boolean(row.trending),
     checkSize: row.checkSize === true || row.check_size === true,
     sizes: String(row.sizes || '').trim(),
+    dollSize: String(row.dollSize || row.doll_size || '').trim().toLowerCase(),
+    dollFitNote: String(row.dollFitNote || row.doll_fit_note || '').trim(),
     sort: row.sort ?? index,
   }
 }
@@ -111,6 +122,11 @@ export function matchesCatalogTab(item, tab) {
   if (!tab) return true
   if (tab === 'trending') return Boolean(item.trending)
   return item.category === tab
+}
+
+export function matchesDollFilter(item, filter) {
+  if (!filter) return true
+  return item.dollSize === filter
 }
 
 export function catalogForKid(catalog, years, tab, clothingSize) {
@@ -139,6 +155,8 @@ export function fromDbCatalog(row) {
     trending: row.trending,
     check_size: row.check_size,
     sizes: row.sizes,
+    doll_size: row.doll_size,
+    doll_fit_note: row.doll_fit_note,
     sort: row.sort,
   })
 }

@@ -118,6 +118,37 @@ export function ClothesArt() {
   )
 }
 
+export function DollClothesArt() {
+  return (
+    <Art>
+      <circle cx="60" cy="60" r="54" fill="#F3D7C8" />
+      <path d="M38 34h44l-8 18H46z" fill="#F2B544" />
+      <path d="M28 62 60 48l32 14 10 40H18z" fill="#C8643B" />
+      <path d="M60 48v54" stroke="#F6EFE6" strokeWidth="4" />
+    </Art>
+  )
+}
+
+export function BabyDollArt() {
+  return (
+    <Art>
+      <circle cx="60" cy="60" r="54" fill="#F8E7C0" />
+      <path d="M46 42h28l-6 12H52z" fill="#F2B544" />
+      <path d="M40 60 60 50l20 10 6 28H34z" fill="#C8643B" />
+    </Art>
+  )
+}
+
+export function BiggerDollArt() {
+  return (
+    <Art>
+      <circle cx="60" cy="60" r="54" fill="#F3D7C8" />
+      <path d="M36 30h48l-8 16H44z" fill="#F2B544" />
+      <path d="M24 54 60 40l36 14 8 48H16z" fill="#C8643B" />
+    </Art>
+  )
+}
+
 export function LearningArt() {
   return (
     <Art>
@@ -135,20 +166,6 @@ export function SparkleArt() {
       <path d="M60 18 70 46 98 50 76 68 82 98 60 82 38 98 44 68 22 50 50 46Z" fill="#F2B544" />
       <circle cx="26" cy="28" r="6" fill="#C8643B" />
       <circle cx="94" cy="32" r="4" fill="#7A9A74" />
-    </Art>
-  )
-}
-
-function Dolls() {
-  return (
-    <Art>
-      <circle cx="60" cy="60" r="54" fill="#F8E7C0" />
-      <circle cx="60" cy="46" r="16" fill="#F3C7A6" />
-      <path d="M44 44c2-16 30-16 32 0" fill="#3A2A22" />
-      <path d="M36 78 60 62l24 16v22H36z" fill="#C8643B" />
-      <circle cx="78" cy="40" r="6" fill="#7A9A74" />
-      <circle cx="54" cy="46" r="2" fill="#3A2A22" />
-      <circle cx="66" cy="46" r="2" fill="#3A2A22" />
     </Art>
   )
 }
@@ -244,7 +261,6 @@ function Stuffed() {
 }
 
 const TILES = {
-  dolls: Dolls,
   lego: Lego,
   art: ArtSupplies,
   books: Books,
@@ -255,6 +271,7 @@ const TILES = {
   toys: ToysArt,
   clothes: ClothesArt,
   learning: LearningArt,
+  dolls: DollClothesArt,
 }
 
 export function CategoryArt({ id }) {

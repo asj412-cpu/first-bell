@@ -64,6 +64,8 @@ function CatalogCard({ item, kids, onSave, onRemove }) {
           <p className="dim" style={{ margin: '4px 0 0' }}>
             {fits.length ? `Shows for ${fits.map((kid) => kid.name).join(', ')}` : hidden}
             {labeled ? ` · ${labeled}` : ''}
+            {draft.category === 'dolls' && draft.dollSize ? ` · ${draft.dollSize === 'toddler' ? 'bigger doll' : 'baby doll'}` : ''}
+            {draft.category === 'dolls' && draft.dollFitNote ? ` · ${draft.dollFitNote}` : ''}
             {draft.inStock === false ? ' · ask a grown-up' : ''}
             {draft.checkSize ? ' · check size' : ''}
             {draft.trending ? ' · trending' : ''}
@@ -96,6 +98,16 @@ function CatalogCard({ item, kids, onSave, onRemove }) {
           <label className="field">
             <span>Sizes</span>
             <input value={draft.sizes || ''} placeholder="5,6,7 or 5/6+" onChange={(event) => patch({ sizes: event.target.value })} />
+          </label>
+        )}
+        {draft.category === 'dolls' && (
+          <label className="field">
+            <span>Doll</span>
+            <select value={draft.dollSize || ''} onChange={(event) => patch({ dollSize: event.target.value })}>
+              <option value="">Any doll</option>
+              <option value="baby">Baby doll</option>
+              <option value="toddler">Bigger doll</option>
+            </select>
           </label>
         )}
         <label className="field">

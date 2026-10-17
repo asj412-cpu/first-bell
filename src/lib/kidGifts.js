@@ -123,7 +123,13 @@ export function makeCatalogItem(list, product, clothingSize) {
   return {
     id: crypto.randomUUID(),
     title: product.name,
-    notes: [product.retailer, price, product.inStock === false ? 'Ask a grown-up' : '', product.checkSize ? 'Check size' : ''].filter(Boolean).join(' · '),
+    notes: [
+      product.retailer,
+      price,
+      product.inStock === false ? 'Ask a grown-up' : '',
+      product.checkSize ? 'Check size' : '',
+      product.category === 'dolls' ? product.dollFitNote : '',
+    ].filter(Boolean).join(' · '),
     url: product.url || '',
     urlSecondary: '',
     image: product.image || '',

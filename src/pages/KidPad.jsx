@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { BackArt, CameraArt, CategoryArt, ClothesArt, GiftArt, HeartArt, LearningArt, LockArt, MicArt, SparkleArt, SpeakerArt, ToysArt } from '../components/KidArt.jsx'
-import { CATALOG_TABS, catalogForKid, matchesCatalogTab, normalizeCatalogItem, spokenProduct } from '../lib/catalog.js'
+import { BabyDollArt, BackArt, BiggerDollArt, CameraArt, CategoryArt, ClothesArt, DollClothesArt, GiftArt, HeartArt, LearningArt, LockArt, MicArt, SparkleArt, SpeakerArt, ToysArt } from '../components/KidArt.jsx'
+import { CATALOG_TABS, DOLL_FILTERS, catalogForKid, matchesCatalogTab, matchesDollFilter, normalizeCatalogItem, spokenProduct } from '../lib/catalog.js'
 import {
   KID_PROMPTS,
   blobToDataUrl,
@@ -23,6 +23,12 @@ const TAB_ART = {
   toys: ToysArt,
   clothes: ClothesArt,
   learning: LearningArt,
+  dolls: DollClothesArt,
+}
+
+const DOLL_ART = {
+  baby: BabyDollArt,
+  toddler: BiggerDollArt,
 }
 
 const BURST = [
@@ -98,6 +104,7 @@ export default function KidPad() {
   const [loading, setLoading] = useState(Boolean(supabase))
   const [panel, setPanel] = useState('home')
   const [tab, setTab] = useState('trending')
+  const [dollFilter, setDollFilter] = useState('')
   const [burst, setBurst] = useState(false)
   const [shake, setShake] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -344,9 +351,15 @@ export default function KidPad() {
   const items = kidVisibleItems(list)
   const profile = state.profiles.find((row) => row.memberKey === list.kidKey)
   const years = ageInYears(profile?.birthDate)
-  const products = supabase
-    ? remoteCatalog.filter((item) => matchesCatalogTab(item, tab))
-    : catalogForKid(state.catalog, years, tab, profile?.clothingSize)
+  const dollChoices = supabase
+    ? remoteCatalog.filter((item) => item.category === 'dolls')
+    : catalogForKid(state.catalog, years, 'dolls', profile?.clothingSize)
+  const tabs = dollChoices.length ? CATALOG_TABS : CATALOG_TABS.filter((entry) => entry.id !== 'dolls')
+  const pickedTab = tabs.some((entry) => entry.id === tab) ? tab : 'trending'
+  const products = (supabase
+    ? remoteCatalog.filter((item) => matchesCatalogTab(item, pickedTab))
+    : catalogForKid(state.catalog, years, pickedTab, profile?.clothingSize)
+  ).filter((item) => pickedTab !== 'dolls' || matchesDollFilter(item, dollFilter))
 
   return (
     <div className={`kid-pad ${shake ? 'shake' : ''}`} data-panel={panel}>
@@ -391,16 +404,16 @@ export default function KidPad() {
       ) : (
         <>
           <div className="kid-tabs" role="tablist" aria-label="Pictures">
-            {CATALOG_TABS.map((entry) => {
+            {tabs.map((entry) => {
               const Art = TAB_ART[entry.id]
               return (
                 <button
                   key={entry.id}
                   type="button"
                   role="tab"
-                  className={`kid-tab ${tab === entry.id ? 'on' : ''}`}
+                  className={`kid-tab ${entry.id === 'dolls' ? 'wide' : ''} ${pickedTab === entry.id ? 'on' : ''}`}
                   aria-label={entry.speak}
-                  aria-selected={tab === entry.id}
+                  aria-selected={pickedTab === entry.id}
                   onClick={() => {
                     setTab(entry.id)
                     speak(entry.speak)
@@ -411,6 +424,29 @@ export default function KidPad() {
               )
             })}
           </div>
+          {pickedTab === 'dolls' && (
+            <div className="kid-doll-filters" role="group" aria-label="Doll size">
+              {DOLL_FILTERS.map((entry) => {
+                const Art = DOLL_ART[entry.id]
+                const on = dollFilter === entry.id
+                return (
+                  <button
+                    key={entry.id}
+                    type="button"
+                    className={`kid-doll-chip ${on ? 'on' : ''}`}
+                    aria-label={entry.speak}
+                    aria-pressed={on}
+                    onClick={() => {
+                      setDollFilter(on ? '' : entry.id)
+                      speak(entry.speak)
+                    }}
+                  >
+                    <Art />
+                  </button>
+                )
+              })}
+            </div>
+          )}
           <div className="kid-catalog">
             {products.map((product) => {
               const image = safeMedia(product.image, 'image')

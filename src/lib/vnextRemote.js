@@ -199,6 +199,8 @@ export async function mirrorVnext(client, action, snapshot) {
         trending: Boolean(item.trending),
         check_size: item.checkSize === true,
         sizes: item.sizes || null,
+        doll_size: item.dollSize || null,
+        doll_fit_note: item.dollFitNote || null,
         slug: item.slug || null,
         sort: item.sort ?? 0,
       }),
