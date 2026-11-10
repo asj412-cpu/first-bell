@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { currentWeeks, planForDate } from '../data/learning/index.js'
 import { PARTY } from '../data/seed.js'
 import Avatar from '../components/Avatar.jsx'
 import { turnsLabel } from '../lib/birthdays.js'
@@ -7,6 +8,7 @@ import { formatShortDate, greeting, parseLocalDate } from '../lib/format.js'
 import { motifFor } from '../lib/motifs.js'
 import { buildNextUp } from '../lib/nextup.js'
 import { useBell } from '../lib/store.jsx'
+import { chicagoTodayIso } from '../lib/time.js'
 import { IconArrow } from '../components/Icons.jsx'
 
 function weekdayDate(iso) {
@@ -35,10 +37,24 @@ export default function Home() {
   const connected = (state.imports || []).length > 0
   const [featured, ...rest] = nextUp.soon
   const featuredPlanned = featured ? state.events.some((event) => event.id === `plan-${featured.key}`) : false
+  const today = chicagoTodayIso()
+  const learningNow = currentWeeks(today)
 
   return (
     <div>
       <h1 className="casa-greet">{greeting()}, Johnsons</h1>
+      {learningNow.map((week) => {
+        const kid = state.profiles.find((profile) => profile.memberKey === week.kidKey)
+        const plan = planForDate(week, today)
+        return (
+          <Link key={week.id} to={`/learning/${week.kidKey}?week=${week.weekStart}`} className="card pad learn-home">
+            <div className="kicker">This week’s learning</div>
+            <h2>{kid?.name || week.kidKey}</h2>
+            <p className="when">{week.title}</p>
+            {plan && <p className="muted">{plan.label}. {plan.doTogether}</p>}
+          </Link>
+        )
+      })}
       <div className="casa-hero" role="img" aria-label="The house at dusk" />
 
       {!connected && (

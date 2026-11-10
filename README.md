@@ -68,3 +68,7 @@ Never commit real keys. Apply SQL in `supabase/migrations/` before testing live 
 ## Stack
 
 Vite · React 18 · React Router 6 · Supabase (Auth + Postgres + RLS). Family calendar sync is next (shared calendar or one `.ics` — never an Apple/Google password).
+
+## At-home learning
+
+House → **Learning** (`/learning` and `/learning/:kidKey`). It is a weekly, per-child Peek for the kitchen table. Claire’s week of November 9–13, 2026 is the first file. Parent “We did this” checks persist in `localStorage` (`first-bell.v1`) and, after the new SQL is applied by hand, in `learning_progress`. The migration is not applied yet. Add the next Monday by dropping a JSON file in `src/data/learning/weeks/` and registering it in `src/data/learning/index.js`. Format: `docs/AT-HOME-LEARNING.md`.

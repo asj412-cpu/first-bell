@@ -1,0 +1,333 @@
+{
+  "id": "2026-11-09-claire",
+  "kidKey": "claire",
+  "weekStart": "2026-11-09",
+  "weekEnd": "2026-11-16",
+  "title": "Week of Nov 9–13",
+  "teacher": "Mrs. Krigbaum",
+  "school": "Creekview",
+  "peekLabel": "First Grade Peek of the Week, November 9–13, 2026 (Week 13)",
+  "summary": "Short, parent-led practice for Claire (1st grade, Mrs. Krigbaum, Creekview) for the week of November 9–13, 2026. The skills, word lists, and sentences come from this week's Peek of the Week and the official UFLI Home Practice pages her teacher linked. Anything I added is marked as an extra.",
+  "focus": {
+    "calloutLead": "Highest-leverage practice this week",
+    "lead": "Mrs. Krigbaum does a progress-monitoring check of the spelling pattern and irregular words every Friday. This Friday, November 13, that means the u_e / silent-e pattern and the heart words one, once, who, by, and my. A calm 10-minute review Thursday evening or Friday morning is the best use of time.",
+    "body": "From the November 9–13 Peek of the Week, Claire's class is working on UFLI Lesson 58 (u_e) and Lesson 59 (VCe / silent-e review); story elements of traditional literature (fables, folktales, and fairytales), plus the lesson the story teaches and a retell; past-tense verbs; addition and subtraction word problems within 20, including making up their own; the importance of voting; and observing and writing about the weather.",
+    "homeworkQuote": "UFLI Home Practice (in the Wednesday folder); read every night; practice writing sentences using correct capitalization and punctuation; fact fluency, practice basic math facts to 20; and the Class Link apps Lexia and IXL.",
+    "homeworkCite": "Mrs. Krigbaum, Suggested Homework, Peek of the Week, November 9–13, 2026",
+    "standingRoutine": "A September 28 note from Mrs. Krigbaum is still the standing routine: Claire reads from her phonics binder Thursday through Monday and returns it on Tuesdays. The current week's phonics pattern paper stays at home in the plastic envelope for practice."
+  },
+  "howTo": {
+    "intro": "Each activity is 10 to 20 minutes at the kitchen table. Stop while it is still going well. If the Wednesday folder or the phonics-binder envelope has a slightly different word list than the official UFLI sheets below, use the paper that came home first.",
+    "bullets": [
+      "Materials you already have: sticky notes or index cards, a pencil, paper, a picture book or library book, and small counters such as cereal, beans, or spoons.",
+      "Keep it warm and short. Celebrate a close try, then help her fix it.",
+      "Tonight, Tuesday, November 10: send the phonics binder back if it is still at home.",
+      "Wednesday, November 11: library day for Mrs. Krigbaum's class, and Creekview is asking students to wear red, white, and blue for Veterans Day."
+    ]
+  },
+  "planNote": "Times are America/Chicago (CT). This is a simple rhythm, not a required homework schedule.",
+  "plan": [
+    {
+      "id": "tue",
+      "date": "2026-11-10",
+      "endDate": null,
+      "label": "Tue, Nov 10",
+      "about": "Binder return day",
+      "doTogether": "Send the phonics binder back if it is still at home. Nightly reading, then 5 minutes of facts to 20.",
+      "activityIds": []
+    },
+    {
+      "id": "wed",
+      "date": "2026-11-11",
+      "endDate": null,
+      "label": "Wed, Nov 11",
+      "about": "Veterans Day; library; Wednesday folder",
+      "doTogether": "Wear red, white, and blue. After school, start Activity 1 with the UFLI Home Practice sheet. Read at night. A fairytale or fable from the library helps Activity 4.",
+      "activityIds": ["a1", "a4"]
+    },
+    {
+      "id": "thu",
+      "date": "2026-11-12",
+      "endDate": null,
+      "label": "Thu, Nov 12",
+      "about": "Phonics binder practice starts today",
+      "doTogether": "Activities 2 and 3 (heart words and silent-e review). One or two sentences from Activity 5. Read at night.",
+      "activityIds": ["a2", "a3", "a5"]
+    },
+    {
+      "id": "fri",
+      "date": "2026-11-13",
+      "endDate": null,
+      "label": "Fri, Nov 13",
+      "about": "Progress monitoring at school",
+      "doTogether": "10-minute review of the word lists before school. After school, keep it light: Activity 6 or just read for fun.",
+      "activityIds": ["a6"]
+    },
+    {
+      "id": "sat-mon",
+      "date": "2026-11-14",
+      "endDate": "2026-11-16",
+      "label": "Sat–Mon, Nov 14–16",
+      "about": "Binder practice continues through Monday",
+      "doTogether": "Activity 4 (retell) and Activity 7 (weather). Keep nightly reading. Return the binder again on Tuesday, Nov 17.",
+      "activityIds": ["a4", "a7"]
+    }
+  ],
+  "wordsNote": "Copied from the official Lesson 58 and Lesson 59 Home Practice pages Mrs. Krigbaum linked through the UFLI toolbox. Use the Wednesday-folder sheet if it differs.",
+  "wordLists": [
+    {
+      "lesson": "58: u_e",
+      "sampleWords": ["cube", "mute", "fuse", "tune", "rule", "June"],
+      "chains": ["mule → mute → cute → cube", "use → muse → fuse → fume"],
+      "heartWords": ["one", "once"],
+      "sentences": ["Should we get one tube?", "They will tune the flute once."]
+    },
+    {
+      "lesson": "59: silent e review 2",
+      "sampleWords": ["grade", "chase", "slide", "quite", "froze", "these"],
+      "chains": ["tune → tone → cone → cane", "tame → time → dime → dome"],
+      "heartWords": ["who", "by", "my", "one", "once"],
+      "sentences": ["Who drove to see my game?", "There are five cones at the gate."]
+    }
+  ],
+  "activities": [
+    {
+      "id": "a1",
+      "number": 1,
+      "title": "Silent-e u_e word chains",
+      "goal": "Read and spell UFLI Lesson 58 u_e words, where silent e makes the u say its long sound.",
+      "time": "10–15 minutes",
+      "materials": "Sticky notes or index cards, a pencil, and the Lesson 58 Home Practice sheet if it is home.",
+      "steps": [
+        {
+          "title": "Write the letters",
+          "detail": "On separate sticky notes, write the letters you need for the first chain: m, u, l, e, t, c, b. Keep a silent e in a different color if you have one."
+        },
+        {
+          "title": "Build mule",
+          "detail": "Help Claire make mule. Say each sound, then the whole word. Point to the e at the end and say that it is quiet, but it makes the u say its name."
+        },
+        {
+          "title": "Change one letter at a time",
+          "detail": "Change l to t: mute. Change mute to cute. Change t to b: cube. After each change, have her read the new word before you say it."
+        },
+        {
+          "title": "Do the second chain",
+          "detail": "use → muse → fuse → fume, same way. Then have her read the sample words: cube, mute, fuse, tune, rule, June."
+        }
+      ],
+      "easier": "You build the words and she only reads them.",
+      "harder": "She writes the chain on paper, then reads the two official sentences, \"Should we get one tube?\" and \"They will tune the flute once.\"",
+      "gotIt": "She can read and spell cube, mute, fuse, tune, rule, and June, and she can complete one chain without being told the new word first."
+    },
+    {
+      "id": "a2",
+      "number": 2,
+      "title": "Heart words for Friday",
+      "goal": "Read and write the irregular words from UFLI 58 and 59: one, once, who, by, and my.",
+      "time": "10 minutes",
+      "materials": "Five index cards or sticky notes, a pencil, and a small piece of paper.",
+      "steps": [
+        {
+          "title": "Make five cards",
+          "detail": "Write one, once, who, by, and my, one word per card. These are the official heart words on this week's Home Practice pages (by and my are marked as review)."
+        },
+        {
+          "title": "Read, then hide",
+          "detail": "Mix the cards. She reads each one, then you flip it over and she writes it on a scrap of paper. Check together and fix any letters."
+        },
+        {
+          "title": "Use two in a sentence",
+          "detail": "Ask her to say, then write, one of the official sentences, such as \"Should we get one tube?\" or \"Who drove to see my game?\" Watch for a capital at the start and a question mark at the end."
+        }
+      ],
+      "easier": "Practice only one and once, the new words from Lesson 58.",
+      "harder": "She writes both official question sentences from memory after hearing them once.",
+      "gotIt": "She can read all five words quickly and write one, once, and who correctly without looking."
+    },
+    {
+      "id": "a3",
+      "number": 3,
+      "title": "Silent-e review sort",
+      "goal": "Notice that silent e (the VCe pattern) can work with different vowels, which is the Lesson 59 review.",
+      "time": "15 minutes",
+      "materials": "Sticky notes, a pencil, and a clear table top for five columns.",
+      "steps": [
+        {
+          "title": "Write the sample words",
+          "detail": "One word per note: grade, chase, slide, quite, froze, these. Add the chain words if you want more: tune, tone, cone, cane, tame, time, dime, dome."
+        },
+        {
+          "title": "Sort by the vowel",
+          "detail": "Make columns for a_e, i_e, o_e, u_e, and e_e. She reads each word and places it in the matching column (grade and chase under a_e, slide and quite under i_e, and so on)."
+        },
+        {
+          "title": "Run a chain",
+          "detail": "Build tune, then change it to tone, cone, and cane, or tame to time, dime, and dome. She should read the new word before you tell her what it is."
+        }
+      ],
+      "easier": "Use only the six sample words and sort them together.",
+      "harder": "She completes a chain on her own, then reads \"There are five cones at the gate.\"",
+      "gotIt": "She can tell you that the final e is silent and can sort at least five of the official words by their vowel pattern."
+    },
+    {
+      "id": "a4",
+      "number": 4,
+      "title": "Read, find the lesson, retell",
+      "goal": "Understand the story elements of a fable, folktale, or fairytale, name the lesson it teaches, and retell it.",
+      "time": "15–20 minutes",
+      "materials": "A traditional tale from home or from Wednesday's library visit. Mrs. Krigbaum did not name a required title, so use any fable, folktale, or fairytale you already have.",
+      "steps": [
+        {
+          "title": "Read together",
+          "detail": "Read the story aloud, or take turns if the text is a comfortable fit. Enjoy it once through before you ask questions."
+        },
+        {
+          "title": "Name the story parts",
+          "detail": "Ask who the characters are, where and when the story happens, and what the problem and the ending are. Keep the language simple: who, where, what went wrong, how it ended."
+        },
+        {
+          "title": "Find the lesson",
+          "detail": "Ask what the story is trying to teach. If she stalls, offer two choices and let her pick and explain."
+        },
+        {
+          "title": "Retell",
+          "detail": "Have her retell the story in her own words, beginning, middle, and end, without looking at every page."
+        }
+      ],
+      "easier": "You retell first, then she fills in the characters and the ending.",
+      "harder": "She retells on her own and tells you the lesson in one sentence.",
+      "gotIt": "She can name the characters, the problem, the ending, and one lesson the story teaches."
+    },
+    {
+      "id": "a5",
+      "number": 5,
+      "title": "Sentence workshop",
+      "goal": "Write sentences with correct capitalization and punctuation, and keep practicing past-tense verbs, both from this week's Peek.",
+      "time": "10–15 minutes",
+      "materials": "Paper and a pencil. Use official UFLI words and sentences first.",
+      "steps": [
+        {
+          "title": "Read a model",
+          "detail": "Read one official sentence: \"They will tune the flute once.\" Talk about the capital T and the period."
+        },
+        {
+          "title": "Change it to past tense",
+          "detail": "Ask how it would sound if it already happened. A natural version is \"They tuned the flute once.\" Tuned is an extra example I made from the official word tune; it was not printed on the Home Practice sheet."
+        },
+        {
+          "title": "Write two sentences",
+          "detail": "She writes the official sentence \"There are five cones at the gate.\" Then she writes one new sentence using a word from the list, starting with a capital and ending with a period or question mark."
+        },
+        {
+          "title": "Check together",
+          "detail": "Look only for a capital at the start, a mark at the end, and a past-tense verb if she tried one. Do not mark every spelling."
+        }
+      ],
+      "easier": "She copies one official sentence carefully, then tells you a past-tense sentence out loud.",
+      "harder": "She writes two sentences of her own, each with a capital, an end mark, and a past-tense verb.",
+      "gotIt": "A sentence starts with a capital, ends with the right mark, and she can change a present verb such as tune or chase into past tense when you ask."
+    },
+    {
+      "id": "a6",
+      "number": 6,
+      "title": "Kitchen-table word problems",
+      "goal": "Solve addition and subtraction word problems within 20, make up one of her own, and practice basic facts to 20.",
+      "time": "15–20 minutes",
+      "materials": "10 to 20 counters (cereal, beans, spoons, or coins) and a pencil.",
+      "steps": [
+        {
+          "title": "Warm up the facts",
+          "detail": "For about five minutes, flash facts within 20. Mix addition and subtraction. Use the counters only when she wants to check."
+        },
+        {
+          "title": "Solve two stories",
+          "detail": "The exact numbers below are extras I wrote so you have something ready; Mrs. Krigbaum asked for word problems within 20 but did not send these stories. Example: Claire had 8 spoons and got 6 more. How many now? Then: There were 15 grapes. She ate 7. How many are left?"
+        },
+        {
+          "title": "Act it out",
+          "detail": "She builds each problem with counters, says the number sentence, and writes it (8 + 6 = 14, 15 − 7 = 8)."
+        },
+        {
+          "title": "She becomes the teacher",
+          "detail": "Ask her to make up one addition or subtraction story of her own within 20. You solve it, and she checks you with the counters."
+        }
+      ],
+      "easier": "Stay within 10, and let her use counters for every problem.",
+      "harder": "All mental math within 20, then she writes her own story and the number sentence.",
+      "gotIt": "She can solve one addition and one subtraction story within 20 and tell you a new story of her own."
+    },
+    {
+      "id": "a7",
+      "number": 7,
+      "title": "Window weather watch",
+      "goal": "Observe the weather and write about it, which is this week's science focus.",
+      "time": "10–15 minutes",
+      "materials": "A window or a quick step outside, paper, and a pencil. A crayon is enough if she wants to draw.",
+      "steps": [
+        {
+          "title": "Look carefully",
+          "detail": "Stand at the window or step outside for a minute. Ask what she sees and feels: sun, clouds, rain, wind, and whether it feels hot, warm, cool, or cold."
+        },
+        {
+          "title": "Say it, then write it",
+          "detail": "She tells you one or two sentences about today's weather, then writes them. Remind her about a capital and an end mark, same as Activity 5."
+        },
+        {
+          "title": "Optional sketch",
+          "detail": "If she wants, she can draw what she saw and label it. The drawing is an extra; the teacher asked them to observe and write."
+        }
+      ],
+      "easier": "She dictates and you write, then she reads it back and adds the capital or period.",
+      "harder": "She writes two sentences on her own, maybe comparing today with yesterday.",
+      "gotIt": "She can tell you what the weather is like and write at least one complete sentence about it."
+    }
+  ],
+  "extrasIntro": "These are optional. The first two come from her suggested homework. The third is an extra I added to go with this week's social studies topic, voting. It is not required.",
+  "extras": [
+    {
+      "text": "Lexia or IXL on Class Link, if you already use those school apps at home. A short session is enough; skip this if login is a hassle tonight.",
+      "official": true
+    },
+    {
+      "text": "Nightly reading, even on a busy night: 10 minutes of a book she enjoys still counts.",
+      "official": true
+    },
+    {
+      "text": "Extra: a tiny family vote. Offer two snacks, two books, or two weekend activities. Each person votes, you count, and she helps say which choice wins. This practices the idea of voting; Mrs. Krigbaum did not send a home assignment for it.",
+      "official": false
+    }
+  ],
+  "links": [
+    {
+      "title": "Peek of the Week, November 9–13",
+      "site": "Google Doc",
+      "href": "https://docs.google.com/document/d/1xY5BItn9UXPxU038i4evW_87tjsPDaktghqRWx887ss/edit"
+    },
+    {
+      "title": "UFLI Foundations toolbox",
+      "site": "ufli.education.ufl.edu",
+      "href": "https://ufli.education.ufl.edu/foundations/toolbox/"
+    },
+    {
+      "title": "Lesson 58 Home Practice (u_e)",
+      "site": "UFLI PDF",
+      "href": "https://ufli.education.ufl.edu/wp-content/uploads/2022/08/58_HomePractice_UFLI-Foundations.pdf"
+    },
+    {
+      "title": "Lesson 59 Home Practice (silent e review 2)",
+      "site": "UFLI PDF",
+      "href": "https://ufli.education.ufl.edu/wp-content/uploads/2022/08/59_HomePractice_UFLI-Foundations.pdf"
+    },
+    {
+      "title": "UFLI Home Support Guide",
+      "site": "UFLI PDF",
+      "href": "https://ufli.education.ufl.edu/wp-content/uploads/2022/09/UFLI_Foundations_Home_Support_Guide_Updated.pdf"
+    }
+  ],
+  "sources": [
+    "Mrs. Krigbaum, First Grade Peek of the Week, November 9–13, 2026 (Week 13)",
+    "Mrs. Krigbaum email, September 28, 2026: phonics binder Thursday–Monday, return Tuesday; Friday progress monitoring",
+    "UFLI Foundations Lesson 58 Home Practice (u_e) and Lesson 59 Home Practice (silent e review 2)"
+  ]
+}
