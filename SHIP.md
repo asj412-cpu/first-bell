@@ -46,6 +46,7 @@ Files, in order:
 - `supabase/migrations/20260902120000_household_parties_rsvps.sql`
 - `supabase/migrations/20260902133000_tighten_rsvp_grants.sql`
 - `supabase/migrations/20261016040000_vnext_calendar_gifts_meals.sql` (additive: calendar import, gift lists, meal plans, household profiles — not applied by the app)
+- `supabase/migrations/20261110120000_learning_progress.sql` (additive parent checkmarks for At-home learning — **not applied**; do not run it until Andrew says yes. Until then, Learning checks stay in this browser.)
 
 Creates `households`, `household_members`, `parties`, `rsvps`, RLS, guest RPC `submit_public_rsvp`, host RPC `ensure_host_membership`, and seeds Chloe’s party (Oct 10 2026 1:00–2:30 CT, Cypress Academy Kuykendahl, Amazon `L53W1XS578SM`, Leila Yes).
 

@@ -95,6 +95,23 @@ export async function pullVnext(client, householdId) {
     })
   }
 
+  const learningRes = await client
+    .from('learning_progress')
+    .select('kid_key, week_start, plan_id, done, done_at')
+    .eq('household_id', householdId)
+
+  let learningProgress = null
+  let learningRemote = false
+  let learningNote = ''
+  if (learningRes.error) {
+    learningNote = missing(learningRes.error)
+      ? 'Learning checkmarks stay on this device until the learning_progress migration is applied.'
+      : learningRes.error.message || 'Could not load learning checkmarks.'
+  } else {
+    learningRemote = true
+    learningProgress = mapLearningRows(learningRes.data || [])
+  }
+
   return {
     available: true,
     imports: importsRes.data || [],
@@ -103,7 +120,23 @@ export async function pullVnext(client, householdId) {
     mealPlans,
     grocery,
     events: (eventsRes.data || []).map(mapEvent),
+    learningProgress,
+    learningRemote,
+    learningNote,
   }
+}
+
+function mapLearningRows(rows) {
+  const out = {}
+  for (const row of rows) {
+    const kid = row.kid_key
+    const week = String(row.week_start || '').slice(0, 10)
+    if (!kid || !week || !row.plan_id) continue
+    out[kid] = out[kid] || {}
+    out[kid][week] = out[kid][week] || {}
+    out[kid][week][row.plan_id] = { done: Boolean(row.done), doneAt: row.done_at || null }
+  }
+  return out
 }
 
 async function quiet(promise) {
@@ -243,6 +276,26 @@ export async function mirrorVnext(client, action, snapshot) {
         .eq('household_id', householdId)
         .eq('week_start', action.weekStart)
         .eq('name', item.name),
+    )
+  }
+
+  if (action.type === 'toggle-learning-plan') {
+    if (!snapshot.learningRemote) return
+    const row = snapshot.learningProgress?.[action.kidKey]?.[action.weekStart]?.[action.planId]
+    if (!row) return
+    await quiet(
+      client.from('learning_progress').upsert(
+        {
+          household_id: householdId,
+          kid_key: action.kidKey,
+          week_start: action.weekStart,
+          plan_id: action.planId,
+          done: Boolean(row.done),
+          done_at: row.doneAt || null,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'household_id,kid_key,week_start,plan_id' },
+      ),
     )
   }
 }

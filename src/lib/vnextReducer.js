@@ -176,11 +176,52 @@ export function vnextReducer(state, action) {
           ),
         },
       }
+    case 'toggle-learning-plan': {
+      const byKid = state.learningProgress?.[action.kidKey] || {}
+      const byWeek = byKid[action.weekStart] || {}
+      const done = !planIsDone(state.learningProgress, action.kidKey, action.weekStart, action.planId)
+      return {
+        ...state,
+        learningProgress: {
+          ...state.learningProgress,
+          [action.kidKey]: {
+            ...byKid,
+            [action.weekStart]: {
+              ...byWeek,
+              [action.planId]: done
+                ? { done: true, doneAt: action.at || new Date().toISOString() }
+                : { done: false, doneAt: null },
+            },
+          },
+        },
+      }
+    }
     case 'replace-gifts':
       return { ...state, giftLists: action.giftLists }
     default:
       return state
   }
+}
+
+export function planIsDone(progress, kidKey, weekStart, planId) {
+  const row = progress?.[kidKey]?.[weekStart]?.[planId]
+  if (!row) return false
+  if (typeof row === 'boolean') return row
+  return Boolean(row.done)
+}
+
+export function mergeLearning(local, remote) {
+  const out = { ...(local || {}) }
+  for (const [kid, weeks] of Object.entries(remote || {})) {
+    if (!weeks || typeof weeks !== 'object') continue
+    const nextWeeks = { ...(out[kid] || {}) }
+    for (const [week, plans] of Object.entries(weeks)) {
+      if (!plans || typeof plans !== 'object') continue
+      nextWeeks[week] = { ...(nextWeeks[week] || {}), ...plans }
+    }
+    out[kid] = nextWeeks
+  }
+  return out
 }
 
 export function initialVnext() {
@@ -191,6 +232,8 @@ export function initialVnext() {
     profiles: mergeProfiles(null),
     mealPlans: {},
     grocery: {},
+    learningProgress: {},
+    learningRemote: false,
     kidMode: false,
     vnextReady: false,
     vnextNote: '',
@@ -208,6 +251,8 @@ export function hydrateVnext(saved) {
     profiles: mergeProfiles(saved.profiles),
     mealPlans: saved.mealPlans && typeof saved.mealPlans === 'object' ? saved.mealPlans : {},
     grocery: saved.grocery && typeof saved.grocery === 'object' ? saved.grocery : {},
+    learningProgress:
+      saved.learningProgress && typeof saved.learningProgress === 'object' ? saved.learningProgress : {},
     kidMode: Boolean(saved.kidMode),
   }
 }

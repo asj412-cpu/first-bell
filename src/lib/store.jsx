@@ -4,7 +4,7 @@ import { freshState, HOUSEHOLD, PARTY } from '../data/seed.js'
 import { mergeEvents } from './events.js'
 import { fromDbRsvp, hostDisplayName, toDbStatus } from './rsvps.js'
 import { isSupabaseConfigured, supabase } from './supabase.js'
-import { hydrateVnext, vnextReducer } from './vnextReducer.js'
+import { hydrateVnext, mergeLearning, vnextReducer } from './vnextReducer.js'
 import { mirrorVnext, pullVnext } from './vnextRemote.js'
 
 const KEY = 'first-bell.v1'
@@ -91,9 +91,10 @@ export function BellProvider({ children }) {
       profiles: state.profiles,
       mealPlans: state.mealPlans,
       grocery: state.grocery,
+      learningProgress: state.learningProgress,
       kidMode: state.kidMode,
     })
-  }, [state.session, state.guests, state.messages, state.backend, state.events, state.imports, state.giftLists, state.profiles, state.mealPlans, state.grocery, state.kidMode])
+  }, [state.session, state.guests, state.messages, state.backend, state.events, state.imports, state.giftLists, state.profiles, state.mealPlans, state.grocery, state.learningProgress, state.kidMode])
 
   const loadRsvps = useCallback(async (partyUuid) => {
     if (!supabase || !partyUuid) return
@@ -219,13 +220,17 @@ export function BellProvider({ children }) {
       setState((prev) => ({
         ...prev,
         vnextReady: true,
-        vnextNote: '',
         imports: result.imports,
         giftLists: result.giftLists.length ? result.giftLists : prev.giftLists,
         profiles: result.profiles.length ? mergeProfiles(result.profiles) : prev.profiles,
         mealPlans: Object.keys(result.mealPlans).length ? { ...prev.mealPlans, ...result.mealPlans } : prev.mealPlans,
         grocery: Object.keys(result.grocery).length ? { ...prev.grocery, ...result.grocery } : prev.grocery,
         events: mergeEvents([...(prev.events || []), ...result.events]),
+        learningRemote: Boolean(result.learningRemote),
+        learningProgress: result.learningProgress
+          ? mergeLearning(prev.learningProgress, result.learningProgress)
+          : prev.learningProgress,
+        vnextNote: result.learningNote || '',
       }))
     })
     return () => {
@@ -365,6 +370,9 @@ export function BellProvider({ children }) {
       },
       toggleGrocery(weekStart, itemId) {
         applyVnext({ type: 'toggle-grocery', weekStart, itemId })
+      },
+      toggleLearningPlan(kidKey, weekStart, planId) {
+        applyVnext({ type: 'toggle-learning-plan', kidKey, weekStart, planId })
       },
       async setRsvp(guestId, status) {
         update((s) => ({

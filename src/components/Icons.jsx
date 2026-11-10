@@ -102,6 +102,15 @@ export function IconMeal(props) {
   )
 }
 
+export function IconLearn(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
+      <path d="M12 6.2c-1.6-1-3.4-1.4-5.5-1.4H4.5V18c2.1 0 3.9.4 5.5 1.4 1.6-1 3.4-1.4 5.5-1.4h2V4.8h-2c-2.1 0-3.9.4-5.5 1.4Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+      <path d="M12 6.2V19.4" stroke="currentColor" strokeWidth="1.7" />
+    </svg>
+  )
+}
+
 export function IconGift(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>

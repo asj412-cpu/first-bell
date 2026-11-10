@@ -9,6 +9,7 @@ import Gifts from './pages/Gifts.jsx'
 import GuestRsvp from './pages/GuestRsvp.jsx'
 import History from './pages/History.jsx'
 import Home from './pages/Home.jsx'
+import Learning from './pages/Learning.jsx'
 import Inbox from './pages/Inbox.jsx'
 import Meals from './pages/Meals.jsx'
 import Parties from './pages/Parties.jsx'
@@ -66,6 +67,8 @@ export default function App() {
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/history" element={<History />} />
         <Route path="/meals" element={<Meals />} />
+        <Route path="/learning" element={<Learning />} />
+        <Route path="/learning/:kidKey" element={<Learning />} />
         <Route path="/gifts" element={<Gifts />} />
         <Route path="/gifts/:kidKey" element={<GiftDetail />} />
         <Route path="/settings" element={<Settings />} />

@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useBell } from '../lib/store.jsx'
 import BackendBanner from './BackendBanner.jsx'
-import { IconCal, IconGear, IconGift, IconHistory, IconHome, IconInbox, IconMeal, IconParty } from './Icons.jsx'
+import { IconCal, IconGear, IconGift, IconHistory, IconHome, IconInbox, IconLearn, IconMeal, IconParty } from './Icons.jsx'
 
 const TABS = [
   { to: '/', label: 'Next up', icon: IconHome, end: true },
@@ -12,6 +12,7 @@ const TABS = [
 ]
 
 const MORE = [
+  { to: '/learning', label: 'Learning', icon: IconLearn },
   { to: '/parties', label: 'Parties', icon: IconParty },
   { to: '/inbox', label: 'Inbox', icon: IconInbox },
   { to: '/settings', label: 'Settings', icon: IconGear },
