@@ -203,11 +203,12 @@ export function BellProvider({ children }) {
 
   useEffect(() => {
     if (!supabase || state.backend !== 'live' || !state.householdId) return undefined
-    if (pulledFor.current === state.householdId) return undefined
-    pulledFor.current = state.householdId
+    const householdId = state.householdId
+    if (pulledFor.current === householdId) return undefined
     let cancelled = false
-    pullVnext(supabase, state.householdId).then((result) => {
+    pullVnext(supabase, householdId).then((result) => {
       if (cancelled) return
+      pulledFor.current = householdId
       if (!result.available) {
         patch({
           vnextReady: false,
