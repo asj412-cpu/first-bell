@@ -1,0 +1,156 @@
+[
+  {
+    "name": "new york crew sweatshirt",
+    "category": "Clothes",
+    "age_fit": "Girls (kids sizing; exact size 5-7/XS availability not verified)",
+    "retailer": "Abercrombie Kids",
+    "price": "$37.46",
+    "original_price": "$49.95",
+    "url": "https://www.abercrombie.com/shop/us/kids/p/new-york-crew-sweatshirt-63820923",
+    "image_url": "https://img.abercrombie.com/is/image/anf/KIC_252-26003-00385-250_model1?policy=product-medium",
+    "captured_at": "2026-10-16T08:50:00-05:00"
+  },
+  {
+    "name": "lace-trim satin top",
+    "category": "Clothes",
+    "age_fit": "Girls (kids sizing; exact size 5-7/XS availability not verified)",
+    "retailer": "Abercrombie Kids",
+    "price": "$29.96",
+    "original_price": "$39.95",
+    "url": "https://www.abercrombie.com/shop/us/kids/p/lace-trim-satin-top-63820921",
+    "image_url": "https://img.abercrombie.com/is/image/anf/KIC_240-26000-00035-178_model1?policy=product-medium",
+    "captured_at": "2026-10-16T08:50:00-05:00"
+  },
+  {
+    "name": "easy crew sweater",
+    "category": "Clothes",
+    "age_fit": "Girls (kids sizing; exact size 5-7/XS availability not verified)",
+    "retailer": "Abercrombie Kids",
+    "price": "$33.71",
+    "original_price": "$44.95",
+    "url": "https://www.abercrombie.com/shop/us/kids/p/easy-crew-sweater-63590319",
+    "image_url": "https://img.abercrombie.com/is/image/anf/KIC_250-6030-00134-615_life1?policy=product-medium",
+    "captured_at": "2026-10-16T08:50:00-05:00"
+  },
+  {
+    "name": "bootcut sweatpant",
+    "category": "Clothes",
+    "age_fit": "Girls (kids sizing; exact size 5-7/XS availability not verified)",
+    "retailer": "Abercrombie Kids",
+    "price": "$26.97",
+    "original_price": "$44.95",
+    "url": "https://www.abercrombie.com/shop/us/kids/p/bootcut-sweatpant-63751908",
+    "image_url": "https://img.abercrombie.com/is/image/anf/KIC_247-6071-00159-112_prod1?policy=product-medium",
+    "captured_at": "2026-10-16T08:50:00-05:00"
+  },
+  {
+    "name": "Kids Oversized Waffle T-Shirt",
+    "category": "Clothes",
+    "age_fit": "Girls (kids sizing; exact size 5-7/XS availability not verified)",
+    "retailer": "Gap Kids",
+    "price": "$24.95",
+    "original_price": null,
+    "url": "https://www.gap.com/browse/product.do?pid=911663032&vid=1&pcid=1127946&cid=1127946",
+    "image_url": "https://content.gapinc.com/b/0063/879/185/cn63879185.png?width=585",
+    "captured_at": "2026-10-16T08:50:00-05:00"
+  },
+  {
+    "name": "Kids Recycled Mockneck Puffer Jacket",
+    "category": "Clothes",
+    "age_fit": "Girls (kids sizing; exact size 5-7/XS availability not verified)",
+    "retailer": "Gap Kids",
+    "price": "$98.00",
+    "original_price": null,
+    "url": "https://www.gap.com/browse/product.do?pid=1185779012&vid=1&pcid=1127946&cid=1127946",
+    "image_url": "https://content.gapinc.com/b/0063/995/462/cn63995462.png?width=585",
+    "captured_at": "2026-10-16T08:50:00-05:00"
+  },
+  {
+    "name": "Kids CashSoft Oversized Fair Isle Sweater Dress",
+    "category": "Clothes",
+    "age_fit": "Girls (kids sizing; exact size 5-7/XS availability not verified)",
+    "retailer": "Gap Kids",
+    "price": "$59.95",
+    "original_price": null,
+    "url": "https://www.gap.com/browse/product.do?pid=1184971012&vid=1&pcid=1127946&cid=1127946",
+    "image_url": "https://content.gapinc.com/b/0063/656/298/cn63656298.png?width=585",
+    "captured_at": "2026-10-16T08:50:00-05:00"
+  },
+  {
+    "name": "CozePlush Cardigan Sweater for Girls",
+    "category": "Clothes",
+    "age_fit": "Girls (kids sizing; exact size 5-7/XS availability not verified)",
+    "retailer": "Old Navy",
+    "price": "$12.00",
+    "original_price": "$19.99",
+    "url": "https://oldnavy.gap.com/browse/product.do?pid=903878022&vid=1&pcid=1185229&cid=1185229",
+    "image_url": "https://content.gapinc.com/b/0063/526/835/cn63526835.png?width=585",
+    "captured_at": "2026-10-16T08:50:00-05:00"
+  },
+  {
+    "name": "Long-Sleeve Cable-Knit Sweater for Girls",
+    "category": "Clothes",
+    "age_fit": "Girls (kids sizing; exact size 5-7/XS availability not verified)",
+    "retailer": "Old Navy",
+    "price": "$14.99",
+    "original_price": "$29.99",
+    "url": "https://oldnavy.gap.com/browse/product.do?pid=903200032&vid=1&pcid=1185229&cid=1185229",
+    "image_url": "https://content.gapinc.com/b/0063/970/232/cn63970232.png?width=585",
+    "captured_at": "2026-10-16T08:50:00-05:00"
+  },
+  {
+    "name": "Long-Sleeve Graphic T-Shirt for Girls",
+    "category": "Clothes",
+    "age_fit": "Girls (kids sizing; exact size 5-7/XS availability not verified)",
+    "retailer": "Old Navy",
+    "price": "$6.49",
+    "original_price": "$12.99",
+    "url": "https://oldnavy.gap.com/browse/product.do?pid=906172002&vid=1&pcid=1185229&cid=1185229",
+    "image_url": "https://content.gapinc.com/b/0063/106/176/cn63106176.png?width=585",
+    "captured_at": "2026-10-16T08:50:00-05:00"
+  },
+  {
+    "name": "Hot Wheels RC Barbie Ford Bronco, Remote-Control Toy Car",
+    "category": "Toys",
+    "age_fit": "Ages 5-7 (search-result match for age 5; not individually verified)",
+    "retailer": "Amazon",
+    "price": "$40.97",
+    "original_price": null,
+    "url": "https://www.amazon.com/dp/B0G1V17DQR",
+    "image_url": "https://m.media-amazon.com/images/I/81mTLSVzd3L._AC_UL320_.jpg",
+    "captured_at": "2026-10-16T08:50:00-05:00"
+  },
+  {
+    "name": "Hot Wheels Barbie RC Toy Car, Remote-Control Pink Convertible",
+    "category": "Toys",
+    "age_fit": "Ages 5-7 (search-result match for age 5; not individually verified)",
+    "retailer": "Amazon",
+    "price": "$32.99",
+    "original_price": null,
+    "url": "https://www.amazon.com/dp/B0D7PTHTGW",
+    "image_url": "https://m.media-amazon.com/images/I/81a8LwD-56L._AC_UL320_.jpg",
+    "captured_at": "2026-10-16T08:50:00-05:00"
+  },
+  {
+    "name": "Little Live Pets Mama Surprise Kittens, Interactive Mama, Surprise Toys",
+    "category": "Toys",
+    "age_fit": "Ages 5-7 (search-result match for age 5; not individually verified)",
+    "retailer": "Amazon",
+    "price": "$19.97",
+    "original_price": null,
+    "url": "https://www.amazon.com/dp/B0GBY1S3VG",
+    "image_url": "https://m.media-amazon.com/images/I/71W2Z4jGCeL._AC_UL320_.jpg",
+    "captured_at": "2026-10-16T08:50:00-05:00"
+  },
+  {
+    "name": "LED Drawing Board for Girls, Arts Gifts Kit and Crafts Toys for 3+ Year Old",
+    "category": "Toys",
+    "age_fit": "Ages 5-7 (search-result match for age 5; not individually verified)",
+    "retailer": "Amazon",
+    "price": "$15.29",
+    "original_price": null,
+    "url": "https://www.amazon.com/dp/B0GDCX74KL",
+    "image_url": "https://m.media-amazon.com/images/I/81yZW2Z7UKL._AC_UL320_.jpg",
+    "captured_at": "2026-10-16T08:50:00-05:00"
+  }
+]

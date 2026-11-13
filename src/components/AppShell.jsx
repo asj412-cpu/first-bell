@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { NavLink, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useBell } from '../lib/store.jsx'
 import BackendBanner from './BackendBanner.jsx'
 import { IconCal, IconGear, IconGift, IconHistory, IconHome, IconInbox, IconLearn, IconMeal, IconParty } from './Icons.jsx'
@@ -47,6 +47,8 @@ function Item({ link, pathname }) {
 export default function AppShell() {
   const loc = useLocation()
   const { state } = useBell()
+  const giftGuest = state.memberRole === 'gift'
+  if (giftGuest && !loc.pathname.startsWith('/gifts')) return <Navigate to="/gifts" replace />
   const title = LINKS.find((l) => (l.end ? loc.pathname === '/' : loc.pathname.startsWith(l.to)))?.label || 'Mi Casa'
   const modeLabel =
     state.backend === 'live' ? 'Live' : state.backend === 'offline' ? 'Offline' : 'Demo'
@@ -56,11 +58,11 @@ export default function AppShell() {
       <div className="talavera" aria-hidden="true" />
       <nav className="side-nav" aria-label="Primary">
         <Brand />
-        {TABS.map((l) => (
+        {(giftGuest ? TABS.filter((link) => link.to === '/gifts') : TABS).map((l) => (
           <Item key={l.to} link={l} pathname={loc.pathname} />
         ))}
-        <div className="nav-label">House</div>
-        {MORE.map((l) => (
+        {giftGuest ? null : <div className="nav-label">House</div>}
+        {giftGuest ? null : MORE.map((l) => (
           <Item key={l.to} link={l} pathname={loc.pathname} />
         ))}
       </nav>
@@ -73,7 +75,7 @@ export default function AppShell() {
         <Outlet />
       </main>
       <nav className="bottom-nav" aria-label="Primary">
-        {TABS.map((l) => (
+        {(giftGuest ? TABS.filter((link) => link.to === '/gifts') : TABS).map((l) => (
           <Item key={l.to} link={l} pathname={loc.pathname} />
         ))}
       </nav>
