@@ -187,7 +187,7 @@ export default function Home() {
           <span className="dot" />
           <div>
             <strong>This week’s meals</strong>
-            <div className="dim">School lunches on weekdays. Infants stay on baby foods.</div>
+            <div className="dim">Weekday breakfasts are grab-and-go. Drew eats with the family.</div>
           </div>
         </Link>
       </div>

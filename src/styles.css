@@ -837,6 +837,44 @@ h3 { font-size: 18px; }
 .grocery-row.done span { text-decoration: line-through; color: var(--dim); }
 .grocery-row em { font-style: normal; color: var(--dim); }
 .meal-steps { margin: 8px 0 0; padding-left: 18px; color: var(--muted); }
+.grab-card { margin-top: 14; }
+.grab-card h2 { margin: 2px 0 6px; font-size: 22px; }
+.grab-list { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.grab-list li { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.day-plan { margin-top: 12px; padding: 12px 14px; }
+.day-plan h3 { margin: 0 0 4px; font-size: 18px; }
+.slot-row {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 6px 8px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+.slot-row.locked { background: rgba(200, 100, 59, 0.05); }
+.slot-k {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  padding-top: 2px;
+}
+.slot-body { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+.slot-meta { display: flex; flex-wrap: wrap; gap: 4px; }
+.slot-meta .chip, .grab-list .chip { padding: 2px 8px; font-size: 11px; }
+.season-share { margin: 8px 0 0; }
+.protein-basis, .puree-hint { margin: 8px 0 0; font-size: 14px; }
+.puree-hint { color: var(--ink); }
+.about-meals {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 250, 245, 0.86);
+}
+.about-meals summary { font-weight: 600; cursor: pointer; }
+.about-meals p { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
+.about-meals a { color: var(--gold); text-decoration: underline; }
 .pip.draft { background: var(--teal); }
 .casa-greet {
   font-size: clamp(32px, 7vw, 44px);
