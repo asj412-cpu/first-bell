@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { MEALS } from '../data/meals.js'
+import { GRAB_AND_GO, MEALS } from '../data/meals.js'
 import { defaultProfiles } from '../data/profiles.js'
 import {
   FAMILY_SLOTS,
@@ -65,11 +65,19 @@ test('November week for the Johnsons', () => {
   const grabs = grabAndGoForWeek(WEEK)
   assert.equal(grabs.length, 4)
   assert.ok(grabs.every((item) => item.proteinGrams > 0))
+  const dinnerStyle = /tuna|lentil|bean|salmon|beef|pork|shrimp/i
+  for (const item of GRAB_AND_GO) {
+    const text = `${item.title} ${item.blurb} ${(item.ingredients || []).map((row) => row.name).join(' ')}`
+    assert.equal(dinnerStyle.test(text), false, item.title)
+  }
   const grocery = groceryFromSlots(slots, MEALS, WEEK)
   const names = grocery.map((item) => item.name)
   assert.equal(names.includes('Infant oatmeal'), false)
   assert.equal(names.includes('Honey'), false)
+  assert.equal(names.includes('Canned light tuna in water'), false)
   assert.ok(grabs.some((item) => item.ingredients.some((ingredient) => names.includes(ingredient.name))))
+  const nutFree = grabAndGoForWeek(WEEK, GRAB_AND_GO, ['nut'])
+  assert.equal(nutFree.some((item) => item.id === 'grab-pb-toast'), false)
   const cookedBreakfastIds = new Set(
     ['2026-11-14', '2026-11-15'].map((date) => slots[date].breakfast.mealId),
   )

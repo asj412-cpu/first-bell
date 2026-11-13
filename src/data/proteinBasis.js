@@ -67,6 +67,26 @@ export const USDA_PROTEIN = {
     per100: 11.12,
     food: 'creamed cottage cheese',
   },
+  wholeMilk: {
+    fdcId: 746782,
+    per100: 3.27,
+    food: 'whole milk, 3.25% milkfat',
+  },
+  mozzarella: {
+    fdcId: 171244,
+    per100: 23.75,
+    food: 'part-skim mozzarella',
+  },
+  peanutButter: {
+    fdcId: 172470,
+    per100: 22.21,
+    food: 'smooth peanut butter, no salt',
+  },
+  wholeWheatBread: {
+    fdcId: 172688,
+    per100: 12.45,
+    food: 'whole-wheat bread',
+  },
   blackBeans: {
     fdcId: 175237,
     per100: 8.86,
@@ -87,5 +107,22 @@ export function proteinServing(id, portionG, portionLabel) {
     grams,
     fdcId: row.fdcId,
     basis: `${portionLabel} ${row.food} · USDA FoodData Central ${row.fdcId}`,
+  }
+}
+
+/** Sum of documented portions, rounded once. Not a lab analysis of a mixed recipe. */
+export function proteinFromParts(parts) {
+  if (!parts?.length) return null
+  let raw = 0
+  const bits = []
+  for (const part of parts) {
+    const row = USDA_PROTEIN[part.id]
+    if (!row || !part.portionG || !part.portionLabel) return null
+    raw += (row.per100 * part.portionG) / 100
+    bits.push(`${part.portionLabel} ${row.food} · FDC ${row.fdcId}`)
+  }
+  return {
+    grams: Math.round(raw),
+    basis: bits.join('; '),
   }
 }

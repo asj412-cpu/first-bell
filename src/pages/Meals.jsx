@@ -9,6 +9,7 @@ import {
   FLAVOR_LABEL,
   SEASON_PRODUCE,
   SEASONAL_MEAL_SHARE,
+  allergenKeys,
   currentWeekStart,
   grabAndGoForWeek,
   isSchoolDay,
@@ -40,7 +41,8 @@ export default function Meals() {
   const slots = state.mealPlans[weekStart]
   const dates = weekDates(weekStart)
   const season = seasonForIso(weekStart)
-  const grabs = useMemo(() => grabAndGoForWeek(weekStart), [weekStart])
+  const allergens = useMemo(() => allergenKeys(state.profiles), [state.profiles])
+  const grabs = useMemo(() => grabAndGoForWeek(weekStart, undefined, allergens), [weekStart, allergens])
   const stats = useMemo(() => (slots ? planStats(slots) : null), [slots])
   const grocery = state.grocery[weekStart] || []
   const grouped = grocery.reduce((acc, item) => {
@@ -116,7 +118,7 @@ export default function Meals() {
         <div className="kicker">Monday–Friday breakfast</div>
         <h2>Grab-and-go</h2>
         <p className="muted">
-          Nothing to cook on school mornings. This week’s four options rotate with the week. Saturday and Sunday breakfasts are cooked.
+          No cooking on the way out the door. Yogurt, milk, cheese, and toast are ready as they are. Eggs, egg bites, and muffins are made ahead. This week’s four options rotate. Saturday and Sunday breakfasts are cooked.
         </p>
         <ul className="grab-list">
           {grabs.map((option) => (

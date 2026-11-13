@@ -1,4 +1,4 @@
-import { proteinServing } from './proteinBasis.js'
+import { proteinFromParts, proteinServing } from './proteinBasis.js'
 
 const all = ['preschool', 'elementary', 'tween']
 const older = ['elementary', 'tween']
@@ -1466,9 +1466,11 @@ const GUIDANCE = {
 
 function withGuidance(item) {
   const note = GUIDANCE[item.id] ? { ...item, ...GUIDANCE[item.id] } : item
-  const protein = note.proteinId
-    ? proteinServing(note.proteinId, note.portionG, note.portionLabel)
-    : null
+  const protein = note.proteinParts
+    ? proteinFromParts(note.proteinParts)
+    : note.proteinId
+      ? proteinServing(note.proteinId, note.portionG, note.portionLabel)
+      : null
   return {
     ...item,
     ...note,
@@ -1486,22 +1488,31 @@ function withGuidance(item) {
 
 export const MEALS = LIBRARY.map(withGuidance)
 
-/** Weekday grab-and-go. Cooked breakfasts are weekend-only. */
+/**
+ * Weekday grab-and-go for school mornings. No-cook or made ahead.
+ * No dinner-style proteins (tuna, lentils, beans, and the like).
+ * Cooked breakfasts stay on Saturday and Sunday.
+ */
 export const GRAB_AND_GO = [
   {
     id: 'grab-greek-yogurt',
-    title: 'Plain whole-milk Greek yogurt',
-    blurb: 'A container, no honey and no granola.',
+    title: 'Greek yogurt and fruit',
+    blurb: 'Plain whole-milk Greek yogurt and a piece of fruit. No honey and no granola.',
+    allergens: ['dairy'],
     proteinAnchor: 'Greek yogurt',
     proteinId: 'greekYogurt',
     portionG: 170,
     portionLabel: '1 container (170 g)',
-    ingredients: [{ name: 'Plain whole-milk Greek yogurt', aisle: 'Dairy', qty: '1 large tub' }],
+    ingredients: [
+      { name: 'Plain whole-milk Greek yogurt', aisle: 'Dairy', qty: '1 large tub' },
+      { name: 'Bananas', aisle: 'Produce', qty: '5' },
+    ],
   },
   {
     id: 'grab-eggs',
     title: 'Two hard-cooked eggs',
-    blurb: 'Boil them Sunday. Peel in the morning.',
+    blurb: 'Boil them Sunday. Peel on the way out.',
+    allergens: ['egg'],
     proteinAnchor: 'Eggs',
     proteinId: 'eggHard',
     portionG: 100,
@@ -1509,59 +1520,99 @@ export const GRAB_AND_GO = [
     ingredients: [{ name: 'Eggs', aisle: 'Dairy', qty: '1 dozen' }],
   },
   {
+    id: 'grab-cheese-sticks',
+    title: 'Two cheese sticks',
+    blurb: 'Part-skim mozzarella sticks. Eat them cold.',
+    allergens: ['dairy'],
+    proteinAnchor: 'Cheese',
+    proteinId: 'mozzarella',
+    portionG: 56,
+    portionLabel: 'two 1 oz sticks (56 g)',
+    ingredients: [{ name: 'Mozzarella sticks', aisle: 'Dairy', qty: '1 pack' }],
+  },
+  {
+    id: 'grab-milk',
+    title: 'A cup of whole milk',
+    blurb: 'Plain whole milk. No chocolate syrup.',
+    allergens: ['dairy'],
+    proteinAnchor: 'Milk',
+    proteinId: 'wholeMilk',
+    portionG: 249,
+    portionLabel: '1 cup (249 g)',
+    ingredients: [{ name: 'Whole milk', aisle: 'Dairy', qty: '1 gallon' }],
+  },
+  {
+    id: 'grab-pb-toast',
+    title: 'Peanut butter toast and banana',
+    blurb: 'Peanut butter on whole-wheat toast, banana on top. No honey.',
+    allergens: ['nut', 'gluten'],
+    proteinAnchor: 'Peanut butter and toast',
+    proteinParts: [
+      { id: 'peanutButter', portionG: 32, portionLabel: '2 tbsp (32 g)' },
+      { id: 'wholeWheatBread', portionG: 32, portionLabel: '1 slice (32 g)' },
+    ],
+    ingredients: [
+      { name: 'Peanut butter', aisle: 'Pantry', qty: '1 jar' },
+      { name: 'Whole-wheat bread', aisle: 'Bakery', qty: '1 loaf' },
+      { name: 'Bananas', aisle: 'Produce', qty: '5' },
+    ],
+  },
+  {
+    id: 'grab-egg-bites',
+    title: 'Make-ahead egg bites',
+    blurb: 'Baked in a muffin tin on Sunday. Two eggs each. Nothing to cook in the morning.',
+    allergens: ['egg'],
+    proteinAnchor: 'Eggs',
+    proteinId: 'eggHard',
+    portionG: 100,
+    portionLabel: '2 large (100 g)',
+    ingredients: [{ name: 'Eggs', aisle: 'Dairy', qty: '1 dozen' }],
+  },
+  {
+    id: 'grab-turkey-roll',
+    title: 'Turkey and cheese roll-up',
+    blurb: 'A slice of roast turkey around a cheese stick. Not a sweetened deli loaf.',
+    allergens: ['dairy'],
+    proteinAnchor: 'Turkey and cheese',
+    proteinParts: [
+      { id: 'turkeyBreast', portionG: 85 / 3, portionLabel: '1 oz (28 g)' },
+      { id: 'mozzarella', portionG: 28, portionLabel: '1 stick (28 g)' },
+    ],
+    ingredients: [
+      { name: 'Turkey breast', aisle: 'Protein', qty: '8 oz' },
+      { name: 'Mozzarella sticks', aisle: 'Dairy', qty: '1 pack' },
+    ],
+  },
+  {
     id: 'grab-cottage',
     title: 'Cottage cheese cup',
-    blurb: 'Plain creamed cottage cheese. Fruit only if it is whole fruit.',
+    blurb: 'Plain creamed cottage cheese in a cup, with fruit if you want it.',
+    allergens: ['dairy'],
     proteinAnchor: 'Cottage cheese',
     proteinId: 'cottage',
     portionG: 112.5,
     portionLabel: '½ cup, small curd, not packed (112.5 g)',
-    ingredients: [{ name: 'Cottage cheese', aisle: 'Dairy', qty: '1 tub' }],
-  },
-  {
-    id: 'grab-chicken',
-    title: 'Cold roasted chicken',
-    blurb: 'Slice 3 ounces from Sunday’s chicken. Eat it cold.',
-    proteinAnchor: 'Chicken',
-    proteinId: 'chickenBreast',
-    portionG: 85,
-    portionLabel: '3 oz (85 g)',
-    ingredients: [{ name: 'Chicken breasts', aisle: 'Protein', qty: '1 lb' }],
-  },
-  {
-    id: 'grab-turkey',
-    title: 'Roasted turkey and an apple',
-    blurb: 'Leftover roast turkey, not a sweetened deli loaf, plus an apple.',
-    proteinAnchor: 'Turkey',
-    proteinId: 'turkeyBreast',
-    portionG: 85,
-    portionLabel: '3 oz (85 g)',
     ingredients: [
-      { name: 'Turkey breast', aisle: 'Protein', qty: '1 lb' },
-      { name: 'Apples', aisle: 'Produce', qty: '5' },
+      { name: 'Cottage cheese', aisle: 'Dairy', qty: '1 tub' },
+      { name: 'Apples', aisle: 'Produce', qty: '4' },
     ],
   },
   {
-    id: 'grab-lentils',
-    title: 'Warm or cold lentils',
-    blurb: 'A cup of plain lentils in a jar.',
-    proteinAnchor: 'Lentils',
-    proteinId: 'lentils',
-    portionG: 198,
-    portionLabel: '1 cup cooked (198 g)',
-    ingredients: [{ name: 'Lentils', aisle: 'Pantry', qty: '1 lb dry' }],
-  },
-  {
-    id: 'grab-tuna',
-    title: 'Light tuna and fruit',
-    blurb: 'Tuna canned in water, drained, with a piece of fruit.',
-    proteinAnchor: 'Tuna',
-    proteinId: 'tunaLight',
-    portionG: 85,
-    portionLabel: '3 oz drained (85 g)',
+    id: 'grab-protein-muffins',
+    title: 'Low-sugar protein muffins',
+    blurb: 'Made Sunday from eggs, plain Greek yogurt, banana, and oats. No added sugar, under the Guidelines’ 10 gram cap for one meal.',
+    allergens: ['egg', 'dairy'],
+    proteinAnchor: 'Egg and yogurt',
+    proteinParts: [
+      { id: 'eggHard', portionG: 50, portionLabel: '1 large (50 g)' },
+      { id: 'greekYogurt', portionG: 340 / 6, portionLabel: '56.7 g (340 g yogurt ÷ 6 muffins)' },
+    ],
     ingredients: [
-      { name: 'Canned light tuna in water', aisle: 'Protein', qty: '4 cans' },
-      { name: 'Bananas', aisle: 'Produce', qty: '5' },
+      { name: 'Eggs', aisle: 'Dairy', qty: '6' },
+      { name: 'Plain whole-milk Greek yogurt', aisle: 'Dairy', qty: '2 containers' },
+      { name: 'Bananas', aisle: 'Produce', qty: '2' },
+      { name: 'Rolled oats', aisle: 'Pantry', qty: '1 cup' },
+      { name: 'Cinnamon', aisle: 'Pantry', qty: '1 tsp' },
     ],
   },
 ].map(withGuidance)

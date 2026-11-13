@@ -132,12 +132,13 @@ export function categoriesForSlot(slot) {
   return ['weeknight', 'weekend']
 }
 
-export function grabAndGoForWeek(weekStart, options = GRAB_AND_GO) {
-  if (!options.length) return []
-  const count = Math.min(GRAB_AND_GO_COUNT, options.length)
+export function grabAndGoForWeek(weekStart, options = GRAB_AND_GO, allergens = []) {
+  const pool = options.filter((item) => !(item.allergens || []).some((key) => allergens.includes(key)))
+  if (!pool.length) return []
+  const count = Math.min(GRAB_AND_GO_COUNT, pool.length)
   let start = 0
-  for (const ch of String(weekStart || '')) start = (start + ch.charCodeAt(0)) % options.length
-  return Array.from({ length: count }, (_, i) => options[(start + i) % options.length])
+  for (const ch of String(weekStart || '')) start = (start + ch.charCodeAt(0)) % pool.length
+  return Array.from({ length: count }, (_, i) => pool[(start + i) % pool.length])
 }
 
 function matchesBands(recipe, bands) {
@@ -378,7 +379,7 @@ function addIngredient(map, ingredient) {
   map.set(id, row)
 }
 
-export function groceryFromSlots(slots, recipes = MEALS, weekStart) {
+export function groceryFromSlots(slots, recipes = MEALS, weekStart, allergens = []) {
   const map = new Map()
   const dates = Object.keys(slots || {}).sort()
   const start = weekStart || (dates[0] ? mondayOnOrBefore(dates[0]) : null)
@@ -396,7 +397,7 @@ export function groceryFromSlots(slots, recipes = MEALS, weekStart) {
     }
   }
   if (includeGrab && start) {
-    for (const option of grabAndGoForWeek(start)) {
+    for (const option of grabAndGoForWeek(start, GRAB_AND_GO, allergens)) {
       for (const ingredient of option.ingredients || []) addIngredient(map, ingredient)
     }
   }
