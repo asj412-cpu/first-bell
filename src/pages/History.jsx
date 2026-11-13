@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import CalendarTabs from '../components/CalendarTabs.jsx'
 import { birthdaysInYear } from '../lib/birthdays.js'
 import { turnsLabel } from '../lib/birthdays.js'
+import { importedEvents } from '../lib/calendarItems.js'
 import { eventWhenLabel, isFinished, rsvpSummary, splitEvents } from '../lib/events.js'
 import { chicagoParts } from '../lib/time.js'
 import { useBell } from '../lib/store.jsx'
@@ -20,10 +21,15 @@ export default function History() {
   const pastBirthdays = [year - 1, year]
     .flatMap((value) => birthdaysInYear(state.profiles, value))
     .filter((event) => isFinished(event))
-  const seen = new Set(history.map((event) => event.id))
-  const rows = [...history, ...pastBirthdays.filter((event) => !seen.has(event.id))].sort(
-    (a, b) => new Date(b.endsAt || b.startsAt) - new Date(a.endsAt || a.startsAt),
-  )
+  const pastImports = importedEvents(state.imports).filter((event) => isFinished(event))
+  const seen = new Set()
+  const rows = [...history, ...pastImports, ...pastBirthdays]
+    .filter((event) => {
+      if (!event?.id || seen.has(event.id)) return false
+      seen.add(event.id)
+      return true
+    })
+    .sort((a, b) => new Date(b.endsAt || b.startsAt) - new Date(a.endsAt || a.startsAt))
 
   return (
     <div>
@@ -41,7 +47,7 @@ export default function History() {
           const summary = event.partyId ? rsvpSummary(state.guests) : null
           return (
             <article className="card pad history-card" key={event.id}>
-              <div className="kicker">{event.kind === 'birthday' ? 'Birthday' : event.kind}</div>
+              <div className="kicker">{event.sourceLabel || (event.kind === 'birthday' ? 'Birthday' : event.kind)}</div>
               <h3 style={{ margin: '4px 0 6px' }}>{event.title}</h3>
               <p className="muted" style={{ margin: 0 }}>
                 {eventWhenLabel(event)}

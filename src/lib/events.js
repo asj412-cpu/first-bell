@@ -82,20 +82,65 @@ export function splitEvents(events, now = new Date()) {
   return { upcoming, history }
 }
 
+/** Calendar date in America/Chicago. A date-only all-day value is already that date. */
+export function chicagoDateIso(value, { allDay = false } = {}) {
+  if (value == null || value === '') return null
+  const text = String(value).trim()
+  if (allDay && /^\d{4}-\d{2}-\d{2}$/.test(text)) return text
+  const date = new Date(text)
+  if (Number.isNaN(date.getTime())) return null
+  return chicagoParts(date).iso
+}
+
 export function eventDateIso(event) {
-  return chicagoParts(new Date(event.startsAt)).iso
+  return chicagoDateIso(event?.startsAt, { allDay: Boolean(event?.allDay) })
+}
+
+/**
+ * Chicago dates an event occupies.
+ * All-day rows use an exclusive end (next local midnight), so a one-day
+ * event stored 00:00–24:00 Central lands on that start date only.
+ */
+export function eventDayIsos(event) {
+  const start = eventDateIso(event)
+  if (!start) return []
+  if (!event?.allDay || !event.endsAt) return [start]
+  const end = chicagoDateIso(event.endsAt, { allDay: true })
+  if (!end || end <= start) return [start]
+  const days = []
+  let cursor = start
+  while (cursor < end && days.length < 62) {
+    days.push(cursor)
+    cursor = addDaysIso(cursor, 1)
+  }
+  return days.length ? days : [start]
+}
+
+export function eventOccupies(event, iso) {
+  return eventDayIsos(event).includes(iso)
+}
+
+function hm(parts) {
+  return `${String(parts.hour).padStart(2, '0')}:${String(parts.minute).padStart(2, '0')}`
+}
+
+/** Clock only, in America/Chicago. All-day events have no clock time. */
+export function eventClockLabel(event) {
+  if (!event?.startsAt) return ''
+  if (event.allDay) return 'All day'
+  const start = chicagoParts(new Date(event.startsAt))
+  const startHm = hm(start)
+  if (!event.endsAt) return `${formatTime(startHm)} CT`
+  const end = chicagoParts(new Date(event.endsAt))
+  if (end.iso !== start.iso) return `${formatTime(startHm)} CT`
+  return formatTimeRange(startHm, hm(end))
 }
 
 export function eventWhenLabel(event) {
-  const start = chicagoParts(new Date(event.startsAt))
-  const dateLabel = formatLongDate(start.iso)
-  if (event.allDay) return `${dateLabel} · All day`
-  const startHm = `${String(start.hour).padStart(2, '0')}:${String(start.minute).padStart(2, '0')}`
-  if (!event.endsAt) return `${dateLabel} · ${formatTime(startHm)} CT`
-  const end = chicagoParts(new Date(event.endsAt))
-  if (end.iso !== start.iso) return `${dateLabel} · ${formatTime(startHm)} CT`
-  const endHm = `${String(end.hour).padStart(2, '0')}:${String(end.minute).padStart(2, '0')}`
-  return `${dateLabel} · ${formatTimeRange(startHm, endHm)}`
+  const startIso = eventDateIso(event)
+  if (!startIso) return ''
+  const dateLabel = formatLongDate(startIso)
+  return `${dateLabel} · ${eventClockLabel(event)}`
 }
 
 export function mergeEvents(saved, seeds = seedCalendarEvents()) {

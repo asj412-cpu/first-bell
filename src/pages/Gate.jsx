@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import BackendBanner from '../components/BackendBanner.jsx'
 import { useBell } from '../lib/store.jsx'
@@ -17,10 +17,15 @@ export default function Gate() {
   } = useBell()
   const [email, setEmail] = useState(state.pendingEmail || '')
   const [code, setCode] = useState('')
+  const codeRef = useRef(null)
 
   useEffect(() => {
-    if (state.pendingEmail) setEmail(state.pendingEmail)
+    setEmail(state.pendingEmail || '')
   }, [state.pendingEmail])
+
+  useEffect(() => {
+    if (state.authStep === 'code') codeRef.current?.focus()
+  }, [state.authStep])
 
   if (!ready) {
     return (
@@ -39,12 +44,16 @@ export default function Gate() {
   if (entered) return <Navigate to="/" replace />
 
   const signedInNoHouse = Boolean(state.session && configured && !state.householdId)
+  const onCodeStep = state.authStep === 'code'
+  const digits = code.replace(/\D/g, '')
 
   async function onSend(e) {
     e.preventDefault()
-    if (!email.trim()) return
+    const address = email.trim() || state.pendingEmail
+    if (!address || state.authBusy) return
     try {
-      await sendOtp(email)
+      await sendOtp(address)
+      setCode('')
     } catch {
       /* authError is set on the store */
     }
@@ -52,9 +61,9 @@ export default function Gate() {
 
   async function onVerify(e) {
     e.preventDefault()
-    if (!code.trim()) return
+    if (digits.length < 6 || state.authBusy) return
     try {
-      await verifyOtp(code)
+      await verifyOtp(digits)
     } catch {
       /* authError is set on the store */
     }
@@ -66,13 +75,27 @@ export default function Gate() {
       <div className="card gate-card">
         <img className="bell" src="/icons/icon-192.png" alt="" />
         <div className="eyebrow">Mi Casa</div>
-        <h1>The house, handled.</h1>
-        <p className="lede">
-          Parties, inbox, calendar. Party planning is the wedge — the product is household ops for
-          parents.
-        </p>
+        <h1>{onCodeStep && !signedInNoHouse ? 'Check your email' : 'The house, handled.'}</h1>
+        {configured && !signedInNoHouse && onCodeStep ? (
+          <p className="lede">
+            We emailed <strong>{state.pendingEmail}</strong>. If it shows a code, type it here. You
+            can also tap the link.
+          </p>
+        ) : configured && !signedInNoHouse ? (
+          <p className="lede">We’ll email you a sign-in code (or a link you can tap).</p>
+        ) : (
+          <p className="lede">
+            Parties, inbox, calendar. Open the house on this browser — no password.
+          </p>
+        )}
 
         <BackendBanner />
+
+        {state.authNotice && !signedInNoHouse && (
+          <p className="gate-hint" role="status">
+            {state.authNotice}
+          </p>
+        )}
 
         {signedInNoHouse && (
           <div className="gate-alert">
@@ -99,64 +122,78 @@ export default function Gate() {
           </>
         )}
 
-        {configured && !signedInNoHouse && state.authStep === 'email' && (
+        {configured && !signedInNoHouse && !onCodeStep && (
           <form onSubmit={onSend}>
             <div className="field">
-              <label htmlFor="host-email">Host email</label>
+              <label htmlFor="host-email">Email</label>
               <input
                 id="host-email"
                 type="email"
                 autoComplete="email"
                 inputMode="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="asj412@me.com"
+                placeholder="name@email.com"
                 required
               />
             </div>
-            {state.authError && <p className="form-error">{state.authError}</p>}
+            {state.authError && (
+              <p className="form-error" role="alert">
+                {state.authError}
+              </p>
+            )}
             <button className="btn primary full" type="submit" disabled={state.authBusy}>
-              {state.authBusy ? 'Sending…' : 'Email me a sign-in code'}
+              {state.authBusy ? 'Sending…' : 'Email me a sign-in'}
             </button>
             <p className="gate-note">
-              Magic link + 6-digit code via Supabase Auth. No password. Guest RSVPs never need this.
+              No password. On an iPhone or iPad home-screen app, type the code — a link opens Safari.
+              Guest RSVPs never need this.
             </p>
           </form>
         )}
 
-        {configured && !signedInNoHouse && state.authStep === 'code' && (
+        {configured && !signedInNoHouse && onCodeStep && (
           <form onSubmit={onVerify}>
-            <p className="lede" style={{ marginBottom: 16 }}>
-              We sent a code to <strong>{state.pendingEmail}</strong>. Use the 6-digit code, or tap
-              the magic link in the same email.
+            <p className="gate-hint">
+              On a home-screen app, type the code so you stay in Mi Casa. Tapping the link opens
+              Safari instead.
             </p>
             <div className="field">
-              <label htmlFor="otp">One-time code</label>
+              <label htmlFor="otp">Sign-in code</label>
               <input
+                ref={codeRef}
                 id="otp"
                 className="otp"
+                name="one-time-code"
                 inputMode="numeric"
                 autoComplete="one-time-code"
+                enterKeyHint="done"
                 pattern="[0-9]*"
-                maxLength={8}
-                value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\s/g, ''))}
-                placeholder="123456"
+                maxLength={10}
+                value={digits}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 10))}
                 required
               />
             </div>
-            {state.authError && <p className="form-error">{state.authError}</p>}
-            <button className="btn primary full" type="submit" disabled={state.authBusy || code.length < 6}>
-              {state.authBusy ? 'Checking…' : 'Enter the house'}
-            </button>
-            <button
-              className="btn ghost full"
-              type="button"
-              style={{ marginTop: 10 }}
-              onClick={resetAuthForm}
-            >
-              Use a different email
-            </button>
+            {state.authError && (
+              <p className="form-error" role="alert">
+                {state.authError}
+              </p>
+            )}
+            <div className="gate-actions">
+              <button className="btn primary full" type="submit" disabled={state.authBusy || digits.length < 6}>
+                {state.authBusy ? 'Please wait…' : 'Sign in'}
+              </button>
+              <button className="btn ghost full" type="button" disabled={state.authBusy} onClick={onSend}>
+                {state.authBusy ? 'Please wait…' : 'Send the email again'}
+              </button>
+              <button className="btn ghost full" type="button" onClick={resetAuthForm}>
+                Use a different email
+              </button>
+            </div>
           </form>
         )}
       </div>

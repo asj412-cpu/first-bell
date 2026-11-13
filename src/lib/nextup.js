@@ -1,9 +1,9 @@
 import { holidaysForYear } from '../data/holidays.js'
 import { upcomingBirthdays } from './birthdays.js'
-import { isFinished, wallEvent } from './events.js'
-import { chicagoParts } from './time.js'
+import { eventDayIsos, isFinished, wallEvent } from './events.js'
+import { addDaysIso, chicagoParts, zonedWallToUtc } from './time.js'
 
-function holidaySuggestion(holiday) {
+export function holidaySuggestion(holiday) {
   const event = wallEvent({
     id: holiday.id,
     title: holiday.title,
@@ -23,8 +23,18 @@ function holidaySuggestion(holiday) {
 
 export function importSuggestion(row) {
   const startsAt = row.starts_at || row.startsAt
-  const endsAt = row.ends_at || row.endsAt || null
-  const date = chicagoParts(new Date(startsAt)).iso
+  let endsAt = row.ends_at || row.endsAt || null
+  const allDay = Boolean(row.all_day ?? row.allDay)
+  if (allDay && startsAt && !endsAt) {
+    const startIso = eventDayIsos({ startsAt, allDay: true })[0]
+    if (startIso) endsAt = zonedWallToUtc(addDaysIso(startIso, 1), '00:00').toISOString()
+  }
+  const event = {
+    startsAt,
+    endsAt,
+    allDay,
+  }
+  const date = eventDayIsos(event)[0] || null
   return {
     id: row.id || `import-${row.external_uid || row.externalUid}`,
     key: `import:${row.external_uid || row.externalUid}`,
@@ -32,13 +42,14 @@ export function importSuggestion(row) {
     kind: 'import',
     startsAt,
     endsAt,
-    allDay: Boolean(row.all_day ?? row.allDay),
+    allDay,
     place: row.location || '',
     location: row.location || '',
     notes: row.notes || '',
     date,
     source: 'import',
-    sourceLabel: row.source || 'Family calendar',
+    sourceLabel: 'Family calendar',
+    readOnly: true,
     draft: false,
     checklist: [],
     partyId: null,

@@ -341,19 +341,20 @@ h3 { font-size: 18px; }
 /* ---------- Gate ---------- */
 .gate {
   min-height: 100dvh;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 24px 18px;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 .gate-bg {
-  position: absolute;
-  inset: 0;
+  position: fixed;
+  inset: -4%;
   background:
     linear-gradient(180deg, rgba(246,239,230,.12) 0%, rgba(58,42,34,.35) 100%),
     url("/brand/casa-hero.jpg") center/cover no-repeat;
-  transform: scale(1.04);
 }
 @media (min-width: 800px) {
   .gate-bg { background-image: linear-gradient(180deg, rgba(246,239,230,.2), rgba(58,42,34,.42)), url("/brand/casa-hero.jpg"); background-size: cover; }
@@ -374,8 +375,24 @@ h3 { font-size: 18px; }
   box-shadow: 0 0 0 1px var(--line), 0 16px 32px rgba(58, 42, 34, 0.16);
 }
 .gate-card h1 { margin-bottom: 8px; }
+.gate-card .lede strong { color: var(--ink); font-weight: 600; }
 .gate-card .lede { margin-bottom: 22px; }
-.gate-note { margin-top: 16px; font-size: 12px; color: var(--dim); }
+.gate-note { margin-top: 16px; font-size: 13px; line-height: 1.45; color: var(--dim); }
+.gate-hint {
+  text-align: left;
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(200, 100, 59, 0.08);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 14.5px;
+  line-height: 1.45;
+}
+.gate-actions { display: flex; flex-direction: column; gap: 10px; }
+.gate-card .field input { font-size: 16px; min-height: 48px; }
+.gate-card .btn { min-height: 48px; }
+.gate-card .btn:disabled { opacity: 0.55; cursor: default; }
 .gate-alert {
   text-align: left;
   margin-bottom: 16px;
@@ -393,9 +410,13 @@ h3 { font-size: 18px; }
 }
 .field input.otp {
   letter-spacing: 0.28em;
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
   text-align: center;
+  min-height: 64px;
+  padding-left: 18px;
+  padding-right: 18px;
 }
 .sync-banner {
   padding: 12px 14px;
@@ -620,17 +641,60 @@ h3 { font-size: 18px; }
   color: var(--dim);
   padding: 6px 0;
 }
+.cal-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+.cal-filters button {
+  border: 1px solid var(--line);
+  background: rgba(255,250,245,.9);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.cal-filters button[aria-pressed="true"] {
+  color: #fffaf5;
+  background: linear-gradient(180deg, #d4724a, #C8643B);
+  border-color: #f4e2b3;
+}
 .day {
-  min-height: 54px;
+  min-height: 68px;
+  min-width: 0;
   border-radius: 12px;
   border: 1px solid transparent;
-  padding: 6px 4px 4px;
+  padding: 6px 3px 4px;
   background: rgba(255,250,245,.75);
   text-align: left;
+  overflow: hidden;
 }
 .day .n { font-size: 12px; color: var(--muted); }
 .day.has { border-color: var(--line-strong); background: rgba(200,100,59,.1); }
 .day.today { box-shadow: inset 0 0 0 1px var(--gold); }
+.day.selected { box-shadow: inset 0 0 0 2px var(--terracotta); }
+.day .ev-label {
+  display: block;
+  margin-top: 2px;
+  font-size: 9px;
+  line-height: 1.15;
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.day .ev-label.major { color: var(--terracotta); }
+.day .more {
+  display: block;
+  margin-top: 1px;
+  font-size: 9px;
+  line-height: 1.15;
+  font-weight: 700;
+  color: var(--dim);
+}
 .day .pip {
   display: block;
   margin-top: 6px;
@@ -837,6 +901,44 @@ h3 { font-size: 18px; }
 .grocery-row.done span { text-decoration: line-through; color: var(--dim); }
 .grocery-row em { font-style: normal; color: var(--dim); }
 .meal-steps { margin: 8px 0 0; padding-left: 18px; color: var(--muted); }
+.grab-card { margin-top: 14; }
+.grab-card h2 { margin: 2px 0 6px; font-size: 22px; }
+.grab-list { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.grab-list li { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.day-plan { margin-top: 12px; padding: 12px 14px; }
+.day-plan h3 { margin: 0 0 4px; font-size: 18px; }
+.slot-row {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 6px 8px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+.slot-row.locked { background: rgba(200, 100, 59, 0.05); }
+.slot-k {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  padding-top: 2px;
+}
+.slot-body { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+.slot-meta { display: flex; flex-wrap: wrap; gap: 4px; }
+.slot-meta .chip, .grab-list .chip { padding: 2px 8px; font-size: 11px; }
+.season-share { margin: 8px 0 0; }
+.protein-basis, .puree-hint { margin: 8px 0 0; font-size: 14px; }
+.puree-hint { color: var(--ink); }
+.about-meals {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 250, 245, 0.86);
+}
+.about-meals summary { font-weight: 600; cursor: pointer; }
+.about-meals p { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
+.about-meals a { color: var(--gold); text-decoration: underline; }
 .pip.draft { background: var(--teal); }
 .casa-greet {
   font-size: clamp(32px, 7vw, 44px);
