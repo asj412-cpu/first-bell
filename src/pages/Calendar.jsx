@@ -1,16 +1,38 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import CalendarTabs from '../components/CalendarTabs.jsx'
-import { birthdaysInYear } from '../lib/birthdays.js'
 import { turnsLabel } from '../lib/birthdays.js'
-import { eventDateIso, eventWhenLabel, isFinished } from '../lib/events.js'
+import {
+  eventBucket,
+  passesCalendarFilter,
+  readCalendarFilters,
+  writeCalendarFilters,
+} from '../lib/calendarBuckets.js'
+import { eventsOnDay, gatherCalendarEvents } from '../lib/calendarItems.js'
+import { eventClockLabel } from '../lib/events.js'
 import { chicagoParts, chicagoTodayIso } from '../lib/time.js'
 import { useBell } from '../lib/store.jsx'
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const CELL_PREVIEW = 3
 
 function isoFrom(y, m, d) {
   return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+}
+
+function DayPreview({ events }) {
+  const shown = events.slice(0, CELL_PREVIEW)
+  const extra = events.length - shown.length
+  return (
+    <>
+      {shown.map((event) => (
+        <span key={event.id} className={`ev-label ${eventBucket(event)}`} title={event.title}>
+          {event.title}
+        </span>
+      ))}
+      {extra > 0 && <span className="more">+{extra} more</span>}
+    </>
+  )
 }
 
 export default function CalendarPage() {
@@ -22,13 +44,14 @@ export default function CalendarPage() {
   })
   const [mode, setMode] = useState('month')
   const [selected, setSelected] = useState(today)
+  const [filters, setFilters] = useState(readCalendarFilters)
 
-  function eventsOn(iso) {
-    const year = Number(iso.slice(0, 4))
-    const stored = state.events.filter((event) => eventDateIso(event) === iso && !isFinished(event))
-    const birthdays = birthdaysInYear(state.profiles, year).filter((event) => event.date === iso && !isFinished(event))
-    const ids = new Set(stored.map((event) => event.id))
-    return [...stored, ...birthdays.filter((event) => !ids.has(event.id))]
+  useEffect(() => {
+    writeCalendarFilters(filters)
+  }, [filters])
+
+  function toggleFilter(key) {
+    setFilters((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
   const cells = useMemo(() => {
@@ -55,6 +78,27 @@ export default function CalendarPage() {
     return date
   })
 
+  const years = useMemo(() => {
+    const set = new Set([cursor.y, Number(selected.slice(0, 4))])
+    for (const date of weekDays) set.add(date.getFullYear())
+    return [...set]
+  }, [cursor.y, selected, weekDays])
+
+  const agenda = useMemo(
+    () =>
+      gatherCalendarEvents({
+        events: state.events,
+        imports: state.imports,
+        profiles: state.profiles,
+        years,
+      }).filter((event) => passesCalendarFilter(event, filters)),
+    [state.events, state.imports, state.profiles, years, filters],
+  )
+
+  function eventsOn(iso) {
+    return eventsOnDay(agenda, iso)
+  }
+
   function shift(delta) {
     if (mode === 'week') {
       const [y, m, d] = selected.split('-').map(Number)
@@ -75,10 +119,19 @@ export default function CalendarPage() {
     <div>
       <div className="kicker">Calendar</div>
       <h1>Family time</h1>
-      <p className="lede">Upcoming plans only. Finished days live in History. Birthdays come from Settings.</p>
+      <p className="lede">Upcoming plans only. Finished days live in History. Imported family events stay read-only.</p>
       <CalendarTabs />
       <div className="banner">
-        Connect family calendar for school and sports. Holidays and Johnson birthdays are already on the list. A family event appears only after it is imported.
+        School and sports come from the family calendar. Holidays and Johnson birthdays are already on the list.
+      </div>
+
+      <div className="cal-filters" role="group" aria-label="Event types">
+        <button type="button" aria-pressed={filters.major} onClick={() => toggleFilter('major')}>
+          Major events
+        </button>
+        <button type="button" aria-pressed={filters.daily} onClick={() => toggleFilter('daily')}>
+          Daily family activities
+        </button>
       </div>
 
       <div className="cal-toolbar">
@@ -107,14 +160,15 @@ export default function CalendarPage() {
           <div className="kicker">{event.draft ? 'Draft' : event.sourceLabel || event.kind}</div>
           <h3 style={{ margin: '4px 0 6px' }}>{event.title}</h3>
           <p className="muted" style={{ margin: 0 }}>
-            {event.allDay ? 'All day' : eventWhenLabel(event)}
+            {eventClockLabel(event)}
             {event.place ? ` · ${event.place}` : ''}
           </p>
           {event.turns != null && <p className="dim">{turnsLabel(event.turns)}</p>}
+          {event.readOnly && <p className="dim">Read-only</p>}
           {event.partyId && (
             <Link to={`/parties/${event.partyId}`} className="btn small" style={{ marginTop: 12 }}>Open party desk</Link>
           )}
-          {event.checklist?.length > 0 && (
+          {!event.readOnly && event.checklist?.length > 0 && (
             <ul className="check-list">
               {event.checklist.map((item) => (
                 <li key={item.id}>
@@ -140,11 +194,9 @@ export default function CalendarPage() {
               const iso = isoFrom(cursor.y, cursor.m, day)
               const ev = eventsOn(iso)
               return (
-                <button key={iso} className={`day ${ev.length ? 'has' : ''} ${iso === today ? 'today' : ''} ${iso === selected ? 'has' : ''}`} onClick={() => setSelected(iso)}>
+                <button key={iso} className={`day ${ev.length ? 'has' : ''} ${iso === today ? 'today' : ''} ${iso === selected ? 'selected' : ''}`} onClick={() => setSelected(iso)}>
                   <span className="n">{day}</span>
-                  {ev.map((event) => (
-                    <span key={event.id} className={`pip ${event.kind === 'birthday' ? 'bday' : ''} ${event.draft ? 'draft' : ''}`} title={event.title} />
-                  ))}
+                  <DayPreview events={ev} />
                 </button>
               )
             })}
@@ -157,6 +209,8 @@ export default function CalendarPage() {
           {weekDays.map((date) => {
             const iso = isoFrom(date.getFullYear(), date.getMonth(), date.getDate())
             const ev = eventsOn(iso)
+            const shown = ev.slice(0, CELL_PREVIEW)
+            const extra = ev.length - shown.length
             return (
               <button key={iso} className="card week-row" onClick={() => setSelected(iso)} style={{ textAlign: 'left', borderColor: iso === selected ? 'var(--line-strong)' : undefined }}>
                 <div>
@@ -165,12 +219,13 @@ export default function CalendarPage() {
                 </div>
                 <div>
                   {ev.length === 0 && <span className="dim">Open</span>}
-                  {ev.map((event) => (
+                  {shown.map((event) => (
                     <div key={event.id}>
                       <strong>{event.title}</strong>
-                      <div className="dim">{eventWhenLabel(event)}</div>
+                      <div className="dim">{eventClockLabel(event)}</div>
                     </div>
                   ))}
+                  {extra > 0 && <div className="dim">+{extra} more</div>}
                 </div>
               </button>
             )

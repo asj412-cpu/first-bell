@@ -3,7 +3,7 @@ import { currentWeeks, planForDate } from '../data/learning/index.js'
 import { PARTY } from '../data/seed.js'
 import Avatar from '../components/Avatar.jsx'
 import { turnsLabel } from '../lib/birthdays.js'
-import { eventWhenLabel, isFinished, splitEvents } from '../lib/events.js'
+import { eventClockLabel, eventWhenLabel, isFinished, splitEvents } from '../lib/events.js'
 import { formatShortDate, greeting, parseLocalDate } from '../lib/format.js'
 import { motifFor } from '../lib/motifs.js'
 import { buildNextUp } from '../lib/nextup.js'
@@ -21,8 +21,7 @@ function weekdayDate(iso) {
 
 function planLabel(item) {
   if (item.source === 'birthday') return turnsLabel(item.turns)
-  if (item.allDay) return 'All day'
-  return eventWhenLabel(item)
+  return eventClockLabel(item)
 }
 
 export default function Home() {
@@ -68,7 +67,7 @@ export default function Home() {
           <img src={motifFor(featured)} alt="" />
           <div>
             <h2>{featured.title}</h2>
-            <p className="when">{weekdayDate(featured.date)}</p>
+            <p className="when">{weekdayDate(featured.date)} · {eventClockLabel(featured)}</p>
           </div>
           {featuredPlanned ? (
             <Link to="/calendar" className="btn small">On the calendar</Link>
