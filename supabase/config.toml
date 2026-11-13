@@ -1,0 +1,16 @@
+# Local email templates only. `supabase start` reads this file.
+# The hosted project tzkxuinbpmoeyhzomvut does not. Paste the HTML into the
+# dashboard (Authentication → Emails → Templates). See SHIP.md.
+#
+# Do not run `supabase config push` with this file. It is not a full auth
+# config and must not overwrite the hosted Site URL, SMTP, or redirect URLs.
+
+project_id = "first-bell"
+
+[auth.email.template.magic_link]
+subject = "{{ .Token }} is your Mi Casa sign-in code"
+content_path = "./supabase/templates/magic_link.html"
+
+[auth.email.template.confirmation]
+subject = "{{ .Token }} is your Mi Casa sign-in code"
+content_path = "./supabase/templates/confirmation.html"

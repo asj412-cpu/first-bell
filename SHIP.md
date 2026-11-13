@@ -21,7 +21,7 @@ npm run build        # writes dist/
 npm run preview      # http://localhost:4173
 ```
 
-- **Backend configured:** host gate is email OTP / magic link. Guest path stays public.
+- **Backend configured:** host gate asks for an email, then a code or the link in that email. Guest path stays public.
 - **Env vars missing:** demo gate **Enter Johnson household**. Banner explains RSVPs stay in this browser.
 
 Guest path (no login): `/r/princess-chloe-5`
@@ -70,13 +70,37 @@ npx supabase db push --project-ref tzkxuinbpmoeyhzomvut
   - `https://*.vercel.app/**`
   - `http://localhost:5173/**`
 
-**Email template** (Authentication → Email Templates → Magic Link) so both a code and a link work:
+**Email templates** — the hosted project does not read `supabase/templates/`. Until these two dashboard templates include `{{ .Token }}`, the email is a link only. The sign-in screen already says so: a code, or a link you can tap.
+
+The app calls `signInWithOtp`. Supabase sends **Confirm signup** the first time an address is used, and **Magic Link** after that. Update both. Leave Email OTP length at 6 (Authentication → Providers → Email). Do not run `supabase config push` from the partial `supabase/config.toml`.
+
+Dashboard: project `tzkxuinbpmoeyhzomvut` → Authentication → Emails → Templates.
+
+**Magic Link** — subject `{{ .Token }} is your Mi Casa sign-in code`. Body is `supabase/templates/magic_link.html`:
 
 ```html
-<h2>Mi Casa sign-in</h2>
-<p>Your code: <strong>{{ .Token }}</strong></p>
-<p><a href="{{ .ConfirmationURL }}">Or tap this magic link</a></p>
+<h2>Your sign-in code</h2>
+<p>Your Mi Casa sign-in code is {{ .Token }}</p>
+<p style="font-size:32px;letter-spacing:0.28em;"><strong>{{ .Token }}</strong></p>
+<p>Type that code in the app. It expires soon and works once.</p>
+<p>Or tap the link. On an iPhone or iPad home-screen app, the link opens Safari, so the code is easier.</p>
+<p><a href="{{ .ConfirmationURL }}">Sign in with the link</a></p>
+<p>If you didn’t ask to sign in to Mi Casa, you can ignore this email.</p>
 ```
+
+**Confirm signup** — same subject. Body is `supabase/templates/confirmation.html`:
+
+```html
+<h2>Confirm your email</h2>
+<p>Your Mi Casa sign-in code is {{ .Token }}</p>
+<p style="font-size:32px;letter-spacing:0.28em;"><strong>{{ .Token }}</strong></p>
+<p>Type that code in the app to confirm {{ .Email }} and sign in. It expires soon and works once.</p>
+<p>Or tap the link. On an iPhone or iPad home-screen app, the link opens Safari, so the code is easier.</p>
+<p><a href="{{ .ConfirmationURL }}">Confirm and sign in</a></p>
+<p>If you didn’t ask to sign in to Mi Casa, you can ignore this email.</p>
+```
+
+The repo files are the full HTML to paste. The blocks above are the same message, so either paste is fine. The screen verifies the code with `supabase.auth.verifyOtp({ email, token, type: 'email' })`.
 
 Host emails that auto-join the Johnson household after signup: `asj412@me.com`, `asj412@icloud.com`. To add another host:
 
@@ -94,7 +118,7 @@ If the seeded household still has **zero** members, the first authenticated user
 2. With env vars **set** and migration applied:
    1. `/enter` shows email, not the demo button.
    2. Request a code as `asj412@me.com` or `asj412@icloud.com`.
-   3. Enter the 6-digit code **or** tap the magic link.
+   3. The email is a link until the dashboard templates above are saved. After that, it also shows a 6-digit code. Type the code, or tap the link in the same browser that asked for it. On an iPhone home-screen app, type the code — the link opens Safari.
    4. Land on Home. Settings shows the email and “Supabase · live”.
    5. Sign out returns to `/enter`.
    6. A random email can create an Auth user but will not see RSVPs until it is in `household_members` (gate explains this).
