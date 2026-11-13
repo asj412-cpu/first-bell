@@ -1,4 +1,4 @@
-import { MEALS, mealById } from '../data/meals.js'
+import { GRAB_AND_GO, MEALS, mealById } from '../data/meals.js'
 import { addDaysIso, chicagoParts, mondayOnOrBefore, weekDates } from './time.js'
 
 export const SEASON_PRODUCE = {
@@ -8,7 +8,28 @@ export const SEASON_PRODUCE = {
   summer: ['watermelon', 'peaches', 'corn', 'tomatoes', 'okra'],
 }
 
-export const AISLE_ORDER = ['Produce', 'Dairy', 'Protein', 'Bakery', 'Pantry', 'Frozen', 'Snacks', 'Baby']
+export const AISLE_ORDER = ['Produce', 'Dairy', 'Protein', 'Bakery', 'Pantry', 'Frozen', 'Snacks']
+
+/**
+ * Share of planned meals (not weekday grab-and-go) that may carry a seasonal
+ * or holiday flavor. Andrew, Nov 13 2026: keep that share about 20–25%.
+ * This is the only knob. 16 planned meals × 0.22 rounds to 4 (25%).
+ */
+export const SEASONAL_MEAL_SHARE = 0.22
+
+export const GRAB_AND_GO_COUNT = 4
+
+export const FLAVOR_LABEL = {
+  pumpkin: 'Pumpkin',
+  cranberry: 'Cranberry',
+  pecan: 'Pecan',
+  peppermint: 'Peppermint',
+}
+
+export function seasonalMealCap(plannedCount) {
+  if (!plannedCount || plannedCount < 1) return 0
+  return Math.round(plannedCount * SEASONAL_MEAL_SHARE)
+}
 
 export function seasonForIso(iso) {
   const month = Number(iso.slice(5, 7))
@@ -65,7 +86,7 @@ export function kidProfiles(profiles) {
   return (profiles || []).filter((profile) => profile.role !== 'parent')
 }
 
-/** Shared-table bands. Infants eat from the baby menu, not this list. */
+/** Shared-table bands. Infants eat the family meal, mashed when it is soft. */
 export function tableBands(profiles, now = new Date()) {
   const bands = new Set()
   for (const profile of kidProfiles(profiles)) {
@@ -99,41 +120,134 @@ export function isSchoolDay(iso) {
   return weekday >= 1 && weekday <= 5
 }
 
-export function slotCategory(dateIso, slot) {
-  if (String(slot).startsWith('baby')) return 'baby'
-  const school = isSchoolDay(dateIso)
-  if (slot === 'breakfast') return 'breakfast'
-  if (slot === 'lunch') return school ? 'school-lunch' : 'weekend'
-  return school ? 'weeknight' : 'weekend'
+export function isWeekdayBreakfast(dateIso, slot) {
+  return slot === 'breakfast' && isSchoolDay(dateIso)
 }
 
 export const FAMILY_SLOTS = ['breakfast', 'lunch', 'dinner']
-export const BABY_SLOTS = ['babyBreakfast', 'babyLunch', 'babyDinner']
 
-function poolFor({ recipes = MEALS, category, season, bands, allergens }) {
-  const eligible = recipes.filter((recipe) => {
-    if (recipe.category !== category) return false
-    if ((recipe.allergens || []).some((key) => allergens.includes(key))) return false
-    if (category === 'baby') return recipe.ageBands.includes('infant')
-    if (bands.length && !bands.every((band) => recipe.ageBands.includes(band))) return false
-    if (!bands.length && !recipe.ageBands.includes('preschool')) return false
-    return true
-  })
-  const seasonal = eligible.filter((recipe) => recipe.seasons.includes(season))
-  const anytime = eligible.filter((recipe) => recipe.seasons.includes('any'))
-  const ordered = []
-  for (const recipe of [...seasonal, ...anytime]) {
-    if (!ordered.some((item) => item.id === recipe.id)) ordered.push(recipe)
-  }
-  return ordered
+export function categoriesForSlot(slot) {
+  if (slot === 'breakfast') return ['breakfast']
+  if (slot === 'lunch') return ['school-lunch']
+  return ['weeknight', 'weekend']
 }
 
-function pickFrom(pool, used) {
-  if (!pool.length) return null
-  const fresh = pool.filter((recipe) => !used.includes(recipe.id))
-  if (fresh.length) return fresh[0]
-  const index = used.length % pool.length
-  return pool[index]
+export function grabAndGoForWeek(weekStart, options = GRAB_AND_GO, allergens = []) {
+  const pool = options.filter((item) => !(item.allergens || []).some((key) => allergens.includes(key)))
+  if (!pool.length) return []
+  const count = Math.min(GRAB_AND_GO_COUNT, pool.length)
+  let start = 0
+  for (const ch of String(weekStart || '')) start = (start + ch.charCodeAt(0)) % pool.length
+  return Array.from({ length: count }, (_, i) => pool[(start + i) % pool.length])
+}
+
+function matchesBands(recipe, bands) {
+  if (bands.length && !bands.every((band) => (recipe.ageBands || []).includes(band))) return false
+  if (!bands.length && !(recipe.ageBands || []).includes('preschool')) return false
+  return true
+}
+
+function inSeason(recipe, season) {
+  const seasons = recipe.seasons || []
+  return seasons.includes(season) || seasons.includes('any')
+}
+
+function candidates({ recipes, categories, season, bands, allergens, seasonal }) {
+  return recipes.filter((recipe) => {
+    if (recipe.plan === false || recipe.highlyProcessed) return false
+    if (!categories.includes(recipe.category)) return false
+    if ((recipe.allergens || []).some((key) => allergens.includes(key))) return false
+    if (!matchesBands(recipe, bands)) return false
+    if (!recipe.proteinAnchor || recipe.proteinGrams == null) return false
+    if (seasonal) {
+      return Boolean(recipe.seasonalTheme && recipe.flavor && (recipe.seasons || []).includes(season))
+    }
+    if (recipe.seasonalTheme) return false
+    return inSeason(recipe, season)
+  })
+}
+
+function scoreRecipe(recipe, season) {
+  let score = recipe.proteinGrams || 0
+  if (recipe.refinedGrain) score -= 25
+  if ((recipe.seasons || []).includes(season)) score += 3
+  return score
+}
+
+function rankPool(pool, used, season, flavorCounts = {}) {
+  return [...pool].sort((a, b) => {
+    const aUsed = used.includes(a.id) ? 1 : 0
+    const bUsed = used.includes(b.id) ? 1 : 0
+    if (aUsed !== bUsed) return aUsed - bUsed
+    const aFlavor = flavorCounts[a.flavor] || 0
+    const bFlavor = flavorCounts[b.flavor] || 0
+    if (aFlavor !== bFlavor) return aFlavor - bFlavor
+    const scored = scoreRecipe(b, season) - scoreRecipe(a, season)
+    if (scored !== 0) return scored
+    return a.title.localeCompare(b.title)
+  })
+}
+
+function weekCells(dates) {
+  const cells = []
+  for (const date of dates) {
+    for (const slot of FAMILY_SLOTS) {
+      cells.push({
+        date,
+        slot,
+        grabAndGo: isWeekdayBreakfast(date, slot),
+        locked: false,
+        recipe: null,
+      })
+    }
+  }
+  return cells
+}
+
+function flavorClash(cells, index, flavor) {
+  if (!flavor) return false
+  for (const neighbor of [cells[index - 1], cells[index + 1]]) {
+    if (neighbor?.recipe?.flavor && neighbor.recipe.flavor === flavor) return true
+  }
+  return false
+}
+
+function flavorCounts(cells) {
+  const counts = {}
+  for (const cell of cells) {
+    if (cell.recipe?.flavor) counts[cell.recipe.flavor] = (counts[cell.recipe.flavor] || 0) + 1
+  }
+  return counts
+}
+
+function seasonalCount(cells) {
+  return cells.filter((cell) => cell.recipe?.seasonalTheme).length
+}
+
+function writeSlots(cells) {
+  const slots = {}
+  for (const cell of cells) {
+    slots[cell.date] = slots[cell.date] || {}
+    if (cell.grabAndGo) {
+      slots[cell.date][cell.slot] = { mealId: null, grabAndGo: true, locked: false }
+      continue
+    }
+    slots[cell.date][cell.slot] = {
+      mealId: cell.recipe?.id || null,
+      locked: Boolean(cell.locked),
+    }
+  }
+  return slots
+}
+
+function spreadIndexes(count, picks) {
+  if (picks <= 0 || count <= 0) return []
+  const chosen = []
+  for (let i = 0; i < picks; i += 1) {
+    const idx = Math.min(count - 1, Math.floor(((i + 0.5) * count) / picks))
+    if (!chosen.includes(idx)) chosen.push(idx)
+  }
+  return chosen
 }
 
 export function suggestWeek({ weekStart, profiles, existing, recipes = MEALS, now = new Date() }) {
@@ -141,73 +255,150 @@ export function suggestWeek({ weekStart, profiles, existing, recipes = MEALS, no
   const season = seasonForIso(weekStart)
   const bands = tableBands(profiles, now)
   const allergens = allergenKeys(profiles)
-  const includeBaby = infantProfiles(profiles, now).length > 0
-  const slots = {}
+  const cells = weekCells(dates)
   const used = []
-  const usedBaby = []
-  for (const date of dates) {
-    slots[date] = {}
-    const names = includeBaby ? [...FAMILY_SLOTS, ...BABY_SLOTS] : FAMILY_SLOTS
-    for (const slot of names) {
-      const prev = existing?.[date]?.[slot]
-      if (prev?.locked && prev.mealId && mealById(prev.mealId)) {
-        slots[date][slot] = { mealId: prev.mealId, locked: true }
-        ;(String(slot).startsWith('baby') ? usedBaby : used).push(prev.mealId)
-        continue
-      }
-      const category = slotCategory(date, slot)
-      const meal = pickFrom(
-        poolFor({ recipes, category, season, bands, allergens }),
-        category === 'baby' ? usedBaby : used,
-      )
-      slots[date][slot] = { mealId: meal?.id || null, locked: false }
-      if (meal) (category === 'baby' ? usedBaby : used).push(meal.id)
-    }
+  const context = { recipes, season, bands, allergens }
+
+  for (const cell of cells) {
+    if (cell.grabAndGo) continue
+    const prev = existing?.[cell.date]?.[cell.slot]
+    if (!prev?.locked || !prev.mealId) continue
+    const recipe = recipes.find((item) => item.id === prev.mealId) || mealById(prev.mealId)
+    if (!recipe || String(cell.slot).startsWith('baby')) continue
+    cell.locked = true
+    cell.recipe = recipe
+    used.push(recipe.id)
   }
-  return slots
+
+  const open = cells.filter((cell) => !cell.grabAndGo && !cell.locked)
+  for (const cell of open) {
+    const pool = rankPool(
+      candidates({ ...context, categories: categoriesForSlot(cell.slot), seasonal: false }),
+      used,
+      season,
+    )
+    const recipe = pool[0] || null
+    cell.recipe = recipe
+    if (recipe) used.push(recipe.id)
+  }
+
+  const cap = seasonalMealCap(cells.filter((cell) => !cell.grabAndGo).length)
+  const preferred = new Set(spreadIndexes(open.length, Math.max(0, cap - seasonalCount(cells))))
+  const order = open
+    .map((cell, index) => index)
+    .sort((a, b) => {
+      const aPref = preferred.has(a) ? 0 : 1
+      const bPref = preferred.has(b) ? 0 : 1
+      if (aPref !== bPref) return aPref - bPref
+      return a - b
+    })
+
+  for (const index of order) {
+    if (seasonalCount(cells) >= cap) break
+    const cell = open[index]
+    const cellIndex = cells.findIndex((item) => item.date === cell.date && item.slot === cell.slot)
+    const pool = rankPool(
+      candidates({ ...context, categories: categoriesForSlot(cell.slot), seasonal: true }),
+      used,
+      season,
+      flavorCounts(cells),
+    )
+    const recipe = pool.find((item) => !flavorClash(cells, cellIndex, item.flavor))
+    if (!recipe) continue
+    const previousId = cell.recipe?.id
+    if (previousId) {
+      const at = used.indexOf(previousId)
+      if (at >= 0) used.splice(at, 1)
+    }
+    cell.recipe = recipe
+    used.push(recipe.id)
+  }
+
+  return writeSlots(cells)
+}
+
+function cellsFromSlots(slots, dates, recipes) {
+  const cells = weekCells(dates)
+  for (const cell of cells) {
+    const saved = slots?.[cell.date]?.[cell.slot]
+    if (cell.grabAndGo) {
+      cell.recipe = null
+      continue
+    }
+    if (!saved) continue
+    cell.locked = Boolean(saved.locked)
+    cell.recipe = saved.mealId ? recipes.find((item) => item.id === saved.mealId) || mealById(saved.mealId) : null
+  }
+  return cells
 }
 
 export function swapInPool({ slots, date, slot, profiles, recipes = MEALS, now = new Date(), weekStart }) {
   const current = slots?.[date]?.[slot]
-  if (!current || current.locked) return slots
-  const season = seasonForIso(weekStart || date)
-  const pool = poolFor({
-    recipes,
-    category: slotCategory(date, slot),
-    season,
-    bands: tableBands(profiles, now),
-    allergens: allergenKeys(profiles),
-  })
+  if (!current || current.locked || current.grabAndGo || isWeekdayBreakfast(date, slot)) return slots
+  const start = weekStart || mondayOnOrBefore(date)
+  const dates = weekDates(start)
+  const season = seasonForIso(start)
+  const bands = tableBands(profiles, now)
+  const allergens = allergenKeys(profiles)
+  const cells = cellsFromSlots(slots, dates, recipes)
+  const cellIndex = cells.findIndex((cell) => cell.date === date && cell.slot === slot)
+  if (cellIndex < 0) return slots
+  const context = { recipes, season, bands, allergens }
+  const pool = [
+    ...rankPool(candidates({ ...context, categories: categoriesForSlot(slot), seasonal: false }), [], season),
+    ...rankPool(candidates({ ...context, categories: categoriesForSlot(slot), seasonal: true }), [], season),
+  ]
   if (!pool.length) return slots
-  const index = pool.findIndex((recipe) => recipe.id === current.mealId)
-  const next = pool[(index + 1) % pool.length]
-  return {
-    ...slots,
-    [date]: {
-      ...slots[date],
-      [slot]: { mealId: next.id, locked: false },
-    },
+  const cap = seasonalMealCap(cells.filter((cell) => !cell.grabAndGo).length)
+  const startAt = Math.max(0, pool.findIndex((recipe) => recipe.id === current.mealId))
+  for (let step = 1; step <= pool.length; step += 1) {
+    const recipe = pool[(startAt + step) % pool.length]
+    if (recipe.id === current.mealId) continue
+    const previous = cells[cellIndex].recipe
+    cells[cellIndex].recipe = recipe
+    const themed = seasonalCount(cells)
+    const clash = flavorClash(cells, cellIndex, recipe.flavor)
+    if (themed <= cap && !clash) {
+      return writeSlots(cells)
+    }
+    cells[cellIndex].recipe = previous
   }
+  return slots
 }
 
-export function groceryFromSlots(slots, recipes = MEALS) {
+function addIngredient(map, ingredient) {
+  const id = `${ingredient.aisle}|${ingredient.name}`.toLowerCase()
+  const row = map.get(id) || {
+    id,
+    name: ingredient.name,
+    aisle: ingredient.aisle,
+    qty: [],
+    checked: false,
+  }
+  if (ingredient.qty && !row.qty.includes(ingredient.qty)) row.qty.push(ingredient.qty)
+  map.set(id, row)
+}
+
+export function groceryFromSlots(slots, recipes = MEALS, weekStart, allergens = []) {
   const map = new Map()
-  for (const day of Object.values(slots || {})) {
-    for (const slot of Object.values(day || {})) {
-      const meal = recipes.find((recipe) => recipe.id === slot.mealId)
-      if (!meal) continue
-      for (const ingredient of meal.ingredients) {
-        const id = `${ingredient.aisle}|${ingredient.name}`.toLowerCase()
-        const row = map.get(id) || {
-          id,
-          name: ingredient.name,
-          aisle: ingredient.aisle,
-          qty: [],
-          checked: false,
-        }
-        if (ingredient.qty && !row.qty.includes(ingredient.qty)) row.qty.push(ingredient.qty)
-        map.set(id, row)
+  const dates = Object.keys(slots || {}).sort()
+  const start = weekStart || (dates[0] ? mondayOnOrBefore(dates[0]) : null)
+  let includeGrab = false
+  for (const [date, day] of Object.entries(slots || {})) {
+    for (const [key, slot] of Object.entries(day || {})) {
+      if (String(key).startsWith('baby')) continue
+      if (slot?.grabAndGo || isWeekdayBreakfast(date, key)) {
+        includeGrab = true
+        continue
       }
+      const meal = recipes.find((recipe) => recipe.id === slot?.mealId)
+      if (!meal) continue
+      for (const ingredient of meal.ingredients || []) addIngredient(map, ingredient)
+    }
+  }
+  if (includeGrab && start) {
+    for (const option of grabAndGoForWeek(start, GRAB_AND_GO, allergens)) {
+      for (const ingredient of option.ingredients || []) addIngredient(map, ingredient)
     }
   }
   return [...map.values()].sort((a, b) => {
@@ -215,6 +406,39 @@ export function groceryFromSlots(slots, recipes = MEALS) {
     if (aisle !== 0) return aisle
     return a.name.localeCompare(b.name)
   })
+}
+
+export function planStats(slots, recipes = MEALS) {
+  let planned = 0
+  let seasonal = 0
+  const flavors = {}
+  for (const day of Object.values(slots || {})) {
+    for (const [key, cell] of Object.entries(day || {})) {
+      if (String(key).startsWith('baby') || cell?.grabAndGo) continue
+      if (!FAMILY_SLOTS.includes(key)) continue
+      planned += 1
+      const recipe = cell?.mealId
+        ? recipes.find((item) => item.id === cell.mealId) || mealById(cell.mealId)
+        : null
+      if (recipe?.seasonalTheme) {
+        seasonal += 1
+        if (recipe.flavor) flavors[recipe.flavor] = (flavors[recipe.flavor] || 0) + 1
+      }
+    }
+  }
+  return { planned, seasonal, cap: seasonalMealCap(planned), share: SEASONAL_MEAL_SHARE, flavors }
+}
+
+export function flavorRuns(slots, weekStart) {
+  const dates = weekDates(weekStart)
+  const cells = cellsFromSlots(slots, dates, MEALS)
+  const runs = []
+  for (let i = 1; i < cells.length; i += 1) {
+    const prev = cells[i - 1].recipe?.flavor
+    const next = cells[i].recipe?.flavor
+    if (prev && next && prev === next) runs.push({ flavor: prev, date: cells[i].date, slot: cells[i].slot })
+  }
+  return runs
 }
 
 export function mergeChecks(next, prev) {

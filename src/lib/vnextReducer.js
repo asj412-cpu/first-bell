@@ -2,7 +2,7 @@ import { cloneGiftLists } from './gifts.js'
 import { mergeEvents, seedCalendarEvents, wallEvent } from './events.js'
 import { PLAN_CHECKLIST } from './nextup.js'
 import { mergeProfiles } from '../data/profiles.js'
-import { groceryFromSlots, mergeChecks, suggestWeek, swapInPool } from './planner.js'
+import { allergenKeys, groceryFromSlots, mergeChecks, suggestWeek, swapInPool } from './planner.js'
 
 export function blankItem(sort) {
   const id = globalThis.crypto?.randomUUID?.() || `item-${Date.now()}`
@@ -130,7 +130,10 @@ export function vnextReducer(state, action) {
         existing: state.mealPlans[action.weekStart],
         now: action.now,
       })
-      const grocery = mergeChecks(groceryFromSlots(slots), state.grocery[action.weekStart])
+      const grocery = mergeChecks(
+        groceryFromSlots(slots, undefined, action.weekStart, allergenKeys(state.profiles)),
+        state.grocery[action.weekStart],
+      )
       return {
         ...state,
         mealPlans: { ...state.mealPlans, [action.weekStart]: slots },
@@ -146,7 +149,10 @@ export function vnextReducer(state, action) {
         weekStart: action.weekStart,
         now: action.now,
       })
-      const grocery = mergeChecks(groceryFromSlots(slots), state.grocery[action.weekStart])
+      const grocery = mergeChecks(
+        groceryFromSlots(slots, undefined, action.weekStart, allergenKeys(state.profiles)),
+        state.grocery[action.weekStart],
+      )
       return {
         ...state,
         mealPlans: { ...state.mealPlans, [action.weekStart]: slots },
