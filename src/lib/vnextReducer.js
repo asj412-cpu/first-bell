@@ -1,4 +1,5 @@
-import { cloneGiftLists } from './gifts.js'
+import { drawAssignments, freshExchange, myAssignment } from './exchange.js'
+import { cloneGiftLists, mergeGiftLists } from './gifts.js'
 import { mergeEvents, seedCalendarEvents, wallEvent } from './events.js'
 import { PLAN_CHECKLIST } from './nextup.js'
 import { mergeProfiles } from '../data/profiles.js'
@@ -86,8 +87,210 @@ export function vnextReducer(state, action) {
       return mapList(state, action.listId, (list) => ({
         ...list,
         items: list.items.map((item) =>
-          item.id === action.itemId ? { ...item, claimedByName: '', claimedAt: null } : item,
+          item.id === action.itemId ? { ...item, claimedByName: '', claimedAt: null, purchased: false } : item,
         ),
+      }))
+    case 'join-exchange': {
+      const { value } = action
+      const groupId = `group-${value.group.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+      const groups = state.exchange.groups.some((group) => group.label.toLowerCase() === value.group.toLowerCase())
+        ? state.exchange.groups
+        : [...state.exchange.groups, { id: groupId, label: value.group }]
+      const resolvedGroup = groups.find((group) => group.label.toLowerCase() === value.group.toLowerCase())
+      const selfId = `person-${Date.now()}`
+      const selfListKey = `guest-${selfId}`
+      const selfList = {
+        id: `list-${selfId}`,
+        kidKey: selfListKey,
+        displayName: value.name,
+        occasion: 'Christmas 2026',
+        shareSlug: `share-${selfId}`,
+        listKind: 'exchange',
+        items: value.ideas.map((title, sort) => ({
+          id: `${selfId}-${sort}`,
+          title,
+          notes: '',
+          url: '',
+          urlSecondary: '',
+          image: '',
+          availability: '',
+          category: 'Idea',
+          priceLabel: '',
+          retailer: '',
+          ageFit: '',
+          dollSize: '',
+          sourceSlug: '',
+          sort,
+          claimedByName: '',
+          claimedAt: null,
+        })),
+      }
+      const others = value.others.map((person, index) => {
+        const id = `${selfId}-other-${index}`
+        return {
+          participant: {
+            id,
+            name: person.name,
+            groupId: resolvedGroup.id,
+            listKey: `guest-${id}`,
+            inDraw: false,
+            submittedAt: person.ideas.length ? new Date().toISOString() : null,
+            phone: '',
+            email: '',
+            admin: false,
+          },
+          list: {
+            id: `list-${id}`,
+            kidKey: `guest-${id}`,
+            displayName: person.name,
+            occasion: 'Christmas 2026',
+            shareSlug: `share-${id}`,
+            listKind: 'exchange',
+            items: person.ideas.map((title, sort) => ({
+              id: `${id}-${sort}`,
+              title,
+              notes: '',
+              url: '',
+              urlSecondary: '',
+              image: '',
+              availability: '',
+              category: 'Idea',
+              priceLabel: '',
+              retailer: '',
+              ageFit: '',
+              dollSize: '',
+              sourceSlug: '',
+              sort,
+              claimedByName: '',
+              claimedAt: null,
+            })),
+          },
+        }
+      })
+      return {
+        ...state,
+        giftLists: [...state.giftLists, selfList, ...others.map((row) => row.list)],
+        exchange: {
+          ...state.exchange,
+          groups,
+          participants: [
+            ...state.exchange.participants,
+            {
+              id: selfId,
+              name: value.name,
+              groupId: resolvedGroup.id,
+              listKey: selfListKey,
+              inDraw: true,
+              submittedAt: new Date().toISOString(),
+              phone: value.phone,
+              email: value.email,
+              admin: false,
+            },
+            ...others.map((row) => row.participant),
+          ],
+        },
+      }
+    }
+    case 'set-in-draw': {
+      if (state.exchange.eventStatus === 'locked') return state
+      return {
+        ...state,
+        exchange: {
+          ...state.exchange,
+          eventStatus: state.exchange.eventStatus === 'draft' ? 'open' : state.exchange.eventStatus,
+          assignments: state.exchange.eventStatus === 'draft' ? [] : state.exchange.assignments,
+          participants: state.exchange.participants.map((person) =>
+            person.id === action.participantId ? { ...person, inDraw: action.inDraw } : person,
+          ),
+        },
+      }
+    }
+    case 'set-avoid-group':
+      if (state.exchange.eventStatus === 'locked') return state
+      return {
+        ...state,
+        exchange: {
+          ...state.exchange,
+          avoidSameGroup: Boolean(action.avoid),
+          eventStatus: state.exchange.eventStatus === 'draft' ? 'open' : state.exchange.eventStatus,
+          assignments: state.exchange.eventStatus === 'draft' ? [] : state.exchange.assignments,
+        },
+      }
+    case 'draw-santa': {
+      if (state.exchange.eventStatus === 'locked') return { ...state, exchangeError: 'Secret Santa is locked.' }
+      const result = drawAssignments(state.exchange.participants, { avoidSameGroup: state.exchange.avoidSameGroup })
+      if (!result.ok) return { ...state, exchangeError: result.reason }
+      return {
+        ...state,
+        exchangeError: '',
+        exchange: {
+          ...state.exchange,
+          eventStatus: 'draft',
+          drawnAt: action.at || new Date().toISOString(),
+          assignments: result.assignments,
+        },
+      }
+    }
+    case 'lock-santa': {
+      if (state.exchange.eventStatus !== 'draft' || state.exchange.assignments.length < 2) {
+        return { ...state, exchangeError: 'Draw Secret Santa before locking it.' }
+      }
+      const mine = myAssignment(state.exchange, 'andrew')
+      return {
+        ...state,
+        exchangeError: '',
+        exchange: {
+          ...state.exchange,
+          eventStatus: 'locked',
+          lockedAt: action.at || new Date().toISOString(),
+          assignments: mine ? [{ giverId: mine.giverId, receiverId: mine.receiverId }] : [],
+        },
+      }
+    }
+    case 'save-megan-contact':
+      return {
+        ...state,
+        exchange: {
+          ...state.exchange,
+          participants: state.exchange.participants.map((person) =>
+            person.memberKey === 'megan'
+              ? { ...person, phone: action.phone, email: action.email }
+              : person,
+          ),
+        },
+      }
+    case 'preview-reminder':
+      return {
+        ...state,
+        exchange: {
+          ...state.exchange,
+          previews: [action.preview, ...state.exchange.previews].slice(0, 12),
+        },
+      }
+    case 'add-named-wish':
+      return mapList(state, action.listId, (list) => ({
+        ...list,
+        items: [
+          ...list.items,
+          {
+            id: action.itemId,
+            title: action.title,
+            notes: action.notes || '',
+            url: action.url || '',
+            urlSecondary: '',
+            image: '',
+            availability: '',
+            category: 'Idea',
+            priceLabel: '',
+            retailer: '',
+            ageFit: '',
+            dollSize: '',
+            sourceSlug: '',
+            sort: list.items.length,
+            claimedByName: '',
+            claimedAt: null,
+          },
+        ],
       }))
     case 'plan-suggestion': {
       const suggestion = action.suggestion
@@ -235,6 +438,8 @@ export function initialVnext() {
     learningProgress: {},
     learningRemote: false,
     kidMode: false,
+    exchange: freshExchange(),
+    exchangeError: '',
     vnextReady: false,
     vnextNote: '',
   }
@@ -247,7 +452,10 @@ export function hydrateVnext(saved) {
     ...base,
     events: mergeEvents(saved.events),
     imports: Array.isArray(saved.imports) ? saved.imports : [],
-    giftLists: Array.isArray(saved.giftLists) ? saved.giftLists : base.giftLists,
+    giftLists: mergeGiftLists(saved.giftLists, base.giftLists),
+    exchange: saved.exchange && typeof saved.exchange === 'object'
+      ? { ...freshExchange(), ...saved.exchange, participants: saved.exchange.participants || freshExchange().participants }
+      : freshExchange(),
     profiles: mergeProfiles(saved.profiles),
     mealPlans: saved.mealPlans && typeof saved.mealPlans === 'object' ? saved.mealPlans : {},
     grocery: saved.grocery && typeof saved.grocery === 'object' ? saved.grocery : {},

@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { findListBySlug, publicPayloadToList, safeHttp, visibleItems } from '../lib/gifts.js'
+import WishCard from '../components/WishCard.jsx'
+import { isStarterItem } from '../lib/exchange.js'
+import { findListBySlug, listUsesLocalCatalog, presentItems, publicPayloadToList } from '../lib/gifts.js'
 import { useBell } from '../lib/store.jsx'
 import { supabase } from '../lib/supabase.js'
 
 export default function PublicGift() {
   const { slug } = useParams()
-  const { state, claimGift, toggleKidMode } = useBell()
+  const { state, claimGift } = useBell()
   const local = findListBySlug(state.giftLists, slug)
   const [remote, setRemote] = useState(null)
   const [mode, setMode] = useState(supabase ? 'loading' : local ? 'local' : 'missing')
-  const [claiming, setClaiming] = useState(null)
+  const [naming, setNaming] = useState(null)
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -22,14 +24,28 @@ export default function PublicGift() {
       return undefined
     }
     setMode('loading')
-    supabase.rpc('get_public_gift_list', { p_slug: slug }).then(({ data, error: rpcError }) => {
+    supabase.rpc('get_shared_gift_list', { p_slug: slug }).then(({ data, error: rpcError }) => {
       if (cancelled) return
-      if (rpcError || !data) {
-        setMode(local ? 'local' : 'missing')
+      if (!rpcError && data?.list) {
+        const next = publicPayloadToList(data)
+        if ((next.items || []).length && (next.items || []).every(isStarterItem)) {
+          setMode(local ? 'local' : 'missing')
+          return
+        }
+        setRemote(next)
+        setMode('remote')
         return
       }
-      setRemote(publicPayloadToList(data))
-      setMode('remote')
+      supabase.rpc('get_public_gift_list', { p_slug: slug }).then((fallback) => {
+        if (cancelled) return
+        const next = fallback.data ? publicPayloadToList(fallback.data) : null
+        if (next && !(next.items || []).every(isStarterItem)) {
+          setRemote(next)
+          setMode('remote')
+          return
+        }
+        setMode(local ? 'local' : 'missing')
+      })
     })
     return () => {
       cancelled = true
@@ -39,15 +55,15 @@ export default function PublicGift() {
   const list = mode === 'remote' ? remote : local
   if (mode === 'loading') {
     return (
-      <div className="guest-page">
-        <div className="card guest-sheet"><h1>Opening the list…</h1></div>
+      <div className="guest-page gift-guest">
+        <div className="gift-guest-head"><h1>Opening the list…</h1></div>
       </div>
     )
   }
   if (!list || mode === 'missing') {
     return (
-      <div className="guest-page">
-        <div className="card guest-sheet">
+      <div className="guest-page gift-guest">
+        <div className="gift-guest-head">
           <div className="kicker">Mi Casa</div>
           <h1>That list isn’t here</h1>
           <p className="lede">Check the link with the family.</p>
@@ -56,83 +72,72 @@ export default function PublicGift() {
     )
   }
 
-  const items = visibleItems(list, state.kidMode)
-  const hidden = list.items.length - items.length
+  const conceal = mode === 'remote' && list.purchasesVisible === false
+  const items = presentItems(list, { conceal })
 
-  async function submit(item) {
+  async function confirm(item) {
     setBusy(true)
     setError('')
     try {
-      if (mode === 'remote' && supabase) {
-        const { error: rpcError } = await supabase.rpc('claim_gift_item', {
+      if (mode === 'remote' && supabase && !listUsesLocalCatalog(list)) {
+        const { error: rpcError } = await supabase.rpc('mark_gift_purchased', {
           p_slug: slug,
           p_item_id: item.id,
           p_name: name.trim() || null,
         })
         if (rpcError) throw rpcError
-        const { data } = await supabase.rpc('get_public_gift_list', { p_slug: slug })
+        const { data } = await supabase.rpc('get_shared_gift_list', { p_slug: slug })
         if (data) setRemote(publicPayloadToList(data))
       } else {
         claimGift({ slug, itemId: item.id, name })
       }
-      setClaiming(null)
+      setNaming(null)
       setName('')
     } catch (err) {
-      setError(err.message || 'Could not claim that wish')
+      setError(err.message || 'Could not mark that gift')
     } finally {
       setBusy(false)
     }
   }
 
   return (
-    <div className="guest-page">
-      <div className="card guest-sheet">
-        <img className="bell" src="/icons/icon-192.png" alt="" style={{ width: 64, height: 64, borderRadius: 16, marginBottom: 10 }} />
+    <div className="guest-page gift-guest">
+      <header className="gift-guest-head">
+        <img className="bell" src="/icons/icon-192.png" alt="" />
         <div className="kicker">{list.occasion}</div>
         <h1>{list.displayName}’s list</h1>
-        <p className="lede">Take a wish if you want to be the one who gives it. A name is optional.</p>
-        <button className={`btn small ${state.kidMode ? 'primary' : ''}`} aria-pressed={state.kidMode} onClick={toggleKidMode}>
-          {state.kidMode ? 'Kid mode on' : 'Kid mode'}
-        </button>
-        {state.kidMode && hidden > 0 && (
-          <p className="dim">Some wishes are hidden so the surprise stays a surprise.</p>
+        <p className="lede">
+          Pick something to buy. Once you mark it, the next person will see that it is taken.
+          {list.displayName} does not see these marks on their own list.
+        </p>
+        {listUsesLocalCatalog(list) && (
+          <div className="banner">On this preview, a mark stays on this phone until the database update is approved.</div>
         )}
         {error && <p className="form-error">{error}</p>}
-        <div className="gift-public">
-          {items.map((item) => (
-            <article key={item.id} className="wish">
-              <h3>{item.title}</h3>
-              {item.notes && <p className="muted">{item.notes}</p>}
-              <div className="meta-row">
-                {safeHttp(item.url) && <a className="btn small ghost" href={safeHttp(item.url)} target="_blank" rel="noreferrer">Link</a>}
-                {safeHttp(item.urlSecondary) && <a className="btn small ghost" href={safeHttp(item.urlSecondary)} target="_blank" rel="noreferrer">Another link</a>}
-              </div>
-              {item.claimedAt ? (
-                <span className="chip yes">Claimed{item.claimedByName ? ` · ${item.claimedByName}` : ''}</span>
-              ) : claiming === item.id ? (
-                <form
-                  onSubmit={(event) => {
-                    event.preventDefault()
-                    submit(item)
-                  }}
-                >
-                  <label className="field">
-                    <span>Your name</span>
-                    <input value={name} onChange={(event) => setName(event.target.value)} placeholder="Optional" />
-                  </label>
-                  <div className="meta-row">
-                    <button className="btn small primary" disabled={busy}>I’ll get this</button>
-                    <button type="button" className="btn small ghost" onClick={() => setClaiming(null)}>Cancel</button>
-                  </div>
-                </form>
-              ) : (
-                <button className="btn small primary" onClick={() => { setClaiming(item.id); setError('') }}>I’ll get this</button>
-              )}
-            </article>
-          ))}
-        </div>
-        <p className="gate-note"><Link to="/enter">Family sign-in</Link></p>
+      </header>
+      <div className="wish-grid guest-grid">
+        {items.map((item) => (
+          <WishCard
+            key={item.id}
+            item={item}
+            conceal={conceal}
+            busy={busy}
+            naming={naming === item.id}
+            name={name}
+            onName={setName}
+            onStart={() => {
+              setNaming(item.id)
+              setError('')
+            }}
+            onCancel={() => setNaming(null)}
+            onConfirm={() => confirm(item)}
+          />
+        ))}
       </div>
+      {items.length === 0 && (
+        <p className="lede" style={{ padding: '0 18px' }}>No ideas on this list yet.</p>
+      )}
+      <p className="gate-note"><Link to="/enter">Family sign-in</Link></p>
     </div>
   )
 }

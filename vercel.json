@@ -1,6 +1,7 @@
 {
   "rewrites": [
     { "source": "/g/:slug", "destination": "/index.html" },
+    { "source": "/join/:token", "destination": "/index.html" },
     { "source": "/r/:slug", "destination": "/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]

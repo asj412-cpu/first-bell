@@ -4,8 +4,12 @@ import AppShell from './components/AppShell.jsx'
 import { useBell } from './lib/store.jsx'
 import Calendar from './pages/Calendar.jsx'
 import Gate from './pages/Gate.jsx'
+import Assignment from './pages/Assignment.jsx'
 import GiftDetail from './pages/GiftDetail.jsx'
 import Gifts from './pages/Gifts.jsx'
+import JoinList from './pages/JoinList.jsx'
+import Reminders from './pages/Reminders.jsx'
+import SecretSanta from './pages/SecretSanta.jsx'
 import GuestRsvp from './pages/GuestRsvp.jsx'
 import History from './pages/History.jsx'
 import Home from './pages/Home.jsx'
@@ -53,6 +57,7 @@ export default function App() {
       <Route path="/enter" element={<Gate />} />
       <Route path="/r/:slug" element={<GuestRsvp />} />
       <Route path="/g/:slug" element={<PublicGift />} />
+      <Route path="/join/:token" element={<JoinList />} />
       <Route
         element={
           <Protected>
@@ -70,6 +75,9 @@ export default function App() {
         <Route path="/learning" element={<Learning />} />
         <Route path="/learning/:kidKey" element={<Learning />} />
         <Route path="/gifts" element={<Gifts />} />
+        <Route path="/gifts/santa" element={<SecretSanta />} />
+        <Route path="/gifts/assignment" element={<Assignment />} />
+        <Route path="/gifts/reminders" element={<Reminders />} />
         <Route path="/gifts/:kidKey" element={<GiftDetail />} />
         <Route path="/settings" element={<Settings />} />
       </Route>

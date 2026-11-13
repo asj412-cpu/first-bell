@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { mergeProfiles } from '../data/profiles.js'
+import { isUuid, mergeGiftLists, publicPayloadToList } from './gifts.js'
 import { freshState, HOUSEHOLD, PARTY } from '../data/seed.js'
 import { mergeEvents } from './events.js'
 import { fromDbRsvp, hostDisplayName, toDbStatus } from './rsvps.js'
@@ -88,13 +89,14 @@ export function BellProvider({ children }) {
       events: state.events,
       imports: state.imports,
       giftLists: state.giftLists,
+      exchange: state.exchange,
       profiles: state.profiles,
       mealPlans: state.mealPlans,
       grocery: state.grocery,
       learningProgress: state.learningProgress,
       kidMode: state.kidMode,
     })
-  }, [state.session, state.guests, state.messages, state.backend, state.events, state.imports, state.giftLists, state.profiles, state.mealPlans, state.grocery, state.learningProgress, state.kidMode])
+  }, [state.session, state.guests, state.messages, state.backend, state.events, state.imports, state.giftLists, state.exchange, state.profiles, state.mealPlans, state.grocery, state.learningProgress, state.kidMode])
 
   const loadRsvps = useCallback(async (partyUuid) => {
     if (!supabase || !partyUuid) return
@@ -119,11 +121,24 @@ export function BellProvider({ children }) {
 
         let householdId = null
         let memberRole = null
+        let giftLists = null
         if (user) {
           const { data: membership, error: memErr } = await supabase.rpc('ensure_host_membership')
           if (memErr) throw memErr
           householdId = membership?.household_id || null
           memberRole = membership?.role || null
+          await supabase.rpc('link_gift_participant').then(() => {}, () => {})
+          if (!householdId) {
+            const access = await supabase.rpc('get_my_gift_access').then((result) => result.data, () => null)
+            if (access?.household_id) {
+              householdId = access.household_id
+              memberRole = 'gift'
+              const lists = await supabase.rpc('get_my_gift_lists').then((result) => result.data, () => null)
+              if (Array.isArray(lists)) {
+                giftLists = lists.map((row) => publicPayloadToList({ list: row, items: row.items, purchases_visible: false }))
+              }
+            }
+          }
         }
 
         patch({
@@ -132,6 +147,7 @@ export function BellProvider({ children }) {
           partyUuid: party?.id || null,
           householdId,
           memberRole,
+          ...(giftLists ? { giftLists } : {}),
           session: user
             ? sessionFromUser(user, { householdId, role: memberRole })
             : null,
@@ -202,7 +218,7 @@ export function BellProvider({ children }) {
   }, [state.backend, state.partyUuid, state.householdId, loadRsvps])
 
   useEffect(() => {
-    if (!supabase || state.backend !== 'live' || !state.householdId) return undefined
+    if (!supabase || state.backend !== 'live' || !state.householdId || state.memberRole === 'gift') return undefined
     if (pulledFor.current === state.householdId) return undefined
     pulledFor.current = state.householdId
     let cancelled = false
@@ -221,7 +237,7 @@ export function BellProvider({ children }) {
         ...prev,
         vnextReady: true,
         imports: result.imports,
-        giftLists: result.giftLists.length ? result.giftLists : prev.giftLists,
+        giftLists: result.giftLists.length ? mergeGiftLists(result.giftLists) : prev.giftLists,
         profiles: result.profiles.length ? mergeProfiles(result.profiles) : prev.profiles,
         mealPlans: Object.keys(result.mealPlans).length ? { ...prev.mealPlans, ...result.mealPlans } : prev.mealPlans,
         grocery: Object.keys(result.grocery).length ? { ...prev.grocery, ...result.grocery } : prev.grocery,
@@ -236,7 +252,7 @@ export function BellProvider({ children }) {
     return () => {
       cancelled = true
     }
-  }, [state.backend, state.householdId, patch])
+  }, [state.backend, state.householdId, state.memberRole, patch])
 
   const applyVnext = useCallback((action) => {
     let snapshot = null
@@ -352,6 +368,35 @@ export function BellProvider({ children }) {
       },
       releaseClaim(listId, itemId) {
         applyVnext({ type: 'release-claim', listId, itemId })
+        if (live && isUuid(itemId)) {
+          supabase.rpc('release_gift_purchase', { p_item_id: itemId }).then(() => {}, () => {})
+        }
+      },
+      joinExchange(value) {
+        applyVnext({ type: 'join-exchange', value })
+      },
+      setInDraw(participantId, inDraw) {
+        applyVnext({ type: 'set-in-draw', participantId, inDraw })
+      },
+      setAvoidGroup(avoid) {
+        applyVnext({ type: 'set-avoid-group', avoid })
+      },
+      drawSanta() {
+        applyVnext({ type: 'draw-santa' })
+      },
+      lockSanta() {
+        applyVnext({ type: 'lock-santa' })
+      },
+      saveMeganContact(phone, email) {
+        applyVnext({ type: 'save-megan-contact', phone, email })
+      },
+      previewReminder(preview) {
+        applyVnext({ type: 'preview-reminder', preview })
+      },
+      addNamedWish(listId, title) {
+        const itemId = globalThis.crypto?.randomUUID?.() || `wish-${Date.now()}`
+        applyVnext({ type: 'add-named-wish', listId, itemId, title })
+        return itemId
       },
       planSuggestion(suggestion) {
         applyVnext({ type: 'plan-suggestion', suggestion })
