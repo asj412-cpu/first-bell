@@ -15,7 +15,7 @@ Live: [https://first-bell-seven.vercel.app](https://first-bell-seven.vercel.app)
 3. **Parties** — Chloe’s 5th (seeded), RSVP board Yes/No/Maybe/No response (Leila preloaded Yes), Amazon registry, invite assets
 4. **Inbox** — folders Inbox / Bills / Shopping / School / Trash · example cards · copy that the COO/agent files
 5. **Calendar** — month + week shell, Chloe party + birthday seeded, Family sync next
-6. **Auth** — Supabase email OTP / magic link for hosts when env vars are set; **Enter Johnson household** demo only if env vars are missing
+6. **Auth** — host email sign-in (code, or the link in that email) when env vars are set; **Enter Johnson household** demo only if env vars are missing. The code shows up in the email only after the Magic Link and Confirm signup templates in **SHIP.md** are pasted into the Supabase dashboard.
 7. **Public guest RSVP** — `/r/princess-chloe-5` (no login). With Supabase configured, submissions land on the host board across devices
 8. **SHIP.md** — env, migrations, auth test plan, deploy
 

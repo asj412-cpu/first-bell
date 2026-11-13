@@ -3,7 +3,7 @@ import { mergeProfiles } from '../data/profiles.js'
 import { freshState, HOUSEHOLD, PARTY } from '../data/seed.js'
 import { mergeEvents } from './events.js'
 import { fromDbRsvp, hostDisplayName, toDbStatus } from './rsvps.js'
-import { isSupabaseConfigured, supabase } from './supabase.js'
+import { authCallback, clearAuthCallbackParams, isSupabaseConfigured, supabase } from './supabase.js'
 import { hydrateVnext, mergeLearning, vnextReducer } from './vnextReducer.js'
 import { mirrorVnext, pullVnext } from './vnextRemote.js'
 
@@ -62,6 +62,7 @@ export function BellProvider({ children }) {
     householdId: null,
     memberRole: null,
     authError: null,
+    authNotice: null,
     authBusy: false,
     authStep: 'email',
     pendingEmail: '',
@@ -167,7 +168,18 @@ export function BellProvider({ children }) {
 
     supabase.auth.getSession().then(({ data }) => {
       if (cancelled) return
-      return bootstrapLive(data.session?.user ?? null)
+      const user = data.session?.user ?? null
+      const linkFailed = !user && (authCallback.hasCode || authCallback.errorDescription || authCallback.errorCode)
+      if (linkFailed) {
+        patch({
+          authNotice:
+            'That link didn’t finish in this browser. Links only work in the same browser that asked for the email. Type the code if the message has one, or ask for a new email from this screen.',
+        })
+      }
+      if (authCallback.hasCode || authCallback.errorDescription || authCallback.errorCode) {
+        clearAuthCallbackParams()
+      }
+      return bootstrapLive(user)
     })
 
     const {
@@ -283,23 +295,26 @@ export function BellProvider({ children }) {
             emailRedirectTo: `${window.location.origin}/enter`,
           },
         })
-        patch({
+        update((prev) => ({
+          ...prev,
           authBusy: false,
-          authError: error ? error.message : null,
-          authStep: error ? 'email' : 'code',
-          pendingEmail: error ? state.pendingEmail : trimmed,
-        })
+          authError: error ? friendlyAuthError(error.message) : null,
+          authNotice: error ? prev.authNotice : null,
+          authStep: error ? (prev.authStep === 'code' ? 'code' : 'email') : 'code',
+          pendingEmail: error ? prev.pendingEmail : trimmed,
+        }))
         if (error) throw error
       },
       async verifyOtp(token) {
         if (!supabase) throw new Error('Supabase is not configured')
+        const code = String(token || '').replace(/\D/g, '')
         patch({ authBusy: true, authError: null })
         const { error } = await supabase.auth.verifyOtp({
           email: state.pendingEmail,
-          token: token.trim(),
+          token: code,
           type: 'email',
         })
-        patch({ authBusy: false, authError: error ? error.message : null })
+        patch({ authBusy: false, authError: error ? friendlyAuthError(error.message) : null })
         if (error) throw error
       },
       async signOut() {
@@ -314,6 +329,7 @@ export function BellProvider({ children }) {
           authStep: 'email',
           pendingEmail: '',
           authError: null,
+          authNotice: null,
         }))
       },
       resetDemo() {
@@ -453,7 +469,7 @@ export function BellProvider({ children }) {
         }))
       },
       resetAuthForm() {
-        patch({ authStep: 'email', authError: null, pendingEmail: '' })
+        patch({ authStep: 'email', authError: null, authNotice: null, pendingEmail: '' })
       },
     }
   }, [state, ready, configured, update, patch, loadRsvps, applyVnext])
@@ -465,4 +481,15 @@ export function useBell() {
   const ctx = useContext(BellContext)
   if (!ctx) throw new Error('useBell must be used inside BellProvider')
   return ctx
+}
+
+function friendlyAuthError(message) {
+  if (!message) return null
+  if (/only request this after/i.test(message)) {
+    return 'Wait a minute, then ask for another email.'
+  }
+  if (/token has expired or is invalid/i.test(message) || /otp.?expired/i.test(message)) {
+    return 'That code didn’t work. Check the email for the latest code, or tap the link.'
+  }
+  return message
 }

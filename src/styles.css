@@ -341,19 +341,20 @@ h3 { font-size: 18px; }
 /* ---------- Gate ---------- */
 .gate {
   min-height: 100dvh;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 24px 18px;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 .gate-bg {
-  position: absolute;
-  inset: 0;
+  position: fixed;
+  inset: -4%;
   background:
     linear-gradient(180deg, rgba(246,239,230,.12) 0%, rgba(58,42,34,.35) 100%),
     url("/brand/casa-hero.jpg") center/cover no-repeat;
-  transform: scale(1.04);
 }
 @media (min-width: 800px) {
   .gate-bg { background-image: linear-gradient(180deg, rgba(246,239,230,.2), rgba(58,42,34,.42)), url("/brand/casa-hero.jpg"); background-size: cover; }
@@ -374,8 +375,24 @@ h3 { font-size: 18px; }
   box-shadow: 0 0 0 1px var(--line), 0 16px 32px rgba(58, 42, 34, 0.16);
 }
 .gate-card h1 { margin-bottom: 8px; }
+.gate-card .lede strong { color: var(--ink); font-weight: 600; }
 .gate-card .lede { margin-bottom: 22px; }
-.gate-note { margin-top: 16px; font-size: 12px; color: var(--dim); }
+.gate-note { margin-top: 16px; font-size: 13px; line-height: 1.45; color: var(--dim); }
+.gate-hint {
+  text-align: left;
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(200, 100, 59, 0.08);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 14.5px;
+  line-height: 1.45;
+}
+.gate-actions { display: flex; flex-direction: column; gap: 10px; }
+.gate-card .field input { font-size: 16px; min-height: 48px; }
+.gate-card .btn { min-height: 48px; }
+.gate-card .btn:disabled { opacity: 0.55; cursor: default; }
 .gate-alert {
   text-align: left;
   margin-bottom: 16px;
@@ -393,9 +410,13 @@ h3 { font-size: 18px; }
 }
 .field input.otp {
   letter-spacing: 0.28em;
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
   text-align: center;
+  min-height: 64px;
+  padding-left: 18px;
+  padding-right: 18px;
 }
 .sync-banner {
   padding: 12px 14px;
