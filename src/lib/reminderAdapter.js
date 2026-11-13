@@ -1,13 +1,15 @@
 /**
- * Reminder delivery is a stub on purpose.
- * Nothing in this file opens a network request or talks to an email or SMS provider.
- * Andrew has to choose a delivery option and say yes before any message can be sent.
+ * Andrew chose iCloud SMTP (smtp.mail.me.com) for reminder delivery.
+ * This file still does not send anything. An app-specific password for
+ * asj412@me.com has to be saved as a server secret before a message can go out.
+ * Do not put that password in the app or the repo.
  */
 
 export const REMINDER_ADAPTER = {
-  id: 'stub',
+  id: 'icloud-smtp',
   delivers: false,
-  label: 'Nothing is sent. No email or text provider is connected.',
+  label:
+    'Reminders will go through iCloud mail (smtp.mail.me.com). Nothing is sent yet. An app-specific password has to be saved on the server first.',
 }
 
 export function previewReminder({ reminder, recipients, previewedAt }) {

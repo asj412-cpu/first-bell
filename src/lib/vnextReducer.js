@@ -1,4 +1,4 @@
-import { drawAssignments, freshExchange, myAssignment } from './exchange.js'
+import { drawAssignments, freshExchange, myAssignment, wishFromIdea } from './exchange.js'
 import { cloneGiftLists, mergeGiftLists } from './gifts.js'
 import { mergeEvents, seedCalendarEvents, wallEvent } from './events.js'
 import { PLAN_CHECKLIST } from './nextup.js'
@@ -97,7 +97,40 @@ export function vnextReducer(state, action) {
         ? state.exchange.groups
         : [...state.exchange.groups, { id: groupId, label: value.group }]
       const resolvedGroup = groups.find((group) => group.label.toLowerCase() === value.group.toLowerCase())
-      const selfId = `person-${Date.now()}`
+      const returning = state.exchange.participants.find(
+        (person) => person.email && person.email.toLowerCase() === value.email,
+      )
+      if (returning) {
+        const list = state.giftLists.find((row) => row.kidKey === returning.listKey)
+        return {
+          ...state,
+          giftLists: state.giftLists.map((row) =>
+            row.kidKey === returning.listKey
+              ? {
+                  ...row,
+                  displayName: value.name,
+                  items: value.items.map((idea, sort) => {
+                    const previous = list?.items?.find((item) => item.id === idea.id)
+                    return {
+                      ...wishFromIdea(idea, idea.id || `${returning.id}-${sort}`, sort),
+                      claimedByName: previous?.claimedByName || '',
+                      claimedAt: previous?.claimedAt || null,
+                    }
+                  }),
+                }
+              : row,
+          ),
+          exchange: {
+            ...state.exchange,
+            participants: state.exchange.participants.map((person) =>
+              person.id === returning.id
+                ? { ...person, name: value.name, phone: value.phone, submittedAt: new Date().toISOString() }
+                : person,
+            ),
+          },
+        }
+      }
+      const selfId = value.selfId || `person-${Date.now()}`
       const selfListKey = `guest-${selfId}`
       const selfList = {
         id: `list-${selfId}`,
@@ -106,26 +139,9 @@ export function vnextReducer(state, action) {
         occasion: 'Christmas 2026',
         shareSlug: `share-${selfId}`,
         listKind: 'exchange',
-        items: value.ideas.map((title, sort) => ({
-          id: `${selfId}-${sort}`,
-          title,
-          notes: '',
-          url: '',
-          urlSecondary: '',
-          image: '',
-          availability: '',
-          category: 'Idea',
-          priceLabel: '',
-          retailer: '',
-          ageFit: '',
-          dollSize: '',
-          sourceSlug: '',
-          sort,
-          claimedByName: '',
-          claimedAt: null,
-        })),
+        items: value.items.map((idea, sort) => wishFromIdea(idea, `${selfId}-${sort}`, sort)),
       }
-      const others = value.others.map((person, index) => {
+      const others = (value.others || []).map((person, index) => {
         const id = `${selfId}-other-${index}`
         return {
           participant: {
@@ -134,7 +150,7 @@ export function vnextReducer(state, action) {
             groupId: resolvedGroup.id,
             listKey: `guest-${id}`,
             inDraw: false,
-            submittedAt: person.ideas.length ? new Date().toISOString() : null,
+            submittedAt: person.items.length ? new Date().toISOString() : null,
             phone: '',
             email: '',
             admin: false,
@@ -146,24 +162,7 @@ export function vnextReducer(state, action) {
             occasion: 'Christmas 2026',
             shareSlug: `share-${id}`,
             listKind: 'exchange',
-            items: person.ideas.map((title, sort) => ({
-              id: `${id}-${sort}`,
-              title,
-              notes: '',
-              url: '',
-              urlSecondary: '',
-              image: '',
-              availability: '',
-              category: 'Idea',
-              priceLabel: '',
-              retailer: '',
-              ageFit: '',
-              dollSize: '',
-              sourceSlug: '',
-              sort,
-              claimedByName: '',
-              claimedAt: null,
-            })),
+            items: person.items.map((idea, sort) => wishFromIdea(idea, `${id}-${sort}`, sort)),
           },
         }
       })
@@ -267,6 +266,19 @@ export function vnextReducer(state, action) {
           previews: [action.preview, ...state.exchange.previews].slice(0, 12),
         },
       }
+    case 'save-own-items':
+      return mapList(state, action.listId, (list) => ({
+        ...list,
+        items: action.items.map((idea, sort) => {
+          const previous = list.items.find((item) => item.id === idea.id)
+          return {
+            ...wishFromIdea(idea, idea.id || previous?.id || `idea-${Date.now()}-${sort}`, sort),
+            notes: previous?.notes || '',
+            claimedByName: previous?.claimedByName || '',
+            claimedAt: previous?.claimedAt || null,
+          }
+        }),
+      }))
     case 'add-named-wish':
       return mapList(state, action.listId, (list) => ({
         ...list,

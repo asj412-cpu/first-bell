@@ -81,7 +81,7 @@ export default function Reminders() {
       <h1>Reminders</h1>
       <div className="stub-banner" role="note">
         <strong>Nothing is sent.</strong>
-        <p>{REMINDER_ADAPTER.label} This screen only shows the words and who would get them. Sending needs Andrew’s yes, and a delivery option he picks.</p>
+        <p>{REMINDER_ADAPTER.label} This screen only shows the words and who would get them.</p>
       </div>
       {error && <p className="form-error">{error}</p>}
       {rows.map((reminder) => {

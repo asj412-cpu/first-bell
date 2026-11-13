@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
+import GiftItemFields from '../components/GiftItemFields.jsx'
 import { IconBack } from '../components/Icons.jsx'
 import WishCard from '../components/WishCard.jsx'
-import { categoryLabel, PRICE_AS_OF } from '../lib/exchange.js'
-import { listUsesLocalCatalog, presentItems, safeHttp } from '../lib/gifts.js'
+import { blankGiftItem, categoryLabel, PRICE_AS_OF, validateGiftItems, withGiftImages } from '../lib/exchange.js'
+import { isUuid, listUsesLocalCatalog, presentItems } from '../lib/gifts.js'
 import { useBell } from '../lib/store.jsx'
+import { supabase } from '../lib/supabase.js'
 
 const FILTERS = ['All', 'Toys', 'Doll clothes', 'Clothes', 'Learning']
 
@@ -17,13 +19,16 @@ function matchesFilter(item, filter, dollSize) {
 
 export default function GiftDetail() {
   const { kidKey } = useParams()
-  const { state, toggleKidMode, addNamedWish, releaseClaim } = useBell()
+  const { state, toggleKidMode, releaseClaim, saveOwnItems } = useBell()
   const list = state.giftLists.find((row) => row.kidKey === kidKey)
   const [filter, setFilter] = useState('All')
   const [dollSize, setDollSize] = useState('')
   const [query, setQuery] = useState('')
-  const [wish, setWish] = useState('')
   const [copied, setCopied] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [rows, setRows] = useState(null)
+  const [rowErrors, setRowErrors] = useState({})
+  const [saving, setSaving] = useState(false)
   const guest = state.memberRole === 'gift'
   const ownExchange = Boolean(list && list.listKind === 'exchange' && (guest || (state.session?.demo && list.kidKey === 'andrew')))
   const conceal = state.kidMode || ownExchange || guest
@@ -52,12 +57,49 @@ export default function GiftDetail() {
     }).catch(() => setCopied(false))
   }
 
-  function addWish(event) {
+  const catalog = items.some((item) => item.category && item.category !== 'Idea')
+  const canEdit = list.listKind === 'exchange' && (guest || state.session?.demo || state.memberRole === 'owner')
+
+  function startEdit() {
+    const ideas = items.filter((item) => !item.sourceSlug)
+    setRows(
+      ideas.length
+        ? ideas.map((item) => ({
+            key: item.id,
+            id: item.id,
+            description: item.title,
+            url: item.url || '',
+          }))
+        : [blankGiftItem()],
+    )
+    setRowErrors({})
+    setEditing(true)
+  }
+
+  async function saveEdits(event) {
     event.preventDefault()
-    const title = wish.trim()
-    if (!title) return
-    addNamedWish(list.id, title)
-    setWish('')
+    const result = validateGiftItems(rows)
+    setRowErrors(result.errors)
+    if (!result.ok) return
+    setSaving(true)
+    try {
+      const stored = await withGiftImages(result.items)
+      saveOwnItems(list.id, stored)
+      if (supabase && state.backend === 'live' && isUuid(list.id)) {
+        await supabase.rpc('save_my_gift_items', {
+          p_list: list.id,
+          p_items: stored.map((item) => ({
+            id: isUuid(item.id) ? item.id : null,
+            description: item.description,
+            url: item.url,
+            image: item.image,
+          })),
+        })
+      }
+      setEditing(false)
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -69,9 +111,11 @@ export default function GiftDetail() {
         <p className="lede">Drew was born in February 2026. There are no catalog ideas for him yet. Add one when you think of it.</p>
       ) : (
         <p className="lede">
-          {conceal
-            ? 'Ideas for Christmas. Nothing here shows what has already been bought.'
-            : `Prices say “about” because they were checked on ${PRICE_AS_OF}, not today.`}
+          {list.listKind === 'exchange'
+            ? 'Your gifts. Open a link to see the page, and come back here any time to add or change a row.'
+            : conceal
+              ? 'Ideas for Christmas. Nothing here shows what has already been bought.'
+              : `Prices say “about” because they were checked on ${PRICE_AS_OF}, not today.`}
         </p>
       )}
       {!guest && (
@@ -93,7 +137,7 @@ export default function GiftDetail() {
       {listUsesLocalCatalog(list) && !conceal && (
         <div className="banner">Marks on this preview stay on this phone until the database update is approved.</div>
       )}
-      {items.length > 0 && (
+      {catalog && items.length > 0 && (
         <>
           <label className="field">
             <span>Find a gift</span>
@@ -142,15 +186,36 @@ export default function GiftDetail() {
         ))}
       </div>
       {filtered.length === 0 && items.length > 0 && <p className="lede">Nothing in this filter. Try another one.</p>}
-      {(!state.kidMode || list.listKind === 'exchange') && (
-        <form className="card pad" onSubmit={addWish}>
-          <h2>Add an idea</h2>
-          <label className="field">
-            <span>Wish</span>
-            <input value={wish} onChange={(event) => setWish(event.target.value)} placeholder="A soft book" />
-          </label>
-          <button className="btn primary" type="submit">Add to {list.displayName}</button>
-          {safeHttp(items[0]?.url) ? null : null}
+      {canEdit && !editing && (
+        <button className="btn big" type="button" onClick={startEdit}>
+          Add or edit items
+        </button>
+      )}
+      {canEdit && editing && (
+        <form className="card pad" onSubmit={saveEdits}>
+          <h2>Your items</h2>
+          <GiftItemFields
+            items={rows}
+            errors={rowErrors}
+            onChange={(index, patch) => {
+              const next = rows.slice()
+              next[index] = { ...next[index], ...patch }
+              setRows(next)
+            }}
+            onAdd={() => setRows([...rows, blankGiftItem()])}
+            onRemove={(index) => {
+              const next = rows.filter((_, item) => item !== index)
+              setRows(next.length ? next : [blankGiftItem()])
+            }}
+          />
+          <div className="meta-row">
+            <button className="btn primary" type="submit" disabled={saving}>
+              {saving ? 'Saving…' : 'Save items'}
+            </button>
+            <button className="btn ghost" type="button" onClick={() => setEditing(false)}>
+              Cancel
+            </button>
+          </div>
         </form>
       )}
     </div>

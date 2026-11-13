@@ -375,6 +375,9 @@ export function BellProvider({ children }) {
       joinExchange(value) {
         applyVnext({ type: 'join-exchange', value })
       },
+      saveOwnItems(listId, items) {
+        applyVnext({ type: 'save-own-items', listId, items })
+      },
       setInDraw(participantId, inDraw) {
         applyVnext({ type: 'set-in-draw', participantId, inDraw })
       },

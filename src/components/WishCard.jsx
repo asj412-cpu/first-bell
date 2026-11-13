@@ -5,8 +5,15 @@ export default function WishCard({ item, conceal, busy, naming, name, onName, on
   const buyer = item.claimedByName
   return (
     <article className="wish-card">
-      <div className="wish-photo">
-        {item.image ? <img src={item.image} alt="" /> : <span className="wish-emoji" aria-hidden="true">🎁</span>}
+      <div className={`wish-photo ${item.image ? '' : 'wish-photo-empty'}`}>
+        {item.image ? (
+          <img src={item.image} alt="" />
+        ) : (
+          <div className="wish-placeholder">
+            <span className="wish-emoji" aria-hidden="true">🎁</span>
+            <span>No photo</span>
+          </div>
+        )}
       </div>
       <div className="wish-body">
         {item.category ? <div className="kicker">{item.category === 'Doll Clothes' ? 'Doll clothes' : item.category}</div> : null}
@@ -20,7 +27,7 @@ export default function WishCard({ item, conceal, busy, naming, name, onName, on
         <div className="meta-row">
           {safeHttp(item.url) ? (
             <a className="btn small" href={safeHttp(item.url)} target="_blank" rel="noreferrer">
-              See it at the store
+              {item.category === 'Idea' ? 'Open link' : 'See it at the store'}
             </a>
           ) : null}
         </div>

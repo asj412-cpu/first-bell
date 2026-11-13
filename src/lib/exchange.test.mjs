@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
+import { assertPublicHttpUrl, extractPreviewImage } from '../../api/giftImage.js'
 import { drawAssignments, presentItems, validateJoin } from './exchange.js'
 import { sendReminder } from './reminderAdapter.js'
 import { readFileSync } from 'node:fs'
@@ -58,20 +59,50 @@ test('a recipient view hides purchase marks', () => {
   assert.equal(items[0].title, 'Book')
 })
 
-test('joining requires name, phone, email, household, and an idea', () => {
-  const missing = validateJoin({ name: 'A', phone: '123', email: 'nope', group: '', ideas: '' })
+test('joining requires a description on each row and an http link', () => {
+  const missing = validateJoin({
+    name: 'A',
+    phone: '123',
+    email: 'nope',
+    group: '',
+    items: [{ description: '', url: 'notaurl' }],
+  })
   assert.equal(missing.ok, false)
   const ok = validateJoin({
     name: 'Rosa',
     phone: '(713) 555-0136',
     email: 'rosa@example.com',
     group: 'Quiroga',
-    ideas: 'A wool scarf\nA book',
-    others: [{ name: 'Luis', ideas: 'Coffee' }],
+    items: [
+      { description: 'A wool scarf', url: 'https://example.com/scarf' },
+      { description: 'A book', url: '' },
+    ],
+    others: [{ name: 'Luis', items: [{ description: 'Coffee', url: 'ftp://files.example/x' }] }],
   })
-  assert.equal(ok.ok, true)
-  assert.deepEqual(ok.value.ideas, ['A wool scarf', 'A book'])
-  assert.equal(ok.value.others[0].name, 'Luis')
+  assert.equal(ok.ok, false)
+  assert.equal(ok.errors['other-0-url-0'], 'Link must start with http:// or https://.')
+  const fixed = validateJoin({
+    name: 'Rosa',
+    phone: '(713) 555-0136',
+    email: 'rosa@example.com',
+    group: 'Quiroga',
+    items: [
+      { description: 'A wool scarf', url: 'https://example.com/scarf' },
+      { description: 'A book', url: '' },
+    ],
+    others: [{ name: 'Luis', items: [{ description: 'Coffee', url: '' }] }],
+  })
+  assert.equal(fixed.ok, true)
+  assert.equal(fixed.value.items[0].url, 'https://example.com/scarf')
+  assert.equal(fixed.value.items[1].url, '')
+})
+
+test('a product page preview image is read from og:image', () => {
+  const html = '<meta property="og:image" content="/cdn/scarf.jpg">'
+  assert.equal(extractPreviewImage(html, 'https://shop.example/item'), 'https://shop.example/cdn/scarf.jpg')
+  assert.equal(extractPreviewImage('<p>No photo</p>', 'https://example.com'), '')
+  assert.throws(() => assertPublicHttpUrl('http://127.0.0.1/secret'), /not allowed/)
+  assert.throws(() => assertPublicHttpUrl('ftp://shop.example/item'), /http/)
 })
 
 test('the send adapter refuses to deliver', () => {

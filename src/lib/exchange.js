@@ -204,6 +204,96 @@ export function buildPreview(reminder, exchange, previewedAt) {
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+export function blankGiftItem() {
+  const key = globalThis.crypto?.randomUUID?.() || `row-${Date.now()}-${Math.random().toString(16).slice(2)}`
+  return { key, description: '', url: '' }
+}
+
+export function giftUrl(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+  try {
+    const parsed = new URL(raw)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null
+    if (parsed.username || parsed.password) return null
+    return parsed.href
+  } catch {
+    return null
+  }
+}
+
+export function validateGiftItems(items) {
+  const errors = {}
+  const clean = []
+  ;(items || []).forEach((item, index) => {
+    const description = String(item.description || '').trim()
+    const urlRaw = String(item.url || '').trim()
+    if (!description && !urlRaw) return
+    if (!description) {
+      errors[`item-${index}`] = 'Add a description, or remove this row.'
+      return
+    }
+    if (description.length > 160) {
+      errors[`item-${index}`] = 'Keep the description under 160 characters.'
+      return
+    }
+    const url = giftUrl(urlRaw)
+    if (urlRaw && !url) {
+      errors[`url-${index}`] = 'Link must start with http:// or https://.'
+      return
+    }
+    clean.push({
+      id: item.id,
+      description,
+      url: url || '',
+      image: item.image || '',
+    })
+  })
+  if (!clean.length) errors.items = 'Add at least one gift.'
+  if (clean.length > 40) errors.items = 'Forty gifts is the limit for one list.'
+  return { ok: Object.keys(errors).length === 0 && clean.length > 0 && clean.length <= 40, errors, items: clean }
+}
+
+export async function withGiftImages(items) {
+  return Promise.all(
+    (items || []).map(async (item) => {
+      if (!item.url) return { ...item, image: '' }
+      try {
+        const response = await fetch(`/api/gift-image?url=${encodeURIComponent(item.url)}`, {
+          signal: AbortSignal.timeout(8000),
+        })
+        if (!response.ok) return { ...item, image: '' }
+        const data = await response.json()
+        const image = giftUrl(data?.image)
+        return { ...item, image: image || '' }
+      } catch {
+        return { ...item, image: '' }
+      }
+    }),
+  )
+}
+
+export function wishFromIdea(idea, id, sort) {
+  return {
+    id,
+    title: idea.description,
+    notes: '',
+    url: idea.url || '',
+    urlSecondary: '',
+    image: idea.image || '',
+    availability: '',
+    category: 'Idea',
+    priceLabel: '',
+    retailer: '',
+    ageFit: '',
+    dollSize: '',
+    sourceSlug: '',
+    sort,
+    claimedByName: '',
+    claimedAt: null,
+  }
+}
+
 export function digits(value) {
   return String(value || '').replace(/\D/g, '')
 }
@@ -214,30 +304,41 @@ export function validateJoin(input) {
   const phone = (input.phone || '').trim()
   const email = (input.email || '').trim().toLowerCase()
   const group = (input.group || '').trim()
-  const ideas = String(input.ideas || '')
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .slice(0, 40)
+  const mine = validateGiftItems(input.items)
+  Object.assign(errors, mine.errors)
   if (name.length < 2) errors.name = 'Enter your name.'
   if (digits(phone).length < 10) errors.phone = 'Enter a phone number we can reach you at.'
   if (!EMAIL_PATTERN.test(email)) errors.email = 'Enter your email.'
   if (group.length < 2) errors.group = 'Name your household, even if it is just you.'
-  if (!ideas.length) errors.ideas = 'Add at least one gift idea, one per line.'
   const others = (input.others || [])
-    .map((person) => ({
-      name: (person.name || '').trim(),
-      ideas: String(person.ideas || '')
-        .split('\n')
-        .map((line) => line.trim())
-        .filter(Boolean)
-        .slice(0, 40),
-    }))
-    .filter((person) => person.name || person.ideas.length)
+    .map((person) => {
+      const ideas = validateGiftItems(person.items || [])
+      return {
+        name: (person.name || '').trim(),
+        items: ideas.items,
+        itemErrors: ideas.errors,
+        touched: Boolean((person.name || '').trim() || (person.items || []).some((item) => item.description || item.url)),
+      }
+    })
+    .filter((person) => person.touched)
   others.forEach((person, index) => {
-    if (person.name.length < 2) errors[`other-${index}`] = 'Enter their name, or remove the row.'
+    if (person.name.length < 2) errors[`other-${index}`] = 'Enter their name, or remove them.'
+    Object.entries(person.itemErrors).forEach(([key, message]) => {
+      errors[`other-${index}-${key}`] = message
+    })
   })
-  return { ok: Object.keys(errors).length === 0, errors, value: { name, phone, email, group, ideas, others } }
+  return {
+    ok: Object.keys(errors).length === 0,
+    errors,
+    value: {
+      name,
+      phone,
+      email,
+      group,
+      items: mine.items,
+      others: others.map((person) => ({ name: person.name, items: person.items })),
+    },
+  }
 }
 
 export function participantByList(exchange, list) {
