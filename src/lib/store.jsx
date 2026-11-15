@@ -4,6 +4,8 @@ import { isUuid, mergeGiftLists, publicPayloadToList } from './gifts.js'
 import { freshState, HOUSEHOLD, PARTY } from '../data/seed.js'
 import { mergeEvents } from './events.js'
 import { fromDbRsvp, hostDisplayName, toDbStatus } from './rsvps.js'
+import { newInviteToken } from './invites.js'
+import { requestReentry } from './reentry.js'
 import { authCallback, clearAuthCallbackParams, isSupabaseConfigured, supabase } from './supabase.js'
 import { hydrateVnext, mergeLearning, vnextReducer } from './vnextReducer.js'
 import { mirrorVnext, pullVnext } from './vnextRemote.js'
@@ -67,10 +69,21 @@ export function BellProvider({ children }) {
     authBusy: false,
     authStep: 'email',
     pendingEmail: '',
+    eventAccess: [],
+    toast: '',
   }))
+  const toastTimer = useRef(null)
   const partyUuidRef = useRef(null)
   partyUuidRef.current = state.partyUuid
   const pulledFor = useRef(null)
+
+  const notify = useCallback((message) => {
+    setState((prev) => ({ ...prev, toast: message || '' }))
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    toastTimer.current = setTimeout(() => {
+      setState((prev) => ({ ...prev, toast: '' }))
+    }, 2600)
+  }, [])
 
   const patch = useCallback((partial) => {
     setState((prev) => ({ ...prev, ...partial }))
@@ -96,8 +109,10 @@ export function BellProvider({ children }) {
       grocery: state.grocery,
       learningProgress: state.learningProgress,
       kidMode: state.kidMode,
+      tasks: state.tasks,
+      contributions: state.contributions,
     })
-  }, [state.session, state.guests, state.messages, state.backend, state.events, state.imports, state.giftLists, state.exchange, state.profiles, state.mealPlans, state.grocery, state.learningProgress, state.kidMode])
+  }, [state.session, state.guests, state.messages, state.backend, state.events, state.imports, state.giftLists, state.exchange, state.profiles, state.mealPlans, state.grocery, state.learningProgress, state.kidMode, state.tasks, state.contributions])
 
   const loadRsvps = useCallback(async (partyUuid) => {
     if (!supabase || !partyUuid) return
@@ -123,6 +138,7 @@ export function BellProvider({ children }) {
         let householdId = null
         let memberRole = null
         let giftLists = null
+        let eventAccess = []
         if (user) {
           const { data: membership, error: memErr } = await supabase.rpc('ensure_host_membership')
           if (memErr) throw memErr
@@ -140,6 +156,19 @@ export function BellProvider({ children }) {
               }
             }
           }
+          if (!householdId) {
+            const events = await supabase.rpc('get_my_event_access').then((result) => result.data, () => null)
+            if (Array.isArray(events) && events.length) {
+              eventAccess = events
+              memberRole = 'guest'
+            }
+          }
+          if (householdId && memberRole !== 'gift') {
+            const tasks = await supabase.rpc('list_household_tasks').then((result) => result.data, () => null)
+            if (Array.isArray(tasks)) {
+              setState((prev) => ({ ...prev, tasks }))
+            }
+          }
         }
 
         patch({
@@ -148,6 +177,7 @@ export function BellProvider({ children }) {
           partyUuid: party?.id || null,
           householdId,
           memberRole,
+          eventAccess,
           ...(giftLists ? { giftLists } : {}),
           session: user
             ? sessionFromUser(user, { householdId, role: memberRole })
@@ -286,7 +316,11 @@ export function BellProvider({ children }) {
       ready,
         entered: Boolean(
           state.session &&
-            (state.session.demo || state.householdId || !configured || state.backend === 'offline'),
+            (state.session.demo ||
+              state.householdId ||
+              (state.eventAccess && state.eventAccess.length) ||
+              !configured ||
+              state.backend === 'offline'),
         ),
       configured,
       enterDemo() {
@@ -301,15 +335,34 @@ export function BellProvider({ children }) {
           },
         }))
       },
-      async sendOtp(email) {
+      async sendOtp(email, redirectTo) {
         if (!supabase) throw new Error('Supabase is not configured')
         const trimmed = email.trim().toLowerCase()
         patch({ authBusy: true, authError: null })
+        const reentry = await requestReentry(trimmed)
+        if (reentry.mode === 'limited') {
+          patch({ authBusy: false, authError: reentry.message, authStep: 'email' })
+          throw new Error(reentry.message)
+        }
+        if (reentry.mode === 'session') {
+          const { error } = await supabase.auth.setSession({
+            access_token: reentry.access_token,
+            refresh_token: reentry.refresh_token,
+          })
+          patch({
+            authBusy: false,
+            authError: error ? friendlyAuthError(error.message) : null,
+            authStep: 'email',
+            pendingEmail: trimmed,
+          })
+          if (error) throw error
+          return { mode: 'session' }
+        }
         const { error } = await supabase.auth.signInWithOtp({
           email: trimmed,
           options: {
             shouldCreateUser: true,
-            emailRedirectTo: `${window.location.origin}/enter`,
+            emailRedirectTo: redirectTo || `${window.location.origin}/enter`,
           },
         })
         update((prev) => ({
@@ -321,6 +374,7 @@ export function BellProvider({ children }) {
           pendingEmail: error ? prev.pendingEmail : trimmed,
         }))
         if (error) throw error
+        return { mode: 'otp' }
       },
       async verifyOtp(token) {
         if (!supabase) throw new Error('Supabase is not configured')
@@ -331,8 +385,12 @@ export function BellProvider({ children }) {
           token: code,
           type: 'email',
         })
+        if (!error) {
+          await supabase.rpc('mark_email_verified').then(() => {}, () => {})
+        }
         patch({ authBusy: false, authError: error ? friendlyAuthError(error.message) : null })
         if (error) throw error
+        return { mode: 'session' }
       },
       async signOut() {
         if (live) {
@@ -343,6 +401,7 @@ export function BellProvider({ children }) {
           session: null,
           householdId: null,
           memberRole: null,
+          eventAccess: [],
           authStep: 'email',
           pendingEmail: '',
           authError: null,
@@ -389,8 +448,94 @@ export function BellProvider({ children }) {
           supabase.rpc('release_gift_purchase', { p_item_id: itemId }).then(() => {}, () => {})
         }
       },
+      notify,
       joinExchange(value) {
         applyVnext({ type: 'join-exchange', value })
+      },
+      markInviteUsed(token, email) {
+        if (!token) return
+        update((prev) => ({
+          ...prev,
+          exchange: {
+            ...prev.exchange,
+            invites: (prev.exchange.invites || []).map((invite) =>
+              invite.token === token ? { ...invite, usedAt: new Date().toISOString(), usedByEmail: email || '' } : invite,
+            ),
+          },
+        }))
+      },
+      async createFamilyInvite({ kind, partySlug, label }) {
+        if (!(live && supabase)) {
+          const token = newInviteToken()
+          const invite = {
+            token,
+            kind,
+            label: label || (kind === 'event' ? 'Family event' : 'Christmas 2026'),
+            partySlug: partySlug || null,
+            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            singleUse: true,
+            usedAt: null,
+          }
+          update((prev) => ({
+            ...prev,
+            exchange: { ...prev.exchange, invites: [...(prev.exchange.invites || []), invite] },
+          }))
+          return invite
+        }
+        const { data, error } = await supabase.rpc('create_family_invite', {
+          p_kind: kind,
+          p_party_slug: partySlug || null,
+          p_label: label || null,
+        })
+        if (error) throw error
+        return data
+      },
+      addTask(title) {
+        const clean = title.trim()
+        if (clean.length < 2) return
+        const task = { id: newInviteToken().slice(0, 16), title: clean.slice(0, 120), done: false }
+        update((prev) => ({ ...prev, tasks: [...(prev.tasks || []), task] }))
+        if (live && supabase) {
+          supabase.rpc('save_household_task', { p_client_id: task.id, p_title: task.title, p_done: false }).then(() => {}, () => {})
+        }
+        notify('Chore added')
+      },
+      toggleTask(id) {
+        let next = null
+        update((prev) => {
+          const tasks = (prev.tasks || []).map((task) => {
+            if (task.id !== id) return task
+            next = { ...task, done: !task.done }
+            return next
+          })
+          return { ...prev, tasks }
+        })
+        if (next && live && supabase) {
+          supabase
+            .rpc('save_household_task', { p_client_id: next.id, p_title: next.title, p_done: next.done })
+            .then(() => {}, () => {})
+        }
+      },
+      addContribution(partyId, kind, title) {
+        const clean = title.trim()
+        if (clean.length < 2) return
+        const row = {
+          id: newInviteToken().slice(0, 16),
+          partyId,
+          kind,
+          title: clean.slice(0, 120),
+          ownerName: '',
+          done: false,
+        }
+        update((prev) => ({ ...prev, contributions: [...(prev.contributions || []), row] }))
+        notify(kind === 'bring' ? 'Added to the bring list' : 'Task added')
+        return row
+      },
+      setContribution(id, patchRow) {
+        update((prev) => ({
+          ...prev,
+          contributions: (prev.contributions || []).map((row) => (row.id === id ? { ...row, ...patchRow } : row)),
+        }))
       },
       saveOwnItems(listId, items) {
         applyVnext({ type: 'save-own-items', listId, items })
@@ -521,7 +666,7 @@ export function BellProvider({ children }) {
         patch({ authStep: 'email', authError: null, authNotice: null, pendingEmail: '' })
       },
     }
-  }, [state, ready, configured, update, patch, loadRsvps, applyVnext])
+  }, [state, ready, configured, update, patch, loadRsvps, applyVnext, notify])
 
   return <BellContext.Provider value={api}>{children}</BellContext.Provider>
 }

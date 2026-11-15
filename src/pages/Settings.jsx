@@ -1,4 +1,13 @@
 import { HOUSEHOLD } from '../data/seed.js'
+
+function roleLabel(role, demo) {
+  if (role === 'owner') return 'Household admin'
+  if (role === 'member') return 'Household'
+  if (role === 'gift') return 'Gift list guest'
+  if (role === 'guest') return 'Event guest'
+  if (demo) return 'Demo host'
+  return 'Household admin'
+}
 import { ageLabel } from '../lib/planner.js'
 import { hostDisplayName } from '../lib/rsvps.js'
 import { useBell } from '../lib/store.jsx'
@@ -42,7 +51,7 @@ export default function Settings() {
           </div>
           <div className="row">
             <span>Role</span>
-            <strong>{state.memberRole || (state.session?.demo ? 'demo host' : 'host')}</strong>
+            <strong>{roleLabel(state.memberRole, state.session?.demo)}</strong>
           </div>
           <div className="row">
             <span>Time zone</span>

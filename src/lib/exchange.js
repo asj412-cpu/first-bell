@@ -94,6 +94,7 @@ export function freshExchange() {
     ],
     assignments: [],
     previews: [],
+    invites: [],
   }
 }
 
@@ -298,13 +299,24 @@ export function digits(value) {
   return String(value || '').replace(/\D/g, '')
 }
 
+function ideasOrEmpty(items) {
+  const result = validateGiftItems(items)
+  const blank = (items || []).every((item) => !String(item?.description || '').trim() && !String(item?.url || '').trim())
+  if (blank) {
+    const errors = { ...result.errors }
+    delete errors.items
+    return { errors, items: [] }
+  }
+  return { errors: result.errors, items: result.items }
+}
+
 export function validateJoin(input) {
   const errors = {}
   const name = (input.name || '').trim()
   const phone = (input.phone || '').trim()
   const email = (input.email || '').trim().toLowerCase()
   const group = (input.group || '').trim()
-  const mine = validateGiftItems(input.items)
+  const mine = ideasOrEmpty(input.items)
   Object.assign(errors, mine.errors)
   if (name.length < 2) errors.name = 'Enter your name.'
   if (digits(phone).length < 10) errors.phone = 'Enter a phone number we can reach you at.'
@@ -312,7 +324,7 @@ export function validateJoin(input) {
   if (group.length < 2) errors.group = 'Name your household, even if it is just you.'
   const others = (input.others || [])
     .map((person) => {
-      const ideas = validateGiftItems(person.items || [])
+      const ideas = ideasOrEmpty(person.items || [])
       return {
         name: (person.name || '').trim(),
         items: ideas.items,

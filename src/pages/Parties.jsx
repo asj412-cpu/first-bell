@@ -34,9 +34,10 @@ export default function Parties() {
       </Link>
 
       <div className="card pad empty" style={{ marginTop: 14 }}>
-        <div className="kicker">Next party</div>
-        <h3 style={{ marginTop: 6 }}>When you’re ready, Mi Casa shortlists three venues.</h3>
-        <p className="muted">You pick. You pay the place. We run invites, RSVPs, and the wishlist.</p>
+        <div className="kicker">Next event</div>
+        <h3 style={{ marginTop: 6 }}>Plan the next one from the calendar.</h3>
+        <p className="muted">Birthdays and holidays already on the calendar can become an event. Guest invites use the same link you send for gift lists.</p>
+        <Link className="btn small primary" to="/calendar">Open the calendar</Link>
       </div>
     </div>
   )

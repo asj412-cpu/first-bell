@@ -1286,6 +1286,47 @@ h3 { font-size: 18px; }
 .preview-person { padding: 12px 0; border-top: 1px solid var(--line); }
 .preview-person p { margin: 8px 0; }
 
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--nav-h) + 16px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 50;
+  max-width: min(420px, calc(100% - 32px));
+  padding: 12px 16px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fffaf5;
+  font-weight: 600;
+  box-shadow: var(--shadow);
+}
+@media (min-width: 900px) {
+  .toast { bottom: 28px; }
+}
+.btn:disabled { opacity: 0.55; cursor: default; }
+.share-sheet { display: grid; gap: 8px; margin-top: 12px; }
+.share-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.share-actions .btn { flex: 1 1 120px; }
+.invite-card { display: grid; gap: 8px; margin: 8px 0 14px; }
+.invite-card .btn.big, .invite-card .btn.primary { justify-self: start; }
+.account-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0 14px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.family-card, .more-link { display: grid; gap: 6px; margin-top: 14px; }
+.family-card .btn, .more-link .btn { justify-self: start; margin-top: 6px; }
+.chore-add { display: flex; gap: 8px; align-items: flex-end; margin-top: 8px; }
+.chore-add .field { flex: 1; margin: 0; }
+.chore-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+.chore-list label { display: flex; gap: 10px; align-items: flex-start; }
+.chore-list .done { text-decoration: line-through; color: var(--dim); }
+.chore-list em { font-style: normal; color: var(--dim); }
+
 @media print {
   .bottom-nav, .side-nav, .topbar, .talavera, .no-print, .cal-toolbar, .meta-row { display: none !important; }
   body { background: white; color: #1a120c; }

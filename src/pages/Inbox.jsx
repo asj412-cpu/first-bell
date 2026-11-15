@@ -4,7 +4,7 @@ import { relativeMail } from '../lib/format.js'
 import { useBell } from '../lib/store.jsx'
 
 export default function Inbox() {
-  const { state, moveMessage } = useBell()
+  const { state, moveMessage, notify } = useBell()
   const [folder, setFolder] = useState('inbox')
   const items = state.messages.filter((m) => m.folder === folder)
   const attention = state.messages.filter((m) => m.folder === 'inbox').length
@@ -63,7 +63,13 @@ export default function Inbox() {
           <p>{m.snippet}</p>
           <div className="actions">
             {m.suggested && m.folder === 'inbox' && (
-              <button className="btn small primary" onClick={() => moveMessage(m.id, m.suggested)}>
+              <button
+                className="btn small primary"
+                onClick={() => {
+                  moveMessage(m.id, m.suggested)
+                  notify(`Filed to ${label(m.suggested)}`)
+                }}
+              >
                 File to {label(m.suggested)}
               </button>
             )}

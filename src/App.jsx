@@ -6,7 +6,9 @@ import Calendar from './pages/Calendar.jsx'
 import Gate from './pages/Gate.jsx'
 import Assignment from './pages/Assignment.jsx'
 import GiftDetail from './pages/GiftDetail.jsx'
+import Family from './pages/Family.jsx'
 import Gifts from './pages/Gifts.jsx'
+import More from './pages/More.jsx'
 import JoinList from './pages/JoinList.jsx'
 import Reminders from './pages/Reminders.jsx'
 import SecretSanta from './pages/SecretSanta.jsx'
@@ -49,10 +51,21 @@ function ScrollToTop() {
   return null
 }
 
+function Toast() {
+  const { state } = useBell()
+  if (!state.toast) return null
+  return (
+    <div className="toast" role="status">
+      {state.toast}
+    </div>
+  )
+}
+
 export default function App() {
   return (
     <>
       <ScrollToTop />
+      <Toast />
     <Routes>
       <Route path="/enter" element={<Gate />} />
       <Route path="/r/:slug" element={<GuestRsvp />} />
@@ -66,6 +79,8 @@ export default function App() {
         }
       >
         <Route path="/" element={<Home />} />
+        <Route path="/family" element={<Family />} />
+        <Route path="/more" element={<More />} />
         <Route path="/parties" element={<Parties />} />
         <Route path="/parties/:id" element={<PartyDetail />} />
         <Route path="/inbox" element={<Inbox />} />

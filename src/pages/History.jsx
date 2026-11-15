@@ -39,7 +39,8 @@ export default function History() {
       <CalendarTabs />
       {rows.length === 0 && (
         <div className="card pad empty">
-          <p className="muted" style={{ margin: 0 }}>Nothing has finished yet.</p>
+          <p className="muted" style={{ marginTop: 0 }}>Nothing has finished yet.</p>
+          <Link className="btn small" to="/calendar">See what’s coming up</Link>
         </div>
       )}
       <div className="history-list">
