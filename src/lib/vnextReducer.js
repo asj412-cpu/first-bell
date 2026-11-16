@@ -1,4 +1,5 @@
 import { drawAssignments, freshExchange, myAssignment, wishFromIdea } from './exchange.js'
+import { consumeInvite } from './invites.js'
 import { cloneGiftLists, mergeGiftLists } from './gifts.js'
 import { mergeEvents, seedCalendarEvents, wallEvent } from './events.js'
 import { PLAN_CHECKLIST } from './nextup.js'
@@ -120,14 +121,18 @@ export function vnextReducer(state, action) {
                 }
               : row,
           ),
-          exchange: {
-            ...state.exchange,
-            participants: state.exchange.participants.map((person) =>
-              person.id === returning.id
-                ? { ...person, name: value.name, phone: value.phone, submittedAt: new Date().toISOString() }
-                : person,
-            ),
-          },
+          exchange: consumeInvite(
+            {
+              ...state.exchange,
+              participants: state.exchange.participants.map((person) =>
+                person.id === returning.id
+                  ? { ...person, name: value.name, phone: value.phone, submittedAt: new Date().toISOString() }
+                  : person,
+              ),
+            },
+            value.token,
+            value.email,
+          ),
         }
       }
       const selfId = value.selfId || `person-${Date.now()}`
@@ -169,7 +174,8 @@ export function vnextReducer(state, action) {
       return {
         ...state,
         giftLists: [...state.giftLists, selfList, ...others.map((row) => row.list)],
-        exchange: {
+        exchange: consumeInvite(
+          {
           ...state.exchange,
           groups,
           participants: [
@@ -187,7 +193,10 @@ export function vnextReducer(state, action) {
             },
             ...others.map((row) => row.participant),
           ],
-        },
+          },
+          value.token,
+          value.email,
+        ),
       }
     }
     case 'set-in-draw': {
@@ -458,6 +467,8 @@ export function initialVnext() {
     kidMode: false,
     exchange: freshExchange(),
     exchangeError: '',
+    tasks: [],
+    contributions: [],
     vnextReady: false,
     vnextNote: '',
   }
@@ -480,5 +491,7 @@ export function hydrateVnext(saved) {
     learningProgress:
       saved.learningProgress && typeof saved.learningProgress === 'object' ? saved.learningProgress : {},
     kidMode: Boolean(saved.kidMode),
+    tasks: Array.isArray(saved.tasks) ? saved.tasks : [],
+    contributions: Array.isArray(saved.contributions) ? saved.contributions : [],
   }
 }

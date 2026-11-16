@@ -34,8 +34,10 @@ In Vercel → Project → Settings → Environment Variables, set for **Producti
 |---|---|
 | `VITE_SUPABASE_URL` | `https://tzkxuinbpmoeyhzomvut.supabase.co` |
 | `VITE_SUPABASE_ANON_KEY` | Project Settings → API → `anon` `public` key (JWT) or the publishable `sb_publishable_…` key |
+| `SUPABASE_URL` | Same project URL. Server only. Optional if `VITE_SUPABASE_URL` is set; `/api/reentry` falls back to that. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Project Settings → API → `service_role` **secret**. Server only. **Not set yet.** Required for email re-entry. Never use a `VITE_` name. |
 
-Do **not** put the `service_role` key in Vite or Vercel frontend env. Vite inlines any `VITE_*` value into the browser bundle.
+Do **not** put the `service_role` key in Vite, in any `VITE_` variable, or in the repo. Vite inlines any `VITE_*` value into the browser bundle. See `docs/EMAIL-REENTRY.md`. Until `SUPABASE_SERVICE_ROLE_KEY` is set, Continue still emails a code.
 
 After saving env vars, trigger a new deployment. Existing builds will not pick them up.
 
@@ -47,6 +49,7 @@ Files, in order:
 - `supabase/migrations/20260902133000_tighten_rsvp_grants.sql`
 - `supabase/migrations/20261016040000_vnext_calendar_gifts_meals.sql` (additive: calendar import, gift lists, meal plans, household profiles — not applied by the app)
 - `supabase/migrations/20261110120000_learning_progress.sql` (additive parent checkmarks for At-home learning — **not applied**; do not run it until Andrew says yes. Until then, Learning checks stay in this browser.)
+- `supabase/migrations/20261115190000_family_invites_and_reentry.sql` (family invite links, verified-email re-entry, chores, event bring-list — **not applied**; do not run it until Andrew says yes.)
 
 Creates `households`, `household_members`, `parties`, `rsvps`, RLS, guest RPC `submit_public_rsvp`, host RPC `ensure_host_membership`, and seeds Chloe’s party (Oct 10 2026 1:00–2:30 CT, Cypress Academy Kuykendahl, Amazon `L53W1XS578SM`, Leila Yes).
 

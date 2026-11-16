@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import GiftItemFields from '../components/GiftItemFields.jsx'
-import { blankGiftItem, DEMO_INVITE_TOKEN, validateJoin, withGiftImages } from '../lib/exchange.js'
+import { PARTY } from '../data/seed.js'
+import { blankGiftItem, validateJoin, withGiftImages } from '../lib/exchange.js'
+import { inviteStatusCopy, previewLocalInvite, rpcMissing } from '../lib/invites.js'
 import { useBell } from '../lib/store.jsx'
 import { supabase } from '../lib/supabase.js'
 
@@ -14,15 +16,41 @@ function emptyForm() {
 export default function JoinList() {
   const { token } = useParams()
   const navigate = useNavigate()
-  const { state, joinExchange } = useBell()
+  const { state, joinExchange, sendOtp, verifyOtp, notify, markInviteUsed, addOrUpdateRsvp } = useBell()
   const [form, setForm] = useState(emptyForm)
   const [errors, setErrors] = useState({})
   const [code, setCode] = useState('')
   const [waiting, setWaiting] = useState(false)
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
+  const [preview, setPreview] = useState(null)
   const demo = !supabase || state.backend === 'demo' || state.session?.demo
-  const known = demo ? token === (state.exchange?.inviteToken || DEMO_INVITE_TOKEN) : true
+  const signedInEmail = (state.session?.email || '').toLowerCase()
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      if (demo) {
+        if (!cancelled) setPreview(previewLocalInvite(token, state.exchange))
+        return
+      }
+      const { data, error } = await supabase.rpc('preview_family_invite', { p_token: token })
+      if (cancelled) return
+      if (error) {
+        setPreview(rpcMissing(error)
+          ? { status: 'active', kind: 'gift_list', label: 'Christmas 2026', party_slug: null, legacy: true }
+          : { status: 'missing', kind: null, label: '', party_slug: null })
+        return
+      }
+      setPreview(data)
+    }
+    load().catch(() => {
+      if (!cancelled) setPreview({ status: 'missing', kind: null, label: '', party_slug: null })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [demo, token, state.exchange])
 
   useEffect(() => {
     try {
@@ -32,6 +60,10 @@ export default function JoinList() {
       /* ignore a bad draft */
     }
   }, [token])
+
+  useEffect(() => {
+    if (signedInEmail) setForm((prev) => ({ ...prev, email: signedInEmail }))
+  }, [signedInEmail])
 
   function update(patch) {
     setForm((prev) => ({ ...prev, ...patch }))
@@ -43,25 +75,12 @@ export default function JoinList() {
     update({ items })
   }
 
-  function addItem() {
-    update({ items: [...form.items, blankGiftItem()] })
-  }
-
-  function removeItem(index) {
-    const items = form.items.filter((_, item) => item !== index)
-    update({ items: items.length ? items : [blankGiftItem()] })
-  }
-
-  function addOther() {
-    update({ others: [...form.others, { name: '', items: [blankGiftItem()] }] })
-  }
-
-  async function persist(value) {
+  async function persistGift(value) {
     const items = await withGiftImages(value.items)
     const others = await Promise.all(
       (value.others || []).map(async (person) => ({ ...person, items: await withGiftImages(person.items) })),
     )
-    const ready = { ...value, items, others }
+    const ready = { ...value, items, others, token }
     if (demo) {
       const returning = state.exchange.participants.find(
         (person) => person.email && person.email.toLowerCase() === value.email,
@@ -70,10 +89,11 @@ export default function JoinList() {
       joinExchange({ ...ready, selfId })
       sessionStorage.removeItem(DRAFT_KEY)
       const listKey = returning?.listKey || `guest-${selfId}`
+      notify('You are on the family list')
       navigate(`/gifts/${listKey}`)
       return
     }
-    const { error } = await supabase.rpc('accept_gift_invite', {
+    const { data, error } = await supabase.rpc('accept_gift_invite', {
       p_token: token,
       p_name: ready.name,
       p_phone: ready.phone,
@@ -98,6 +118,12 @@ export default function JoinList() {
       return
     }
     sessionStorage.removeItem(DRAFT_KEY)
+    notify('You are on the family list')
+    const kidKey = data?.kid_key
+    if (kidKey) {
+      navigate(`/gifts/${kidKey}`)
+      return
+    }
     const access = await supabase.rpc('get_my_gift_lists')
     const mine = Array.isArray(access.data)
       ? access.data.find((list) => (list.display_name || '').toLowerCase() === ready.name.toLowerCase())
@@ -105,29 +131,70 @@ export default function JoinList() {
     navigate(mine?.kid_key ? `/gifts/${mine.kid_key}` : '/gifts')
   }
 
+  async function persistEvent(name, rsvp) {
+    if (demo) {
+      markInviteUsed(token, 'guest@demo.local')
+      await addOrUpdateRsvp({ child: name, parent: 'Guest', status: rsvp === 'none' ? 'yes' : rsvp, slug: PARTY.slug })
+      notify('You are on the guest list')
+      navigate(`/parties/${PARTY.id}`)
+      return
+    }
+    const { error } = await supabase.rpc('accept_event_invite', {
+      p_token: token,
+      p_name: name,
+      p_rsvp: rsvp,
+    })
+    if (error) {
+      setMessage(error.message || 'Could not save your RSVP.')
+      return
+    }
+    notify('RSVP saved')
+    navigate(`/parties/${PARTY.id}`)
+  }
+
   async function save(event) {
     event?.preventDefault()
-    const result = validateJoin(form)
+    if (preview?.kind === 'event') {
+      if (form.name.trim().length < 2) {
+        setErrors({ name: 'Enter your name.' })
+        return
+      }
+      if (!demo && !state.session) {
+        setMessage('Sign in with your email first.')
+        return
+      }
+      setSaving(true)
+      try {
+        await persistEvent(form.name.trim(), form.rsvp || 'yes')
+      } finally {
+        setSaving(false)
+      }
+      return
+    }
+    const result = validateJoin({ ...form, email: signedInEmail || form.email })
     setErrors(result.errors)
     if (!result.ok) return
-    if (!known && demo) {
-      setMessage('That invite link is not active.')
+    if (preview && preview.status !== 'active') {
+      setMessage(inviteStatusCopy(preview.status).body)
       return
     }
     setSaving(true)
-    setMessage(demo ? 'Looking up photos…' : '')
+    setMessage('')
     try {
       if (demo || state.session) {
-        await persist(result.value)
+        await persistGift(result.value)
         return
       }
       sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ token, form, value: result.value }))
+      const sent = await sendOtp(result.value.email, window.location.href)
+      if (sent?.mode === 'session') {
+        await persistGift(result.value)
+        return
+      }
       setWaiting(true)
-      const { error } = await supabase.auth.signInWithOtp({
-        email: result.value.email,
-        options: { emailRedirectTo: window.location.href, shouldCreateUser: true },
-      })
-      setMessage(error ? error.message : 'Check your email. Open the link on this phone, or enter the code if the email includes one.')
+      setMessage('Check your email. Open the link on this phone, or enter the code if the email includes one.')
+    } catch (err) {
+      setMessage(err.message || 'Could not start sign-in.')
     } finally {
       setSaving(false)
     }
@@ -135,123 +202,156 @@ export default function JoinList() {
 
   async function confirmCode(event) {
     event.preventDefault()
+    setSaving(true)
     try {
-      const { error } = await supabase.auth.verifyOtp({
-        email: form.email.trim().toLowerCase(),
-        token: code.trim(),
-        type: 'email',
-      })
-      if (error) throw error
+      await verifyOtp(code)
       const draft = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || 'null')
-      if (draft?.value) await persist(draft.value)
+      if (preview?.kind === 'event') {
+        await persistEvent(form.name.trim(), form.rsvp || 'yes')
+        return
+      }
+      if (draft?.value) await persistGift(draft.value)
     } catch (err) {
       setMessage(err.message || 'That sign-in did not work.')
+    } finally {
+      setSaving(false)
     }
   }
 
-  if (!known) {
+  async function beginSignIn(event) {
+    event.preventDefault()
+    const address = form.email.trim()
+    if (!address) return
+    setSaving(true)
+    setMessage('')
+    try {
+      const sent = await sendOtp(address, window.location.href)
+      if (sent?.mode === 'otp') {
+        setWaiting(true)
+        setMessage('Check your email for a code, or tap the link in that message.')
+      }
+    } catch (err) {
+      setMessage(err.message || 'Could not start sign-in.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (!preview) {
     return (
       <div className="guest-page gift-guest">
         <header className="gift-guest-head">
           <div className="kicker">Mi Casa</div>
-          <h1>That invite is not active</h1>
-          <p className="lede">Ask Andrew or Megan for a fresh link.</p>
+          <h1>Opening the invite…</h1>
         </header>
       </div>
     )
   }
 
+  if (preview.status !== 'active') {
+    const copy = inviteStatusCopy(preview.status)
+    return (
+      <div className="guest-page gift-guest">
+        <header className="gift-guest-head">
+          <img className="bell" src="/icons/icon-192.png" alt="" />
+          <div className="kicker">Mi Casa</div>
+          <h1>{copy.title}</h1>
+          <p className="lede">{copy.body}</p>
+          <p className="gate-note"><Link to="/enter">Family sign-in</Link></p>
+        </header>
+      </div>
+    )
+  }
+
+  const eventInvite = preview.kind === 'event'
+  const needsSignIn = !demo && !state.session
+
   return (
     <div className="guest-page gift-guest">
-      <form className="gift-guest-head" onSubmit={save}>
+      <form className="gift-guest-head" onSubmit={needsSignIn && !waiting ? beginSignIn : save}>
         <img className="bell" src="/icons/icon-192.png" alt="" />
-        <div className="kicker">Johnson family</div>
-        <h1>Add my Christmas list</h1>
+        <div className="kicker">{preview.label || 'Johnson family'}</div>
+        <h1>{eventInvite ? 'You are invited' : 'Join the family list'}</h1>
         <p className="lede">
-          Tell us who you are, then add each gift as its own row. A link is optional. You can come back and change the list later.
+          {eventInvite
+            ? 'Sign in with your email, then tell us your name and whether you can come. You can also add something to bring once you are in.'
+            : 'Sign in with your email, then add your name and phone. You will get your own list. Bought gifts stay hidden from the person they are for.'}
         </p>
-        <label className="field">
-          <span>Your name</span>
-          <input value={form.name} onChange={(event) => update({ name: event.target.value })} autoComplete="name" />
-        </label>
-        {errors.name && <p className="form-error">{errors.name}</p>}
-        <label className="field">
-          <span>Phone</span>
-          <input value={form.phone} onChange={(event) => update({ phone: event.target.value })} inputMode="tel" autoComplete="tel" placeholder="(713) 555-0100" />
-        </label>
-        {errors.phone && <p className="form-error">{errors.phone}</p>}
-        <label className="field">
-          <span>Email</span>
-          <input value={form.email} onChange={(event) => update({ email: event.target.value })} type="email" autoComplete="email" inputMode="email" />
-        </label>
-        {errors.email && <p className="form-error">{errors.email}</p>}
-        <label className="field">
-          <span>Household</span>
-          <input value={form.group} onChange={(event) => update({ group: event.target.value })} placeholder="The Garcias" />
-        </label>
-        {errors.group && <p className="form-error">{errors.group}</p>}
-        <h2>Your gifts</h2>
-        <GiftItemFields
-          items={form.items}
-          errors={errors}
-          onChange={changeItem}
-          onAdd={addItem}
-          onRemove={removeItem}
-        />
-        {form.others.map((person, index) => (
-          <fieldset key={index} className="other-person">
-            <legend>Someone in your household</legend>
-            <label className="field">
-              <span>Name</span>
-              <input
-                value={person.name}
-                onChange={(event) => {
-                  const others = form.others.slice()
-                  others[index] = { ...person, name: event.target.value }
-                  update({ others })
-                }}
-              />
-            </label>
-            {errors[`other-${index}`] && <p className="form-error">{errors[`other-${index}`]}</p>}
-            <GiftItemFields
-              items={person.items}
-              errors={Object.fromEntries(
-                Object.entries(errors)
-                  .filter(([key]) => key.startsWith(`other-${index}-`))
-                  .map(([key, message]) => [key.replace(`other-${index}-`, ''), message]),
-              )}
-              onChange={(itemIndex, patch) => {
-                const others = form.others.slice()
-                const items = person.items.slice()
-                items[itemIndex] = { ...items[itemIndex], ...patch }
-                others[index] = { ...person, items }
-                update({ others })
-              }}
-              onAdd={() => {
-                const others = form.others.slice()
-                others[index] = { ...person, items: [...person.items, blankGiftItem()] }
-                update({ others })
-              }}
-              onRemove={(itemIndex) => {
-                const others = form.others.slice()
-                const items = person.items.filter((_, item) => item !== itemIndex)
-                others[index] = { ...person, items: items.length ? items : [blankGiftItem()] }
-                update({ others })
-              }}
+
+        {needsSignIn && (
+          <label className="field">
+            <span>Email</span>
+            <input
+              value={form.email}
+              onChange={(event) => update({ email: event.target.value })}
+              type="email"
+              autoComplete="email"
+              inputMode="email"
+              required
             />
-            <button
-              className="btn small ghost"
-              type="button"
-              onClick={() => update({ others: form.others.filter((_, item) => item !== index) })}
-            >
-              Remove this person
-            </button>
-          </fieldset>
-        ))}
-        <button className="btn" type="button" onClick={addOther}>
-          Add someone in my household
-        </button>
-        {message && <p className="lede">{message}</p>}
+          </label>
+        )}
+
+        {!needsSignIn && (
+          <>
+            <label className="field">
+              <span>Your name</span>
+              <input value={form.name} onChange={(event) => update({ name: event.target.value })} autoComplete="name" />
+            </label>
+            {errors.name && <p className="form-error">{errors.name}</p>}
+            {eventInvite ? (
+              <label className="field">
+                <span>RSVP</span>
+                <select value={form.rsvp || 'yes'} onChange={(event) => update({ rsvp: event.target.value })}>
+                  <option value="yes">Yes, I’ll be there</option>
+                  <option value="maybe">Maybe</option>
+                  <option value="no">I can’t come</option>
+                </select>
+              </label>
+            ) : (
+              <>
+                <label className="field">
+                  <span>Phone</span>
+                  <input value={form.phone} onChange={(event) => update({ phone: event.target.value })} inputMode="tel" autoComplete="tel" placeholder="(713) 555-0100" />
+                </label>
+                {errors.phone && <p className="form-error">{errors.phone}</p>}
+                <label className="field">
+                  <span>Email</span>
+                  <input
+                    value={signedInEmail || form.email}
+                    readOnly={Boolean(signedInEmail)}
+                    onChange={(event) => {
+                      if (!signedInEmail) update({ email: event.target.value })
+                    }}
+                    type="email"
+                    autoComplete="email"
+                    inputMode="email"
+                  />
+                </label>
+                {errors.email && <p className="form-error">{errors.email}</p>}
+                <label className="field">
+                  <span>Your household</span>
+                  <input value={form.group} onChange={(event) => update({ group: event.target.value })} placeholder="The Garcias" />
+                </label>
+                {errors.group && <p className="form-error">{errors.group}</p>}
+                <h2>Gift ideas</h2>
+                <p className="dim">Optional. You can add them now or later from your list.</p>
+                <GiftItemFields
+                  items={form.items}
+                  errors={errors}
+                  onChange={changeItem}
+                  onAdd={() => update({ items: [...form.items, blankGiftItem()] })}
+                  onRemove={(index) => {
+                    const items = form.items.filter((_, item) => item !== index)
+                    update({ items: items.length ? items : [blankGiftItem()] })
+                  }}
+                />
+              </>
+            )}
+          </>
+        )}
+
+        {message && <p className="lede" role="status">{message}</p>}
         {waiting && (
           <label className="field">
             <span>Code from the email</span>
@@ -259,19 +359,21 @@ export default function JoinList() {
           </label>
         )}
         {waiting ? (
-          <button className="btn primary big" type="button" onClick={confirmCode}>
-            Finish and save my list
+          <button className="btn primary big" type="button" onClick={confirmCode} disabled={saving}>
+            {saving ? 'Please wait…' : 'Finish and join'}
           </button>
         ) : (
           <button className="btn primary big" type="submit" disabled={saving}>
-            {saving ? 'Saving…' : 'Save my list'}
+            {saving ? 'Please wait…' : needsSignIn ? 'Continue' : eventInvite ? 'Save my RSVP' : 'Join and open my list'}
           </button>
         )}
         <p className="gate-note">
-          Phone and email are visible only to Andrew and Megan.
+          {eventInvite
+            ? 'This invite works once.'
+            : 'Phone and email are visible only to Andrew and Megan.'}
           {demo ? ' This demo stays in this browser.' : ''}
         </p>
-        <p className="gate-note"><Link to="/enter">Family sign-in</Link></p>
+        <p className="gate-note"><Link to="/enter">Already in the family? Sign in</Link></p>
       </form>
     </div>
   )

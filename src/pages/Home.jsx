@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useState } from 'react'
 import { currentWeeks, planForDate } from '../data/learning/index.js'
 import { PARTY } from '../data/seed.js'
 import Avatar from '../components/Avatar.jsx'
@@ -7,6 +8,7 @@ import { eventClockLabel, eventWhenLabel, isFinished, splitEvents } from '../lib
 import { formatShortDate, greeting, parseLocalDate } from '../lib/format.js'
 import { motifFor } from '../lib/motifs.js'
 import { buildNextUp } from '../lib/nextup.js'
+import { currentWeekStart } from '../lib/planner.js'
 import { useBell } from '../lib/store.jsx'
 import { chicagoTodayIso } from '../lib/time.js'
 import { IconArrow } from '../components/Icons.jsx'
@@ -25,7 +27,8 @@ function planLabel(item) {
 }
 
 export default function Home() {
-  const { state, planSuggestion } = useBell()
+  const { state, planSuggestion, notify, addTask, toggleTask, suggestWeek } = useBell()
+  const [chore, setChore] = useState('')
   const openRsvps = state.guests.filter((guest) => guest.status === 'none').length
   const inboxN = state.messages.filter((message) => message.folder === 'inbox' && message.attention).length
   const { upcoming, history } = splitEvents(state.events)
@@ -70,9 +73,16 @@ export default function Home() {
             <p className="when">{weekdayDate(featured.date)} · {eventClockLabel(featured)}</p>
           </div>
           {featuredPlanned ? (
-            <Link to="/calendar" className="btn small">On the calendar</Link>
+            <Link to="/calendar" className="btn small primary">On the calendar</Link>
           ) : (
-            <button className="btn small" type="button" onClick={() => planSuggestion(featured)}>
+            <button
+              className="btn small primary"
+              type="button"
+              onClick={() => {
+                planSuggestion(featured)
+                notify('Added to the calendar')
+              }}
+            >
               Plan this
             </button>
           )}
@@ -87,11 +97,28 @@ export default function Home() {
         <div className="season-row">
           {rest.map((item) => {
             const planned = state.events.some((event) => event.id === `plan-${item.key}`)
+            if (planned) {
+              return (
+                <Link key={item.key} to="/calendar" className="season-card">
+                  <img src={motifFor(item)} alt="" />
+                  <strong>{item.title}</strong>
+                  <span>{formatShortDate(item.date)} · On the calendar</span>
+                </Link>
+              )
+            }
             return (
-              <button key={item.key} className="season-card" type="button" onClick={() => !planned && planSuggestion(item)}>
+              <button
+                key={item.key}
+                className="season-card"
+                type="button"
+                onClick={() => {
+                  planSuggestion(item)
+                  notify('Added to the calendar')
+                }}
+              >
                 <img src={motifFor(item)} alt="" />
                 <strong>{item.title}</strong>
-                <span>{formatShortDate(item.date)} · {planned ? 'On the calendar' : planLabel(item)}</span>
+                <span>{formatShortDate(item.date)} · {planLabel(item)}</span>
               </button>
             )
           })}
@@ -106,11 +133,31 @@ export default function Home() {
           <div className="bday-row">
             {nextUp.birthdays.map((item) => {
               const planned = state.events.some((event) => event.id === `plan-${item.key}`)
-              return (
-                <button key={item.key} className="bday-chip" type="button" onClick={() => !planned && planSuggestion(item)}>
+              const body = (
+                <>
                   <Avatar name={item.who || item.title} seed={item.memberKey || item.who} />
                   <strong>{item.who || item.title}</strong>
-                  <span>{turnsLabel(item.turns)}{planned ? ' · planned' : ''}</span>
+                  <span>{turnsLabel(item.turns)}{planned ? ' · on the calendar' : ''}</span>
+                </>
+              )
+              if (planned) {
+                return (
+                  <Link key={item.key} to="/calendar" className="bday-chip">
+                    {body}
+                  </Link>
+                )
+              }
+              return (
+                <button
+                  key={item.key}
+                  className="bday-chip"
+                  type="button"
+                  onClick={() => {
+                    planSuggestion(item)
+                    notify('Birthday added to the calendar')
+                  }}
+                >
+                  {body}
                 </button>
               )
             })}
@@ -161,6 +208,80 @@ export default function Home() {
             {nextUp.soon[0] ? formatShortDate(nextUp.soon[0].date).replace(/^.+, /, '') : '—'}
           </div>
           <div className="lbl">{nextUp.soon[0]?.title || 'Connect family calendar'}</div>
+        </Link>
+      </div>
+
+      <div className="section-head">
+        <h2>Tasks</h2>
+        <Link to="/settings" className="dim">Household</Link>
+      </div>
+      <form
+        className="chore-add"
+        onSubmit={(event) => {
+          event.preventDefault()
+          addTask(chore)
+          setChore('')
+        }}
+      >
+        <label className="field">
+          <span className="sr">New chore</span>
+          <input
+            value={chore}
+            onChange={(event) => setChore(event.target.value)}
+            placeholder="Add a chore for the house"
+          />
+        </label>
+        <button className="btn small primary" type="submit">Add</button>
+      </form>
+      {(state.tasks || []).length === 0 ? (
+        <div className="card pad empty">
+          <p className="muted" style={{ margin: 0 }}>Nothing on the list yet. Add the next thing the house needs done.</p>
+        </div>
+      ) : (
+        <ul className="chore-list">
+          {(state.tasks || []).map((task) => (
+            <li key={task.id}>
+              <label>
+                <input type="checkbox" checked={task.done} onChange={() => toggleTask(task.id)} />
+                <span className={task.done ? 'done' : ''}>{task.title}</span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="section-head">
+        <h2>Meals</h2>
+        <Link to="/meals">This week</Link>
+      </div>
+      <div className="card pad">
+        <p className="muted" style={{ marginTop: 0 }}>
+          Weekday breakfasts are grab-and-go. Drew eats with the family.
+        </p>
+        <button
+          className="btn small primary"
+          type="button"
+          onClick={() => {
+            suggestWeek(currentWeekStart())
+            notify('This week’s meals are ready')
+          }}
+        >
+          Plan this week
+        </button>
+      </div>
+
+      <div className="section-head">
+        <h2>Family & friends</h2>
+      </div>
+      <div className="stats">
+        <Link to="/family" className="card pad stat">
+          <div className="kicker">Shared planning</div>
+          <div className="lbl">Events, gift lists, and invites</div>
+        </Link>
+        <Link to="/parties" className="card pad stat">
+          <div className="kicker">Events</div>
+          <div className="num">{partyDone ? history.filter((event) => event.partyId).length : upcoming.filter((event) => event.partyId).length}</div>
+          <div className="lbl">{partyDone ? 'In history' : 'Coming up'}</div>
         </Link>
       </div>
 

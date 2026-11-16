@@ -14,6 +14,9 @@ export const supabase = isSupabaseConfigured
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        flowType: 'pkce',
+        storageKey: 'micasa-auth',
+        storage: typeof window === 'undefined' ? undefined : window.localStorage,
       },
     })
   : null

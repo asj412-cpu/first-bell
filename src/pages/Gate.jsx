@@ -82,7 +82,9 @@ export default function Gate() {
             can also tap the link.
           </p>
         ) : configured && !signedInNoHouse ? (
-          <p className="lede">We’ll email you a sign-in code (or a link you can tap).</p>
+          <p className="lede">
+            If you have signed in with this email before, we’ll open the house. A new email still gets a code.
+          </p>
         ) : (
           <p className="lede">
             Parties, inbox, calendar. Open the house on this browser — no password.
@@ -104,8 +106,7 @@ export default function Gate() {
               household yet.
             </p>
             <p className="dim">
-              Use asj412@me.com or asj412@icloud.com after the seed migration, or add this address to{' '}
-              <code>households.host_emails</code>.
+              Household admins use asj412@me.com or asj412@icloud.com. If someone invited you, open that invite link instead of this screen.
             </p>
             <button className="btn ghost full" type="button" onClick={() => signOut()}>
               Sign out
@@ -146,11 +147,10 @@ export default function Gate() {
               </p>
             )}
             <button className="btn primary full" type="submit" disabled={state.authBusy}>
-              {state.authBusy ? 'Sending…' : 'Email me a sign-in'}
+              {state.authBusy ? 'Please wait…' : 'Continue'}
             </button>
             <p className="gate-note">
-              No password. On an iPhone or iPad home-screen app, type the code — a link opens Safari.
-              Guest RSVPs never need this.
+              No password. A returning email opens the house on this phone. A new email gets a code — on a home-screen app, type the code so you stay in Mi Casa.
             </p>
           </form>
         )}
