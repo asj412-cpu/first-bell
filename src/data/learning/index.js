@@ -1,4 +1,5 @@
 import claireWeek from './weeks/2026-11-09-claire.json'
+import claireWeekNov16 from './weeks/2026-11-16-claire.json'
 
 /**
  * Monday Peek weeks. To add one:
@@ -7,7 +8,7 @@ import claireWeek from './weeks/2026-11-09-claire.json'
  * 3. Rebuild. No other code change.
  * Field list: src/data/learning/schema.md
  */
-const WEEKS = [claireWeek]
+const WEEKS = [claireWeek, claireWeekNov16]
 
 for (const week of WEEKS) {
   if (!week?.id || !week.kidKey || !week.weekStart || !week.weekEnd) {
