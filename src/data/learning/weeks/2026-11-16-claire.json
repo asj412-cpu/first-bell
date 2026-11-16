@@ -1,0 +1,345 @@
+{
+  "id": "2026-11-16-claire",
+  "kidKey": "claire",
+  "weekStart": "2026-11-16",
+  "weekEnd": "2026-11-23",
+  "title": "Week of Nov 16–20",
+  "teacher": "Mrs. Krigbaum",
+  "school": "Creekview",
+  "peekLabel": "First Grade Peek of the Week, November 16–20, 2026 (Week 14)",
+  "summary": "Short, parent-led practice for Claire (1st grade, Mrs. Krigbaum, Creekview) for the week of November 16–20, 2026. The skills, word lists, and sentences come from this week's Peek of the Week and the official UFLI Home Practice pages for Lessons 60 and 61. Anything I added is marked as an extra.",
+  "focus": {
+    "calloutLead": "Highest-leverage practice this week",
+    "lead": "A September 28 note from Mrs. Krigbaum is still the Friday routine: a progress-monitoring check of the spelling pattern and irregular words. This Friday, November 20, that means Lesson 60 (_ce /s/), Lesson 61 (_ge /j/), and the review heart words who, by, my, one, and once. By and my are marked with an asterisk on both Home Practice pages. A calm 10-minute review Thursday evening or Friday morning is the best use of time.",
+    "body": "From the November 16–20 Peek of the Week, Claire's class is working on UFLI Lesson 60 (_ce /s/) and Lesson 61 (_ge /j/); the story elements of traditional literature (fables, folktales, and fairytales); composing a fairytale; telling whether a balanced equation is true or false, writing related facts, and reviewing adding and subtracting within 20; cultures and customs of the community with a focus on Thanksgiving; and recognizable patterns with the seasons.",
+    "homeworkQuote": "UFLI Home Practice (in the Wednesday folder); read every night; practice writing sentences using correct capitalization and punctuation; fact fluency, practice basic math facts to 20; and the Class Link apps Lexia and IXL.",
+    "homeworkCite": "Mrs. Krigbaum, Suggested Homework, Peek of the Week, November 16–20, 2026",
+    "standingRoutine": "A September 28 note from Mrs. Krigbaum is still the standing routine: Claire reads from her phonics binder Thursday through Monday and returns it on Tuesdays. The current week's phonics pattern paper stays at home in the plastic envelope for practice."
+  },
+  "howTo": {
+    "intro": "Each activity is 10 to 20 minutes at the kitchen table. Stop while it is still going well. If the Wednesday folder or the phonics-binder envelope has a slightly different word list than the official UFLI sheets below, use the paper that came home first.",
+    "bullets": [
+      "Materials you already have: sticky notes or index cards, a pencil, paper, a picture book or library book, and small counters such as cereal, beans, or spoons.",
+      "Keep it warm and short. Celebrate a close try, then help her fix it.",
+      "Monday, November 16: World Diabetes Day, wear blue. Creekview is making a basket for the Tomball Education Foundation Boots and Bling event, and items are needed by Monday, November 16, if you want to contribute. Tuesday, November 17: send the phonics binder back if it is still at home.",
+      "Wednesday, November 18: library day for Mrs. Krigbaum's class, and the UFLI Home Practice sheet is in the Wednesday folder. Thursday, November 19: Pajama or Hat day.",
+      "November 23–27 is the Thanksgiving holiday. December 18 is the Christmas party, 9:30–10:15, with early release at 1:05.",
+      "Reminders from the Peek: label water bottles, label coats and jackets, bring wired headphones, and bring one healthy mess-free snack (nothing that leaves fingers sticky, oily, or messy)."
+    ]
+  },
+  "planNote": "Times are America/Chicago (CT). This is a simple rhythm, not a required homework schedule.",
+  "plan": [
+    {
+      "id": "mon",
+      "date": "2026-11-16",
+      "endDate": null,
+      "label": "Mon, Nov 16",
+      "about": "World Diabetes Day; basket items due",
+      "doTogether": "Wear blue. Boots and Bling basket items are needed on Monday, November 16, if you are contributing. Read tonight, then a few minutes of facts to 20. Activity 1 is a head start on Lesson 60 before the Wednesday folder.",
+      "activityIds": ["a1"]
+    },
+    {
+      "id": "tue",
+      "date": "2026-11-17",
+      "endDate": null,
+      "label": "Tue, Nov 17",
+      "about": "Binder return day",
+      "doTogether": "Send the phonics binder back if it is still at home. Nightly reading, then 5 minutes of facts to 20.",
+      "activityIds": []
+    },
+    {
+      "id": "wed",
+      "date": "2026-11-18",
+      "endDate": null,
+      "label": "Wed, Nov 18",
+      "about": "Library day; Wednesday folder",
+      "doTogether": "Library day for Mrs. Krigbaum's class. After school, do Activity 1 with the UFLI Home Practice sheet. Read at night. A fable, folktale, or fairytale from the library helps Activities 4 and 5.",
+      "activityIds": ["a1", "a4"]
+    },
+    {
+      "id": "thu",
+      "date": "2026-11-19",
+      "endDate": null,
+      "label": "Thu, Nov 19",
+      "about": "Pajama or Hat day; binder practice starts",
+      "doTogether": "Pajama or Hat day. Activities 2 and 3 (heart words and _ge /j/). Start Activity 5 if she is ready: one official sentence, then a beginning of her fairytale. Read at night.",
+      "activityIds": ["a2", "a3", "a5"]
+    },
+    {
+      "id": "fri",
+      "date": "2026-11-20",
+      "endDate": null,
+      "label": "Fri, Nov 20",
+      "about": "Progress monitoring at school",
+      "doTogether": "10-minute review of the word lists before school. After school, keep it light: Activity 6 or just read for fun.",
+      "activityIds": ["a6"]
+    },
+    {
+      "id": "sat-mon",
+      "date": "2026-11-21",
+      "endDate": "2026-11-23",
+      "label": "Sat–Mon, Nov 21–23",
+      "about": "Binder practice; Thanksgiving holiday starts Monday",
+      "doTogether": "Activity 5 (fairytale) and Activity 7 (seasons). Keep nightly reading. Monday, November 23, starts the Thanksgiving holiday, so there is no school November 23–27 and the binder stays home until school is back.",
+      "activityIds": ["a5", "a7"]
+    }
+  ],
+  "wordsNote": "Copied from the official Lesson 60 and Lesson 61 Home Practice pages. The Peek links the UFLI toolbox for Home Practice. Use the Wednesday-folder sheet if it differs.",
+  "wordLists": [
+    {
+      "lesson": "60: _ce /s/",
+      "sampleWords": ["nice", "race", "lace", "place", "spice", "twice"],
+      "chains": ["face → pace → lace → race", "ice → mice → nice → lice"],
+      "heartWords": ["who", "by", "my", "one", "once"],
+      "sentences": ["Can you get one ice cube?", "I think there will be space in the trunk."]
+    },
+    {
+      "lesson": "61: _ge /j/",
+      "sampleWords": ["age", "cage", "sage", "rage", "wage", "change"],
+      "chains": ["cage → wage → sage → stage", "age → page → rage → range"],
+      "heartWords": ["who", "by", "my", "one", "once"],
+      "sentences": ["That stage is huge!", "She wants to look at the next page."]
+    }
+  ],
+  "activities": [
+    {
+      "id": "a1",
+      "number": 1,
+      "title": "_ce /s/ word chains",
+      "goal": "Read and spell UFLI Lesson 60 words with the _ce /s/ pattern.",
+      "time": "10–15 minutes",
+      "materials": "Sticky notes or index cards, a pencil, and the Lesson 60 Home Practice sheet if it is home.",
+      "steps": [
+        {
+          "title": "Write the letters",
+          "detail": "On separate sticky notes, write the letters for the first chain: f, a, c, e, p, l, r."
+        },
+        {
+          "title": "Build face",
+          "detail": "Help Claire make face. The Home Practice script says to make the word face, spelling it. The new concept is _ce /s/."
+        },
+        {
+          "title": "Change one part at a time",
+          "detail": "Follow the Lesson 60 script. Change the f to p. She reads the word: pace. Change pace to lace (she spells it). Change the l to r. She reads the word: race."
+        },
+        {
+          "title": "Do the second chain",
+          "detail": "ice → mice → nice → lice, changing one part at a time. Then have her read the sample words: nice, race, lace, place, spice, twice."
+        }
+      ],
+      "easier": "You build the words and she only reads them.",
+      "harder": "She writes the chain on paper, then reads the two official sentences, \"Can you get one ice cube?\" and \"I think there will be space in the trunk.\"",
+      "gotIt": "She can read and spell nice, race, lace, place, spice, and twice, and she can complete one chain without being told the new word first."
+    },
+    {
+      "id": "a2",
+      "number": 2,
+      "title": "Heart words for Friday",
+      "goal": "Read and write the review irregular words from UFLI 60 and 61: who, by, my, one, and once.",
+      "time": "10 minutes",
+      "materials": "Five index cards or sticky notes, a pencil, and a small piece of paper.",
+      "steps": [
+        {
+          "title": "Make five cards",
+          "detail": "Write who, by, my, one, and once, one word per card. These are the review irregular words on both Home Practice pages. By and my are marked with an asterisk."
+        },
+        {
+          "title": "Read, then hide",
+          "detail": "Mix the cards. She reads each one, then you flip it over and she writes it on a scrap of paper. Check together and fix any letters."
+        },
+        {
+          "title": "Use one in a sentence",
+          "detail": "Ask her to say, then write, the official sentence \"Can you get one ice cube?\" It uses the heart word one. Watch for a capital at the start and a question mark at the end."
+        }
+      ],
+      "easier": "Practice only who, one, and once, and keep by and my for another day. By and my are the starred review words.",
+      "harder": "She writes \"Can you get one ice cube?\" from memory after hearing it once, then reads who, by, my, one, and once in a mixed pile.",
+      "gotIt": "She can read all five words quickly and write who, one, and once correctly without looking."
+    },
+    {
+      "id": "a3",
+      "number": 3,
+      "title": "_ge /j/ word chains",
+      "goal": "Read and spell UFLI Lesson 61 words with the _ge /j/ pattern.",
+      "time": "10–15 minutes",
+      "materials": "Sticky notes or index cards, a pencil, and the Lesson 61 Home Practice sheet if it is home.",
+      "steps": [
+        {
+          "title": "Write the letters",
+          "detail": "On separate sticky notes, write the letters for the scripted chain: c, a, g, e, w, s, t."
+        },
+        {
+          "title": "Build cage",
+          "detail": "Help Claire make cage. The Home Practice script says to make the word cage, spelling it. The new concept is _ge /j/."
+        },
+        {
+          "title": "Follow the script",
+          "detail": "Change the c to w. She reads the word: wage. Change wage to sage (she spells it). Add t between s and a. She reads the word: stage."
+        },
+        {
+          "title": "Do the second chain",
+          "detail": "age → page → rage → range, changing one part at a time. Then have her read the sample words: age, cage, sage, rage, wage, change."
+        }
+      ],
+      "easier": "You build the words and she only reads them.",
+      "harder": "She writes the chain on paper, then reads \"That stage is huge!\" and \"She wants to look at the next page.\"",
+      "gotIt": "She can read and spell age, cage, sage, rage, wage, and change, and she can complete the cage chain without being told the new word first."
+    },
+    {
+      "id": "a4",
+      "number": 4,
+      "title": "Story elements in a traditional tale",
+      "goal": "Understand the story elements of traditional literature: a fable, a folktale, or a fairytale.",
+      "time": "15–20 minutes",
+      "materials": "A fable, folktale, or fairytale from home or from Wednesday's library visit. Mrs. Krigbaum did not name a required title.",
+      "steps": [
+        {
+          "title": "Read together",
+          "detail": "Read a fable, folktale, or fairytale aloud, or take turns if the text is a comfortable fit. Enjoy it once through before you ask about story elements."
+        },
+        {
+          "title": "Name the kind of story",
+          "detail": "Ask whether this one is a fable, a folktale, or a fairytale. If she is not sure, you can name the kind and keep going."
+        },
+        {
+          "title": "Talk about the story elements",
+          "detail": "Ask her to tell you the story elements. Extra: if she needs a prompt, ask who is in the story, where it happens, and what happens first, next, and last. The Peek names story elements and does not list those parts."
+        }
+      ],
+      "easier": "You read the whole story, then she tells you one story element.",
+      "harder": "She tells the story elements on her own after one reading.",
+      "gotIt": "She can say whether the book is a fable, a folktale, or a fairytale, and she can name story elements from it."
+    },
+    {
+      "id": "a5",
+      "number": 5,
+      "title": "Compose a fairytale",
+      "goal": "Compose a fairytale, and practice writing sentences with correct capitalization and punctuation.",
+      "time": "10–15 minutes",
+      "materials": "Paper and a pencil. Use the official UFLI sentences as the models for capitals and end marks.",
+      "steps": [
+        {
+          "title": "Read a model",
+          "detail": "Read one official sentence and name the capital and the end mark. Use \"That stage is huge!\" or \"She wants to look at the next page.\" or \"Can you get one ice cube?\""
+        },
+        {
+          "title": "She composes",
+          "detail": "She writes a fairytale. This week's writing focus is composing a fairytale. Stop while it is still going well. A beginning on Thursday and more over the weekend is enough."
+        },
+        {
+          "title": "Check together",
+          "detail": "Look only for a capital at the start of each sentence and a mark at the end. Do not mark every spelling. She may use words from the Lesson 60 and 61 lists if she wants."
+        }
+      ],
+      "easier": "She tells the fairytale out loud and writes one sentence with a capital and an end mark. You can write the rest as she dictates.",
+      "harder": "She writes the fairytale on her own, with a capital and an end mark on every sentence.",
+      "gotIt": "She has started a fairytale, and the sentences you check start with a capital and end with a period, question mark, or exclamation mark."
+    },
+    {
+      "id": "a6",
+      "number": 6,
+      "title": "True or false, and facts to 20",
+      "goal": "Tell if a balanced equation is true or false, write related facts, and review adding and subtracting within 20.",
+      "time": "15–20 minutes",
+      "materials": "10 to 20 counters (cereal, beans, spoons, or coins) and a pencil.",
+      "steps": [
+        {
+          "title": "Warm up the facts",
+          "detail": "For about five minutes, practice basic math facts to 20. Mix adding and subtracting. Use the counters only when she wants to check."
+        },
+        {
+          "title": "True or false",
+          "detail": "Show one balanced equation at a time and ask if it is true or false. The equations below are extras I wrote so you have something ready. Mrs. Krigbaum did not send these problems. Extra: 8 + 7 = 15 (true). Extra: 9 + 6 = 16 (false). Extra: 14 − 5 = 9 (true)."
+        },
+        {
+          "title": "Write related facts",
+          "detail": "Ask her to write related facts for one equation. Extra fact family, not from the Peek: from 8 + 7 = 15, the related facts are 7 + 8 = 15, 15 − 8 = 7, and 15 − 7 = 8. She can build them with counters."
+        },
+        {
+          "title": "Review within 20",
+          "detail": "Do a few more adding and subtracting facts within 20. Stay with facts. Skip a new story problem unless she asks for one."
+        }
+      ],
+      "easier": "Stay within 10, and let her use counters for every fact. Within 10 is an extra step down from the Peek, which says within 20.",
+      "harder": "She says true or false for the three extra equations without counters, then writes all four related facts from memory.",
+      "gotIt": "She can say whether a balanced equation is true or false, write a set of related facts, and answer adding and subtracting facts within 20."
+    },
+    {
+      "id": "a7",
+      "number": 7,
+      "title": "Patterns with the seasons",
+      "goal": "Talk about recognizable patterns with the seasons, which is this week's science focus.",
+      "time": "10–15 minutes",
+      "materials": "A window or a quick step outside, and a pencil and paper if she wants to write.",
+      "steps": [
+        {
+          "title": "Look, then name a pattern",
+          "detail": "Stand at the window or step outside for a minute. Ask what patterns she recognizes with the seasons. Let her answer before you offer ideas."
+        },
+        {
+          "title": "If she needs an example",
+          "detail": "Extra examples I added, which the Peek does not list: cooler air, coats and jackets, and the sun setting earlier. Use one only if she is stuck, then let her name a pattern of her own."
+        },
+        {
+          "title": "One sentence, if she wants",
+          "detail": "If she wants to write, one sentence about a seasonal pattern is enough. Remind her about a capital and an end mark, same as Activity 5. The writing is optional. The Peek asks her to understand the patterns."
+        }
+      ],
+      "easier": "She names the season and one thing that happens in that season. You write it if she wants it on paper.",
+      "harder": "She names two patterns with the seasons and writes one sentence on her own.",
+      "gotIt": "She can tell you one pattern she recognizes with the seasons."
+    }
+  ],
+  "extrasIntro": "These are optional. The first two come from her suggested homework. The third is an extra I added to go with this week's social studies topic, Thanksgiving. It is not required.",
+  "extras": [
+    {
+      "text": "Lexia or IXL on Class Link, if you already use those school apps at home. A short session is enough; skip this if login is a hassle tonight.",
+      "official": true
+    },
+    {
+      "text": "Nightly reading, even on a busy night: 10 minutes of a book she enjoys still counts.",
+      "official": true
+    },
+    {
+      "text": "Extra: talk about a Thanksgiving custom in your family or community. Social studies this week is cultures and customs of the community, with a focus on Thanksgiving. Mrs. Krigbaum did not send a home assignment for it.",
+      "official": false
+    }
+  ],
+  "links": [
+    {
+      "title": "Peek of the Week, November 16–20",
+      "site": "Google Doc",
+      "href": "https://docs.google.com/document/d/1xY5BItn9UXPxU038i4evW_87tjsPDaktghqRWx887ss/edit"
+    },
+    {
+      "title": "Boots and Bling basket wishlist",
+      "site": "Amazon",
+      "href": "https://www.amazon.com/hz/wishlist/ls/3HVGJGDISTVPH?ref_=wl_share"
+    },
+    {
+      "title": "UFLI Foundations toolbox",
+      "site": "ufli.education.ufl.edu",
+      "href": "https://ufli.education.ufl.edu/foundations/toolbox/"
+    },
+    {
+      "title": "Lesson 60 Home Practice (_ce /s/)",
+      "site": "UFLI PDF",
+      "href": "https://ufli.education.ufl.edu/wp-content/uploads/2022/08/60_HomePractice_UFLI-Foundations.pdf"
+    },
+    {
+      "title": "Lesson 61 Home Practice (_ge /j/)",
+      "site": "UFLI PDF",
+      "href": "https://ufli.education.ufl.edu/wp-content/uploads/2022/08/61_HomePractice_UFLI-Foundations.pdf"
+    },
+    {
+      "title": "UFLI Home Support Guide",
+      "site": "UFLI PDF",
+      "href": "https://ufli.education.ufl.edu/wp-content/uploads/2022/09/UFLI_Foundations_Home_Support_Guide_Updated.pdf"
+    }
+  ],
+  "sources": [
+    "Mrs. Krigbaum, First Grade Peek of the Week, November 16–20, 2026 (Week 14)",
+    "Mrs. Krigbaum email, September 28, 2026: phonics binder Thursday–Monday, return Tuesday; Friday progress monitoring",
+    "UFLI Foundations Lesson 60 Home Practice (_ce /s/) and Lesson 61 Home Practice (_ge /j/)"
+  ]
+}
