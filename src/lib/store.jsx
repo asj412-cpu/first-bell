@@ -6,6 +6,7 @@ import { mergeEvents } from './events.js'
 import { fromDbRsvp, hostDisplayName, toDbStatus } from './rsvps.js'
 import { newInviteToken } from './invites.js'
 import { requestReentry } from './reentry.js'
+import { authConfirmUrl, friendlyAuthError, friendlyLinkError } from './authLink.js'
 import { authCallback, clearAuthCallbackParams, isSupabaseConfigured, supabase } from './supabase.js'
 import { hydrateVnext, mergeLearning, vnextReducer } from './vnextReducer.js'
 import { mirrorVnext, pullVnext } from './vnextRemote.js'
@@ -67,6 +68,7 @@ export function BellProvider({ children }) {
     authError: null,
     authNotice: null,
     authBusy: false,
+    authLinkFailed: false,
     authStep: 'email',
     pendingEmail: '',
     eventAccess: [],
@@ -114,7 +116,7 @@ export function BellProvider({ children }) {
     })
   }, [state.session, state.guests, state.messages, state.backend, state.events, state.imports, state.giftLists, state.exchange, state.profiles, state.mealPlans, state.grocery, state.learningProgress, state.kidMode, state.tasks, state.contributions])
 
-  const loadRsvps = useCallback(async (partyUuid) => {
+  const loadRsvps = useCallback(async (partyUuid, shouldApply = () => true) => {
     if (!supabase || !partyUuid) return
     const { data, error } = await supabase
       .from('rsvps')
@@ -122,11 +124,16 @@ export function BellProvider({ children }) {
       .eq('party_id', partyUuid)
       .order('created_at', { ascending: true })
     if (error) throw error
+    if (!shouldApply()) return
     patch({ guests: (data || []).map(fromDbRsvp) })
   }, [patch])
 
+  const bootstrapGen = useRef(0)
+
   const bootstrapLive = useCallback(
     async (user) => {
+      const gen = ++bootstrapGen.current
+      const current = () => bootstrapGen.current === gen
       try {
         const { data: party, error: partyErr } = await supabase
           .from('parties')
@@ -134,6 +141,7 @@ export function BellProvider({ children }) {
           .eq('slug', CHLOE_SLUG)
           .maybeSingle()
         if (partyErr) throw partyErr
+        if (!current()) return
 
         let householdId = null
         let memberRole = null
@@ -142,15 +150,19 @@ export function BellProvider({ children }) {
         if (user) {
           const { data: membership, error: memErr } = await supabase.rpc('ensure_host_membership')
           if (memErr) throw memErr
+          if (!current()) return
           householdId = membership?.household_id || null
           memberRole = membership?.role || null
           await supabase.rpc('link_gift_participant').then(() => {}, () => {})
+          if (!current()) return
           if (!householdId) {
             const access = await supabase.rpc('get_my_gift_access').then((result) => result.data, () => null)
+            if (!current()) return
             if (access?.household_id) {
               householdId = access.household_id
               memberRole = 'gift'
               const lists = await supabase.rpc('get_my_gift_lists').then((result) => result.data, () => null)
+              if (!current()) return
               if (Array.isArray(lists)) {
                 giftLists = lists.map((row) => publicPayloadToList({ list: row, items: row.items, purchases_visible: false }))
               }
@@ -158,6 +170,7 @@ export function BellProvider({ children }) {
           }
           if (!householdId) {
             const events = await supabase.rpc('get_my_event_access').then((result) => result.data, () => null)
+            if (!current()) return
             if (Array.isArray(events) && events.length) {
               eventAccess = events
               memberRole = 'guest'
@@ -165,12 +178,14 @@ export function BellProvider({ children }) {
           }
           if (householdId && memberRole !== 'gift') {
             const tasks = await supabase.rpc('list_household_tasks').then((result) => result.data, () => null)
+            if (!current()) return
             if (Array.isArray(tasks)) {
               setState((prev) => ({ ...prev, tasks }))
             }
           }
         }
 
+        if (!current()) return
         patch({
           backend: 'live',
           backendMessage: '',
@@ -185,11 +200,14 @@ export function BellProvider({ children }) {
         })
 
         if (user && householdId && party?.id) {
-          await loadRsvps(party.id)
+          if (!current()) return
+          await loadRsvps(party.id, current)
         } else if (!user) {
+          if (!current()) return
           patch({ guests: load().guests })
         }
       } catch (err) {
+        if (!current()) return
         patch({
           backend: 'offline',
           backendMessage: err.message || 'Supabase is unreachable.',
@@ -197,7 +215,7 @@ export function BellProvider({ children }) {
           guests: load().guests,
         })
       } finally {
-        setReady(true)
+        if (current()) setReady(true)
       }
     },
     [loadRsvps, patch],
@@ -215,11 +233,16 @@ export function BellProvider({ children }) {
     supabase.auth.getSession().then(({ data }) => {
       if (cancelled) return
       const user = data.session?.user ?? null
-      const linkFailed = !user && (authCallback.hasCode || authCallback.errorDescription || authCallback.errorCode)
+      const linkFailed =
+        !user &&
+        !authCallback.tokenHash &&
+        (authCallback.hasCode || authCallback.errorDescription || authCallback.errorCode)
       if (linkFailed) {
         patch({
-          authNotice:
-            'That link didn’t finish in this browser. Links only work in the same browser that asked for the email. Type the code if the message has one, or ask for a new email from this screen.',
+          authLinkFailed: true,
+          authNotice: friendlyLinkError(authCallback.errorDescription),
+          authError: null,
+          authStep: 'email',
         })
       }
       if (authCallback.hasCode || authCallback.errorDescription || authCallback.errorCode) {
@@ -308,6 +331,24 @@ export function BellProvider({ children }) {
     })
   }, [update])
 
+  const markEmailLinkWorking = useCallback(() => {
+    patch({ authBusy: true, authLinkFailed: false, authError: null })
+  }, [patch])
+
+  const failEmailLink = useCallback((message) => {
+    patch({
+      authBusy: false,
+      authLinkFailed: true,
+      authNotice: message || friendlyLinkError(''),
+      authError: null,
+      authStep: 'email',
+    })
+  }, [patch])
+
+  const finishEmailLink = useCallback(() => {
+    patch({ authBusy: false, authLinkFailed: false, authError: null, authNotice: null })
+  }, [patch])
+
   const api = useMemo(() => {
     const live = state.backend === 'live' && Boolean(supabase)
 
@@ -352,6 +393,7 @@ export function BellProvider({ children }) {
           patch({
             authBusy: false,
             authError: error ? friendlyAuthError(error.message) : null,
+            authLinkFailed: false,
             authStep: 'email',
             pendingEmail: trimmed,
           })
@@ -362,7 +404,7 @@ export function BellProvider({ children }) {
           email: trimmed,
           options: {
             shouldCreateUser: true,
-            emailRedirectTo: redirectTo || `${window.location.origin}/enter`,
+            emailRedirectTo: authConfirmUrl(window.location.origin, redirectTo || '/'),
           },
         })
         update((prev) => ({
@@ -370,25 +412,35 @@ export function BellProvider({ children }) {
           authBusy: false,
           authError: error ? friendlyAuthError(error.message) : null,
           authNotice: error ? prev.authNotice : null,
+          authLinkFailed: error ? prev.authLinkFailed : false,
           authStep: error ? (prev.authStep === 'code' ? 'code' : 'email') : 'code',
           pendingEmail: error ? prev.pendingEmail : trimmed,
         }))
         if (error) throw error
         return { mode: 'otp' }
       },
-      async verifyOtp(token) {
+      async verifyOtp(token, email) {
         if (!supabase) throw new Error('Supabase is not configured')
+        const address = String(email || state.pendingEmail || '').trim().toLowerCase()
         const code = String(token || '').replace(/\D/g, '')
-        patch({ authBusy: true, authError: null })
+        if (!address) {
+          patch({ authBusy: false, authError: 'Enter the email address the code was sent to.' })
+          throw new Error('Enter the email address the code was sent to.')
+        }
+        patch({ authBusy: true, authError: null, pendingEmail: address })
         const { error } = await supabase.auth.verifyOtp({
-          email: state.pendingEmail,
+          email: address,
           token: code,
           type: 'email',
         })
         if (!error) {
           await supabase.rpc('mark_email_verified').then(() => {}, () => {})
         }
-        patch({ authBusy: false, authError: error ? friendlyAuthError(error.message) : null })
+        patch({
+          authBusy: false,
+          authError: error ? friendlyAuthError(error.message) : null,
+          authLinkFailed: error ? state.authLinkFailed : false,
+        })
         if (error) throw error
         return { mode: 'session' }
       },
@@ -406,6 +458,7 @@ export function BellProvider({ children }) {
           pendingEmail: '',
           authError: null,
           authNotice: null,
+          authLinkFailed: false,
         }))
       },
       resetDemo() {
@@ -663,10 +716,13 @@ export function BellProvider({ children }) {
         }))
       },
       resetAuthForm() {
-        patch({ authStep: 'email', authError: null, authNotice: null, pendingEmail: '' })
+        patch({ authStep: 'email', authError: null, authNotice: null, authLinkFailed: false, pendingEmail: '' })
       },
+      markEmailLinkWorking,
+      failEmailLink,
+      finishEmailLink,
     }
-  }, [state, ready, configured, update, patch, loadRsvps, applyVnext, notify])
+  }, [state, ready, configured, update, patch, loadRsvps, applyVnext, notify, markEmailLinkWorking, failEmailLink, finishEmailLink])
 
   return <BellContext.Provider value={api}>{children}</BellContext.Provider>
 }
@@ -677,13 +733,3 @@ export function useBell() {
   return ctx
 }
 
-function friendlyAuthError(message) {
-  if (!message) return null
-  if (/only request this after/i.test(message)) {
-    return 'Wait a minute, then ask for another email.'
-  }
-  if (/token has expired or is invalid/i.test(message) || /otp.?expired/i.test(message)) {
-    return 'That code didn’t work. Check the email for the latest code, or tap the link.'
-  }
-  return message
-}

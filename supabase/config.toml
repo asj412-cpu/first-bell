@@ -1,6 +1,7 @@
 # Local email templates only. `supabase start` reads this file.
 # The hosted project tzkxuinbpmoeyhzomvut does not. Paste the HTML into the
-# dashboard (Authentication → Emails → Templates). See SHIP.md.
+# dashboard (Authentication → Emails → Templates) after /auth/confirm is deployed.
+# See SHIP.md. The link is {{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email.
 #
 # Do not run `supabase config push` with this file. It is not a full auth
 # config and must not overwrite the hosted Site URL, SMTP, or redirect URLs.

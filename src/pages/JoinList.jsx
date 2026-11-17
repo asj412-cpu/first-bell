@@ -192,7 +192,7 @@ export default function JoinList() {
         return
       }
       setWaiting(true)
-      setMessage('Check your email. Open the link on this phone, or enter the code if the email includes one.')
+      setMessage('Check your email for a 6-digit code, or open the link. The link works in any browser. The code keeps your place in this form.')
     } catch (err) {
       setMessage(err.message || 'Could not start sign-in.')
     } finally {
@@ -228,7 +228,7 @@ export default function JoinList() {
       const sent = await sendOtp(address, window.location.href)
       if (sent?.mode === 'otp') {
         setWaiting(true)
-        setMessage('Check your email for a code, or tap the link in that message.')
+        setMessage('Check your email for a 6-digit code, or open the link. The link works in any browser.')
       }
     } catch (err) {
       setMessage(err.message || 'Could not start sign-in.')

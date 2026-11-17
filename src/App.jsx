@@ -1,8 +1,10 @@
 import { useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import AppShell from './components/AppShell.jsx'
+import EmailLinkHandler from './components/EmailLinkHandler.jsx'
 import { useBell } from './lib/store.jsx'
 import Calendar from './pages/Calendar.jsx'
+import AuthConfirm from './pages/AuthConfirm.jsx'
 import Gate from './pages/Gate.jsx'
 import Assignment from './pages/Assignment.jsx'
 import GiftDetail from './pages/GiftDetail.jsx'
@@ -64,10 +66,12 @@ function Toast() {
 export default function App() {
   return (
     <>
+      <EmailLinkHandler />
       <ScrollToTop />
       <Toast />
     <Routes>
       <Route path="/enter" element={<Gate />} />
+      <Route path="/auth/confirm" element={<AuthConfirm />} />
       <Route path="/r/:slug" element={<GuestRsvp />} />
       <Route path="/g/:slug" element={<PublicGift />} />
       <Route path="/join/:token" element={<JoinList />} />
