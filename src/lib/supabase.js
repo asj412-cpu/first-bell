@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { readEmailLink, stripAuthCallbackParams } from './authLink.js'
 
 const url = (import.meta.env.VITE_SUPABASE_URL || '').trim()
 const key = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim()
@@ -6,7 +7,7 @@ const key = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim()
 export const isSupabaseConfigured = Boolean(url && key && /^https?:\/\//i.test(url))
 
 /** Read once, before the client consumes the URL. */
-export const authCallback = readAuthCallback()
+export const authCallback = readEmailLink(typeof window === 'undefined' ? 'http://localhost/' : window.location.href)
 
 export const supabase = isSupabaseConfigured
   ? createClient(url, key, {
@@ -14,6 +15,8 @@ export const supabase = isSupabaseConfigured
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        // PKCE stays on for OAuth. Email links do not use it: the template sends
+        // token_hash to /auth/confirm, and verifyOtp does not read a code verifier.
         flowType: 'pkce',
         storageKey: 'micasa-auth',
         storage: typeof window === 'undefined' ? undefined : window.localStorage,
@@ -21,34 +24,10 @@ export const supabase = isSupabaseConfigured
     })
   : null
 
-function readAuthCallback() {
-  if (typeof window === 'undefined') {
-    return { hasCode: false, errorDescription: '', errorCode: '' }
-  }
-  const current = new URL(window.location.href)
-  const hash = new URLSearchParams(current.hash.startsWith('#') ? current.hash.slice(1) : '')
-  return {
-    hasCode: current.searchParams.has('code'),
-    errorDescription: current.searchParams.get('error_description') || hash.get('error_description') || '',
-    errorCode: current.searchParams.get('error_code') || hash.get('error_code') || '',
-  }
-}
-
 export function clearAuthCallbackParams() {
   if (typeof window === 'undefined') return
-  const current = new URL(window.location.href)
-  let changed = false
-  for (const key of ['code', 'error', 'error_code', 'error_description']) {
-    if (current.searchParams.has(key)) {
-      current.searchParams.delete(key)
-      changed = true
-    }
-  }
-  if (current.hash && /(error|access_token|refresh_token|type)=/.test(current.hash)) {
-    current.hash = ''
-    changed = true
-  }
-  if (!changed) return
-  const next = `${current.pathname}${current.search}${current.hash}`
+  const current = `${window.location.pathname}${window.location.search}${window.location.hash}`
+  const next = stripAuthCallbackParams(window.location.href)
+  if (next === current) return
   window.history.replaceState({}, '', next)
 }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import BackendBanner from '../components/BackendBanner.jsx'
+import { friendlyLinkError } from '../lib/authLink.js'
 import { useBell } from '../lib/store.jsx'
 
 export default function Gate() {
@@ -17,15 +18,20 @@ export default function Gate() {
   } = useBell()
   const [email, setEmail] = useState(state.pendingEmail || '')
   const [code, setCode] = useState('')
+  const [haveCode, setHaveCode] = useState(false)
   const codeRef = useRef(null)
 
   useEffect(() => {
     setEmail(state.pendingEmail || '')
   }, [state.pendingEmail])
 
+  const linkFailed = Boolean(state.authLinkFailed)
+  const onCodeStep = state.authStep === 'code'
+  const showCode = onCodeStep || haveCode || linkFailed
+
   useEffect(() => {
-    if (state.authStep === 'code') codeRef.current?.focus()
-  }, [state.authStep])
+    if (onCodeStep) codeRef.current?.focus()
+  }, [onCodeStep])
 
   if (!ready) {
     return (
@@ -44,16 +50,16 @@ export default function Gate() {
   if (entered) return <Navigate to="/" replace />
 
   const signedInNoHouse = Boolean(state.session && configured && !state.householdId)
-  const onCodeStep = state.authStep === 'code'
   const digits = code.replace(/\D/g, '')
+  const address = (email.trim() || state.pendingEmail || '').trim()
 
   async function onSend(e) {
     e.preventDefault()
-    const address = email.trim() || state.pendingEmail
     if (!address || state.authBusy) return
     try {
       await sendOtp(address)
       setCode('')
+      setHaveCode(false)
     } catch {
       /* authError is set on the store */
     }
@@ -61,13 +67,25 @@ export default function Gate() {
 
   async function onVerify(e) {
     e.preventDefault()
-    if (digits.length < 6 || state.authBusy) return
+    if (digits.length < 6 || !address || state.authBusy) return
     try {
-      await verifyOtp(digits)
+      await verifyOtp(digits, address)
     } catch {
       /* authError is set on the store */
     }
   }
+
+  function useDifferentEmail() {
+    setCode('')
+    setHaveCode(false)
+    setEmail('')
+    resetAuthForm()
+  }
+
+  const failureCopy = state.authNotice || friendlyLinkError('')
+  let title = 'The house, handled.'
+  if (showCode && linkFailed && !onCodeStep) title = 'That link didn’t work'
+  else if (showCode && !signedInNoHouse) title = onCodeStep ? 'Check your email' : 'Enter your code'
 
   return (
     <div className="gate">
@@ -75,12 +93,18 @@ export default function Gate() {
       <div className="card gate-card">
         <img className="bell" src="/icons/icon-192.png" alt="" />
         <div className="eyebrow">Mi Casa</div>
-        <h1>{onCodeStep && !signedInNoHouse ? 'Check your email' : 'The house, handled.'}</h1>
-        {configured && !signedInNoHouse && onCodeStep ? (
-          <p className="lede">
-            We emailed <strong>{state.pendingEmail}</strong>. If it shows a code, type it here. You
-            can also tap the link.
+        <h1>{title}</h1>
+        {configured && !signedInNoHouse && linkFailed && !onCodeStep ? (
+          <p className="lede" role="alert">
+            {failureCopy}
           </p>
+        ) : configured && !signedInNoHouse && onCodeStep ? (
+          <p className="lede">
+            We emailed <strong>{state.pendingEmail}</strong>. Type the 6-digit code, or open the link.
+            The link works even if Mail opens a different browser.
+          </p>
+        ) : configured && !signedInNoHouse && haveCode ? (
+          <p className="lede">Type the 6-digit code from the email, and the address it was sent to.</p>
         ) : configured && !signedInNoHouse ? (
           <p className="lede">
             If you have signed in with this email before, we’ll open the house. A new email still gets a code.
@@ -93,7 +117,7 @@ export default function Gate() {
 
         <BackendBanner />
 
-        {state.authNotice && !signedInNoHouse && (
+        {state.authNotice && !signedInNoHouse && !linkFailed && (
           <p className="gate-hint" role="status">
             {state.authNotice}
           </p>
@@ -123,7 +147,7 @@ export default function Gate() {
           </>
         )}
 
-        {configured && !signedInNoHouse && !onCodeStep && (
+        {configured && !signedInNoHouse && !showCode && (
           <form onSubmit={onSend}>
             <div className="field">
               <label htmlFor="host-email">Email</label>
@@ -149,20 +173,42 @@ export default function Gate() {
             <button className="btn primary full" type="submit" disabled={state.authBusy}>
               {state.authBusy ? 'Please wait…' : 'Continue'}
             </button>
+            <button className="btn ghost full" type="button" onClick={() => setHaveCode(true)}>
+              I have a code
+            </button>
             <p className="gate-note">
-              No password. A returning email opens the house on this phone. A new email gets a code — on a home-screen app, type the code so you stay in Mi Casa.
+              No password. A returning email opens the house on this phone. A new email gets a 6-digit code and a link — either one works in any browser. On a home-screen app, type the code so you stay in Mi Casa.
             </p>
           </form>
         )}
 
-        {configured && !signedInNoHouse && onCodeStep && (
-          <form onSubmit={onVerify}>
-            <p className="gate-hint">
-              On a home-screen app, type the code so you stay in Mi Casa. Tapping the link opens
-              Safari instead.
-            </p>
+        {configured && !signedInNoHouse && showCode && (
+          <form onSubmit={digits.length >= 6 ? onVerify : onSend}>
+            {onCodeStep && (
+              <p className="gate-hint">
+                On a home-screen app, type the code so you stay in Mi Casa. The link opens Safari, and that session stays in Safari.
+              </p>
+            )}
+            {!onCodeStep && (
+              <div className="field">
+                <label htmlFor="host-email">Email</label>
+                <input
+                  id="host-email"
+                  type="email"
+                  autoComplete="email"
+                  inputMode="email"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck="false"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@email.com"
+                  required
+                />
+              </div>
+            )}
             <div className="field">
-              <label htmlFor="otp">Sign-in code</label>
+              <label htmlFor="otp">6-digit code</label>
               <input
                 ref={codeRef}
                 id="otp"
@@ -175,7 +221,6 @@ export default function Gate() {
                 maxLength={10}
                 value={digits}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                required
               />
             </div>
             {state.authError && (
@@ -184,13 +229,15 @@ export default function Gate() {
               </p>
             )}
             <div className="gate-actions">
-              <button className="btn primary full" type="submit" disabled={state.authBusy || digits.length < 6}>
-                {state.authBusy ? 'Please wait…' : 'Sign in'}
+              <button className="btn primary full" type="submit" disabled={state.authBusy || !address}>
+                {state.authBusy ? 'Please wait…' : digits.length >= 6 ? 'Sign in' : 'Send a new link'}
               </button>
-              <button className="btn ghost full" type="button" disabled={state.authBusy} onClick={onSend}>
-                {state.authBusy ? 'Please wait…' : 'Send the email again'}
-              </button>
-              <button className="btn ghost full" type="button" onClick={resetAuthForm}>
+              {digits.length >= 6 && (
+                <button className="btn ghost full" type="button" disabled={state.authBusy || !address} onClick={onSend}>
+                  {state.authBusy ? 'Please wait…' : 'Send a new link'}
+                </button>
+              )}
+              <button className="btn ghost full" type="button" onClick={useDifferentEmail}>
                 Use a different email
               </button>
             </div>

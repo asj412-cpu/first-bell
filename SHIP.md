@@ -73,37 +73,27 @@ npx supabase db push --project-ref tzkxuinbpmoeyhzomvut
   - `https://*.vercel.app/**`
   - `http://localhost:5173/**`
 
-**Email templates** — the hosted project does not read `supabase/templates/`. Until these two dashboard templates include `{{ .Token }}`, the email is a link only. The sign-in screen already says so: a code, or a link you can tap.
+**Email templates** — the hosted project does not read `supabase/templates/`. `supabase/config.toml` is not a full auth config. Do not run `supabase config push`. There is no Supabase access token in this repo, so the Management API cannot update the hosted templates from here.
 
-The app calls `signInWithOtp`. Supabase sends **Confirm signup** the first time an address is used, and **Magic Link** after that. Update both. Leave Email OTP length at 6 (Authentication → Providers → Email). Do not run `supabase config push` from the partial `supabase/config.toml`.
+Paste the templates **after this app version is deployed**. Pasting earlier sends the link to `/auth/confirm`, which older builds do not verify. The app calls `signInWithOtp` with `emailRedirectTo` set to `{origin}/auth/confirm?next=...`. Supabase sends **Confirm signup** the first time an address is used, and **Magic Link** after that. Update both. Leave Email OTP length at 6 (Authentication → Providers → Email).
 
-Dashboard: project `tzkxuinbpmoeyhzomvut` → Authentication → Emails → Templates.
+The link must not be `{{ .ConfirmationURL }}`. That URL is the PKCE redirect: it only finishes in the browser that asked for the email. Use `{{ .TokenHash }}` instead. The screen calls `supabase.auth.verifyOtp({ token_hash, type: 'email' })`, which does not read a stored code verifier. The 6-digit code uses `verifyOtp({ email, token, type: 'email' })`.
 
-**Magic Link** — subject `{{ .Token }} is your Mi Casa sign-in code`. Body is `supabase/templates/magic_link.html`:
-
-```html
-<h2>Your sign-in code</h2>
-<p>Your Mi Casa sign-in code is {{ .Token }}</p>
-<p style="font-size:32px;letter-spacing:0.28em;"><strong>{{ .Token }}</strong></p>
-<p>Type that code in the app. It expires soon and works once.</p>
-<p>Or tap the link. On an iPhone or iPad home-screen app, the link opens Safari, so the code is easier.</p>
-<p><a href="{{ .ConfirmationURL }}">Sign in with the link</a></p>
-<p>If you didn’t ask to sign in to Mi Casa, you can ignore this email.</p>
-```
-
-**Confirm signup** — same subject. Body is `supabase/templates/confirmation.html`:
+Dashboard: project `tzkxuinbpmoeyhzomvut` → Authentication → Emails → Templates. Subject for both: `{{ .Token }} is your Mi Casa sign-in code`. Paste the full HTML from `supabase/templates/magic_link.html` and `supabase/templates/confirmation.html`. The link in both files is:
 
 ```html
-<h2>Confirm your email</h2>
-<p>Your Mi Casa sign-in code is {{ .Token }}</p>
-<p style="font-size:32px;letter-spacing:0.28em;"><strong>{{ .Token }}</strong></p>
-<p>Type that code in the app to confirm {{ .Email }} and sign in. It expires soon and works once.</p>
-<p>Or tap the link. On an iPhone or iPad home-screen app, the link opens Safari, so the code is easier.</p>
-<p><a href="{{ .ConfirmationURL }}">Confirm and sign in</a></p>
-<p>If you didn’t ask to sign in to Mi Casa, you can ignore this email.</p>
+<a href="{{ if .RedirectTo }}{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email{{ else }}{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email{{ end }}">Sign in</a>
 ```
 
-The repo files are the full HTML to paste. The blocks above are the same message, so either paste is fine. The screen verifies the code with `supabase.auth.verifyOtp({ email, token, type: 'email' })`.
+`{{ .RedirectTo }}` is the app URL, and it already contains `?next=`. The fallback uses the Site URL when RedirectTo is empty. Site URL should be `https://first-bell-seven.vercel.app` with no trailing slash.
+
+**Redirect allow list** (Authentication → URL Configuration). Any path on the Site URL host is already allowed, including `/auth/confirm`. Keep these entries so preview and local sign-in can use the same route:
+
+- `https://first-bell-seven.vercel.app/**`
+- `https://*.vercel.app/**`
+- `http://localhost:5173/**`
+
+`vercel.json` already rewrites every non-API path to `index.html`, so `/auth/confirm` loads the app.
 
 Host emails that auto-join the Johnson household after signup: `asj412@me.com`, `asj412@icloud.com`. To add another host:
 
@@ -121,7 +111,7 @@ If the seeded household still has **zero** members, the first authenticated user
 2. With env vars **set** and migration applied:
    1. `/enter` shows email, not the demo button.
    2. Request a code as `asj412@me.com` or `asj412@icloud.com`.
-   3. The email is a link until the dashboard templates above are saved. After that, it also shows a 6-digit code. Type the code, or tap the link in the same browser that asked for it. On an iPhone home-screen app, type the code — the link opens Safari.
+   3. After the dashboard templates above are saved, the email shows a 6-digit code and a link. Open the link in a different browser than the one that asked for it: it should sign in. Or type the code on the sign-in screen (`I have a code`). On an iPhone home-screen app, type the code — the link opens Safari. A link that fails shows “Send a new link”, not a PKCE error.
    4. Land on Home. Settings shows the email and “Supabase · live”.
    5. Sign out returns to `/enter`.
    6. A random email can create an Auth user but will not see RSVPs until it is in `household_members` (gate explains this).
