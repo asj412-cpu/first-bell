@@ -718,11 +718,17 @@ export function BellProvider({ children }) {
       resetAuthForm() {
         patch({ authStep: 'email', authError: null, authNotice: null, authLinkFailed: false, pendingEmail: '' })
       },
+      /** Re-read household / gift / event access after an invite is accepted. */
+      async refreshAccess() {
+        if (!supabase) return
+        const { data } = await supabase.auth.getUser()
+        await bootstrapLive(data?.user ?? null)
+      },
       markEmailLinkWorking,
       failEmailLink,
       finishEmailLink,
     }
-  }, [state, ready, configured, update, patch, loadRsvps, applyVnext, notify, markEmailLinkWorking, failEmailLink, finishEmailLink])
+  }, [bootstrapLive, state, ready, configured, update, patch, loadRsvps, applyVnext, notify, markEmailLinkWorking, failEmailLink, finishEmailLink])
 
   return <BellContext.Provider value={api}>{children}</BellContext.Provider>
 }

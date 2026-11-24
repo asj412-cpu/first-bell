@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import GiftItemFields from '../components/GiftItemFields.jsx'
 import { PARTY } from '../data/seed.js'
 import { blankGiftItem, validateJoin, withGiftImages } from '../lib/exchange.js'
 import { inviteStatusCopy, previewLocalInvite, rpcMissing } from '../lib/invites.js'
+import { friendlyAuthError } from '../lib/authLink.js'
 import { useBell } from '../lib/store.jsx'
 import { supabase } from '../lib/supabase.js'
 
@@ -16,7 +17,7 @@ function emptyForm() {
 export default function JoinList() {
   const { token } = useParams()
   const navigate = useNavigate()
-  const { state, joinExchange, sendOtp, verifyOtp, notify, markInviteUsed, addOrUpdateRsvp } = useBell()
+  const { state, joinExchange, sendOtp, verifyOtp, notify, markInviteUsed, addOrUpdateRsvp, refreshAccess } = useBell()
   const [form, setForm] = useState(emptyForm)
   const [errors, setErrors] = useState({})
   const [code, setCode] = useState('')
@@ -24,6 +25,7 @@ export default function JoinList() {
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
   const [preview, setPreview] = useState(null)
+  const statusRef = useRef(null)
   const demo = !supabase || state.backend === 'demo' || state.session?.demo
   const signedInEmail = (state.session?.email || '').toLowerCase()
 
@@ -64,6 +66,24 @@ export default function JoinList() {
   useEffect(() => {
     if (signedInEmail) setForm((prev) => ({ ...prev, email: signedInEmail }))
   }, [signedInEmail])
+
+  // Once a session exists (code accepted here, or the email link opened in
+  // another tab), leave the code step so the button saves the form instead of
+  // re-checking a code that has already been used.
+  useEffect(() => {
+    if (state.session && waiting) {
+      setWaiting(false)
+      setCode('')
+    }
+  }, [state.session, waiting])
+
+  // Keep any status or error next to the button and on screen, so a tap never
+  // looks like it did nothing.
+  useEffect(() => {
+    if (message && statusRef.current?.scrollIntoView) {
+      statusRef.current.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+    }
+  }, [message])
 
   function update(patch) {
     setForm((prev) => ({ ...prev, ...patch }))
@@ -118,6 +138,9 @@ export default function JoinList() {
       return
     }
     sessionStorage.removeItem(DRAFT_KEY)
+    // The session was loaded before this person joined, so it has no gift
+    // access yet. Reload access first or the list page bounces to sign-in.
+    await refreshAccess?.().catch(() => {})
     notify('You are on the family list')
     const kidKey = data?.kid_key
     if (kidKey) {
@@ -148,6 +171,7 @@ export default function JoinList() {
       setMessage(error.message || 'Could not save your RSVP.')
       return
     }
+    await refreshAccess?.().catch(() => {})
     notify('RSVP saved')
     navigate(`/parties/${PARTY.id}`)
   }
@@ -157,6 +181,7 @@ export default function JoinList() {
     if (preview?.kind === 'event') {
       if (form.name.trim().length < 2) {
         setErrors({ name: 'Enter your name.' })
+        setMessage('Enter your name.')
         return
       }
       if (!demo && !state.session) {
@@ -166,6 +191,8 @@ export default function JoinList() {
       setSaving(true)
       try {
         await persistEvent(form.name.trim(), form.rsvp || 'yes')
+      } catch (err) {
+        setMessage(err?.message || 'Could not save your RSVP. Try again.')
       } finally {
         setSaving(false)
       }
@@ -173,7 +200,11 @@ export default function JoinList() {
     }
     const result = validateJoin({ ...form, email: signedInEmail || form.email })
     setErrors(result.errors)
-    if (!result.ok) return
+    if (!result.ok) {
+      const first = Object.values(result.errors || {}).find(Boolean)
+      setMessage(typeof first === 'string' ? `Check the form: ${first}` : 'Check the highlighted fields above.')
+      return
+    }
     if (preview && preview.status !== 'active') {
       setMessage(inviteStatusCopy(preview.status).body)
       return
@@ -194,25 +225,52 @@ export default function JoinList() {
       setWaiting(true)
       setMessage('Check your email for a 6-digit code, or open the link. The link works in any browser. The code keeps your place in this form.')
     } catch (err) {
-      setMessage(err.message || 'Could not start sign-in.')
+      setMessage(friendlyAuthError(err?.message) || 'Could not start sign-in.')
     } finally {
       setSaving(false)
     }
   }
 
   async function confirmCode(event) {
-    event.preventDefault()
+    event?.preventDefault()
+    // Already signed in (for example the email link opened in another tab):
+    // there is no code left to check, so just go on to the details step.
+    if (state.session) {
+      setWaiting(false)
+      setCode('')
+      setMessage('')
+      return
+    }
+    if (!code.replace(/\D/g, '')) {
+      setMessage('Type the 6-digit code from the email.')
+      return
+    }
     setSaving(true)
     try {
       await verifyOtp(code)
-      const draft = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || 'null')
+      setWaiting(false)
+      setCode('')
+      let draft = null
+      try {
+        draft = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || 'null')
+      } catch {
+        draft = null
+      }
       if (preview?.kind === 'event') {
-        await persistEvent(form.name.trim(), form.rsvp || 'yes')
+        if (form.name.trim().length >= 2) {
+          await persistEvent(form.name.trim(), form.rsvp || 'yes')
+          return
+        }
+        setMessage('You are signed in. Add your name and RSVP, then tap Save my RSVP.')
         return
       }
-      if (draft?.value) await persistGift(draft.value)
+      if (draft?.token === token && draft?.value) {
+        await persistGift(draft.value)
+        return
+      }
+      setMessage('You are signed in. Add your name, phone, and household, then tap Join and open my list.')
     } catch (err) {
-      setMessage(err.message || 'That sign-in did not work.')
+      setMessage(friendlyAuthError(err?.message) || 'That sign-in did not work. Try again or send a new code.')
     } finally {
       setSaving(false)
     }
@@ -231,7 +289,7 @@ export default function JoinList() {
         setMessage('Check your email for a 6-digit code, or open the link. The link works in any browser.')
       }
     } catch (err) {
-      setMessage(err.message || 'Could not start sign-in.')
+      setMessage(friendlyAuthError(err?.message) || 'Could not start sign-in.')
     } finally {
       setSaving(false)
     }
@@ -268,7 +326,7 @@ export default function JoinList() {
 
   return (
     <div className="guest-page gift-guest">
-      <form className="gift-guest-head" onSubmit={needsSignIn && !waiting ? beginSignIn : save}>
+      <form className="gift-guest-head" onSubmit={needsSignIn ? (waiting ? confirmCode : beginSignIn) : save}>
         <img className="bell" src="/icons/icon-192.png" alt="" />
         <div className="kicker">{preview.label || 'Johnson family'}</div>
         <h1>{eventInvite ? 'You are invited' : 'Join the family list'}</h1>
@@ -351,15 +409,14 @@ export default function JoinList() {
           </>
         )}
 
-        {message && <p className="lede" role="status">{message}</p>}
-        {waiting && (
+        {waiting && needsSignIn && (
           <label className="field">
             <span>Code from the email</span>
             <input value={code} onChange={(event) => setCode(event.target.value)} inputMode="numeric" autoComplete="one-time-code" />
           </label>
         )}
-        {waiting ? (
-          <button className="btn primary big" type="button" onClick={confirmCode} disabled={saving}>
+        {waiting && needsSignIn ? (
+          <button className="btn primary big" type="submit" disabled={saving}>
             {saving ? 'Please wait…' : 'Finish and join'}
           </button>
         ) : (
@@ -367,6 +424,7 @@ export default function JoinList() {
             {saving ? 'Please wait…' : needsSignIn ? 'Continue' : eventInvite ? 'Save my RSVP' : 'Join and open my list'}
           </button>
         )}
+        <p ref={statusRef} className="lede" role="alert" aria-live="assertive" hidden={!message}>{message}</p>
         <p className="gate-note">
           {eventInvite
             ? 'This invite works once.'
