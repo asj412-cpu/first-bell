@@ -1,3 +1,4 @@
+import { rememberDevice } from './reentry.js'
 const OTP_TYPES = new Set(['email', 'signup', 'magiclink', 'invite', 'recovery', 'email_change'])
 
 let confirmation = null
@@ -161,6 +162,7 @@ export function verifyEmailLink(client, tokenHash, type) {
       .then(async (result) => {
         if (!result?.error && client.rpc) {
           await client.rpc('mark_email_verified').then(() => {}, () => {})
+          await rememberDevice(result?.data?.session?.access_token)
         }
         return result
       })

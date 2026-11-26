@@ -5,7 +5,7 @@ import { freshState, HOUSEHOLD, PARTY } from '../data/seed.js'
 import { mergeEvents } from './events.js'
 import { fromDbRsvp, hostDisplayName, toDbStatus } from './rsvps.js'
 import { newInviteToken } from './invites.js'
-import { requestReentry } from './reentry.js'
+import { forgetDevice, rememberDevice, requestReentry } from './reentry.js'
 import { authConfirmUrl, friendlyAuthError, friendlyLinkError } from './authLink.js'
 import { authCallback, clearAuthCallbackParams, isSupabaseConfigured, supabase } from './supabase.js'
 import { hydrateVnext, mergeLearning, vnextReducer } from './vnextReducer.js'
@@ -438,13 +438,14 @@ export function BellProvider({ children }) {
           throw new Error('Enter the email address the code was sent to.')
         }
         patch({ authBusy: true, authError: null, pendingEmail: address })
-        const { error } = await supabase.auth.verifyOtp({
+        const { data: verified, error } = await supabase.auth.verifyOtp({
           email: address,
           token: code,
           type: 'email',
         })
         if (!error) {
           await supabase.rpc('mark_email_verified').then(() => {}, () => {})
+          await rememberDevice(verified?.session?.access_token)
         }
         patch({
           authBusy: false,
@@ -456,6 +457,7 @@ export function BellProvider({ children }) {
       },
       async signOut() {
         if (live) {
+          await forgetDevice()
           await supabase.auth.signOut()
         }
         update((s) => ({
