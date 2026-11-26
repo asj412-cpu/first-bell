@@ -21,3 +21,31 @@ export async function requestReentry(email) {
     return { mode: 'otp' }
   }
 }
+
+/**
+ * After a successful code or link sign-in, ask the server to remember this
+ * device. The server sets an httpOnly cookie; this page never sees the token.
+ * Failures are ignored: sign-in already worked, the next visit just asks for a code.
+ */
+export async function rememberDevice(accessToken) {
+  if (!accessToken) return false
+  try {
+    const response = await fetch('/api/remember-device', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}` },
+      credentials: 'same-origin',
+    })
+    return response.ok
+  } catch {
+    return false
+  }
+}
+
+/** Sign-out: this device stops skipping the code. */
+export async function forgetDevice() {
+  try {
+    await fetch('/api/remember-device', { method: 'DELETE', credentials: 'same-origin' })
+  } catch {
+    // ignore
+  }
+}

@@ -62,3 +62,58 @@ export function readBody(req) {
   }
   return {}
 }
+
+// ---- Remembered devices and the REENTRY_MODE switch (GJP-3) ----
+
+export const DEVICE_COOKIE = 'micasa_device'
+export const DEVICE_MAX_AGE = 180 * 24 * 60 * 60
+
+/** device (default): email-only on a remembered device. email: any device. off: always send the code. */
+export function reentryMode(env = process.env) {
+  const value = String(env.REENTRY_MODE || '').trim().toLowerCase()
+  return value === 'email' || value === 'off' ? value : 'device'
+}
+
+export function parseCookies(header) {
+  const out = {}
+  String(header || '')
+    .split(';')
+    .forEach((part) => {
+      const at = part.indexOf('=')
+      if (at < 1) return
+      const key = part.slice(0, at).trim()
+      const value = part.slice(at + 1).trim()
+      if (key && !(key in out)) {
+        try {
+          out[key] = decodeURIComponent(value)
+        } catch {
+          out[key] = value
+        }
+      }
+    })
+  return out
+}
+
+/** The device token from the request cookie, if it looks like one we made. */
+export function deviceTokenFrom(req) {
+  const token = parseCookies(req?.headers?.cookie)[DEVICE_COOKIE] || ''
+  return /^[A-Za-z0-9_-]{43}$/.test(token) ? token : ''
+}
+
+export function hashDeviceToken(token, createHash) {
+  return createHash('sha256').update(String(token)).digest('hex')
+}
+
+export function deviceCookie(token, maxAge = DEVICE_MAX_AGE) {
+  return `${DEVICE_COOKIE}=${token}; Path=/api; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Strict`
+}
+
+export function clearDeviceCookie() {
+  return `${DEVICE_COOKIE}=; Path=/api; Max-Age=0; HttpOnly; Secure; SameSite=Strict`
+}
+
+export function bearerToken(req) {
+  const raw = String(req?.headers?.authorization || req?.headers?.Authorization || '')
+  const match = raw.match(/^Bearer\s+(.+)$/i)
+  return match ? match[1].trim() : ''
+}
