@@ -23,6 +23,7 @@ import Meals from './pages/Meals.jsx'
 import Parties from './pages/Parties.jsx'
 import PartyDetail from './pages/PartyDetail.jsx'
 import PublicGift from './pages/PublicGift.jsx'
+import FamilyProfiles from './pages/FamilyProfiles.jsx'
 import Settings from './pages/Settings.jsx'
 
 function BootScreen() {
@@ -95,6 +96,7 @@ export default function App() {
         <Route path="/learning/:kidKey" element={<Learning />} />
         <Route path="/gifts" element={<Gifts />} />
         <Route path="/gifts/santa" element={<SecretSanta />} />
+        <Route path="/gifts/people" element={<FamilyProfiles />} />
         <Route path="/gifts/assignment" element={<Assignment />} />
         <Route path="/gifts/reminders" element={<Reminders />} />
         <Route path="/gifts/:kidKey" element={<GiftDetail />} />
