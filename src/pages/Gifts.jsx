@@ -186,7 +186,7 @@ export default function Gifts() {
         <section className="managed-family" aria-labelledby="your-family">
           <h2 className="section-label" id="your-family">Your family</h2>
           <p className="dim" style={{ marginTop: 0 }}>
-            Add your husband, wife, or kids here. They don’t need an email or their own invite. You keep their lists.
+            Add your husband, wife, or kids here. They don’t need an email or their own invite. You keep their lists, they’re in Secret Santa too, and you’ll see who they draw.
           </p>
           {myFamily.length > 0 && (
             <div className="gift-index">

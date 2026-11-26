@@ -7,7 +7,7 @@
 -- An invited gift-list member (say Sarah) can add people under herself, such as
 -- her husband and kids. Each managed person is a name-only profile: no account,
 -- email, or invite. Each one gets an ordinary exchange gift list plus a
--- gift_participants row (in_draw = false, user_id NULL), so they show and can be
+-- gift_participants row (user_id NULL), so they show and can be
 -- claimed exactly like any other list. gift_managed_members records who manages
 -- the list.
 --
