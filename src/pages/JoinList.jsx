@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import GiftItemFields from '../components/GiftItemFields.jsx'
+import ProfilePicker from '../components/ProfilePicker.jsx'
 import { PARTY } from '../data/seed.js'
 import { blankGiftItem, validateJoin, withGiftImages } from '../lib/exchange.js'
 import { inviteStatusCopy, previewLocalInvite, rpcMissing } from '../lib/invites.js'
@@ -26,6 +27,10 @@ export default function JoinList() {
   const [saving, setSaving] = useState(false)
   const [preview, setPreview] = useState(null)
   const statusRef = useRef(null)
+  // Shared family link: if Andrew pre-made profiles, people pick their name
+  // first. "I'm not on the list" falls back to the normal join form below.
+  const [linkInfo, setLinkInfo] = useState(null)
+  const [notListed, setNotListed] = useState(false)
   const demo = !supabase || state.backend === 'demo' || state.session?.demo
   const signedInEmail = (state.session?.email || '').toLowerCase()
 
@@ -53,6 +58,17 @@ export default function JoinList() {
       cancelled = true
     }
   }, [demo, token, state.exchange])
+
+  useEffect(() => {
+    if (demo || !supabase) return undefined
+    let cancelled = false
+    supabase.rpc('family_link_info', { p_token: token }).then(({ data, error }) => {
+      if (!cancelled && !error && data) setLinkInfo(data)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [demo, token])
 
   useEffect(() => {
     try {
@@ -304,6 +320,10 @@ export default function JoinList() {
         </header>
       </div>
     )
+  }
+
+  if (preview.status === 'active' && preview.kind === 'gift_list' && linkInfo?.has_profiles && !notListed) {
+    return <ProfilePicker token={token} label={preview.label} onNotListed={() => setNotListed(true)} />
   }
 
   if (preview.status !== 'active') {

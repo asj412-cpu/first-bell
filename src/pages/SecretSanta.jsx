@@ -2,8 +2,12 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { IconBack } from '../components/Icons.jsx'
 import { ideaCount } from '../lib/exchange.js'
+import { checkManualPairs, freeReceivers } from '../lib/profiles.js'
 import { useBell } from '../lib/store.jsx'
 import { supabase } from '../lib/supabase.js'
+
+const MODE_KEY = 'micasa-santa-mode'
+const PICKS_KEY = 'micasa-santa-offline-picks'
 
 function peopleOf(group, participants) {
   return participants.filter((person) => person.groupId === group.id)
@@ -27,6 +31,28 @@ export default function SecretSanta() {
   const [meganEmail, setMeganEmail] = useState('')
   const [busy, setBusy] = useState(false)
   const [avoidChoice, setAvoidChoice] = useState(null)
+  const [mode, setMode] = useState(() => (typeof localStorage !== 'undefined' && localStorage.getItem(MODE_KEY)) || 'draw')
+  const [picks, setPicks] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(PICKS_KEY) || '{}') || {}
+    } catch {
+      return {}
+    }
+  })
+
+  function chooseMode(next) {
+    setMode(next)
+    try { localStorage.setItem(MODE_KEY, next) } catch { /* private mode */ }
+  }
+
+  function pick(giverId, receiverId) {
+    setPicks((prev) => {
+      const next = { ...prev, [giverId]: receiverId }
+      if (!receiverId) delete next[giverId]
+      try { localStorage.setItem(PICKS_KEY, JSON.stringify(next)) } catch { /* private mode */ }
+      return next
+    })
+  }
 
   async function loadLive() {
     if (demo || !isAdmin) return
@@ -78,6 +104,33 @@ export default function SecretSanta() {
     receiver_id: row.receiverId,
     receiver: exchange.participants.find((person) => person.id === row.receiverId)?.name,
   })) : null
+
+  const roster = groups
+    .flatMap((group) => group.people)
+    .filter((person) => person.in_draw)
+    .map((person) => ({ id: person.id, name: person.name }))
+    .sort((a, b) => a.name.localeCompare(b.name))
+  const manual = checkManualPairs(roster, picks)
+
+  async function saveManual() {
+    setError('')
+    if (!manual.complete) {
+      setError(manual.problems[0] || Object.values(manual.errors)[0] || 'Finish the pairings first')
+      return
+    }
+    if (demo) {
+      setError('Offline pairings save in the live app')
+      return
+    }
+    setBusy(true)
+    const { error: rpcError } = await supabase.rpc('save_manual_secret_santa', { p_pairs: manual.pairs })
+    setBusy(false)
+    if (rpcError) {
+      setError(rpcError.message)
+      return
+    }
+    await loadLive()
+  }
 
   async function draw() {
     setError('')
@@ -169,6 +222,8 @@ export default function SecretSanta() {
       {(error || state.exchangeError) && <p className="form-error">{error || state.exchangeError}</p>}
       <p className="status-pill">{status === 'locked' ? 'Locked' : status === 'draft' ? 'Drawn, not locked' : 'Not drawn yet'}</p>
 
+      <details className="roster-details" open={mode === 'draw'}>
+        <summary>Who’s in the drawing ({roster.length})</summary>
       {groups.map((group) => (
         <section key={group.id} className="card pad">
           <h2>{group.label}</h2>
@@ -192,7 +247,53 @@ export default function SecretSanta() {
           </ul>
         </section>
       ))}
+      </details>
 
+      <div className="mode-switch" role="tablist" aria-label="How names are drawn">
+        <button type="button" role="tab" aria-selected={mode === 'draw'} className={mode === 'draw' ? 'is-on' : ''} onClick={() => chooseMode('draw')}>
+          Draw in the app
+        </button>
+        <button type="button" role="tab" aria-selected={mode === 'offline'} className={mode === 'offline' ? 'is-on' : ''} onClick={() => chooseMode('offline')}>
+          I drew names offline
+        </button>
+      </div>
+
+      {mode === 'offline' && (
+        <section className="card pad offline-santa" aria-labelledby="offline-title">
+          <div className="kicker">Offline drawing</div>
+          <h2 id="offline-title" style={{ marginTop: 4 }}>Enter who drew whom</h2>
+          <p className="lede">Pick each person’s name from the hat. Nobody can draw themselves, and each name can only be drawn once.</p>
+          <ol className="offline-pairs">
+            {roster.map((person) => (
+              <li key={person.id} className={manual.errors[person.id] ? 'has-error' : picks[person.id] ? 'is-set' : ''}>
+                <span className="offline-giver">{person.name}</span>
+                <span className="offline-arrow" aria-hidden="true">→</span>
+                <label className="sr-only" htmlFor={`draws-${person.id}`}>{person.name} draws</label>
+                <select
+                  id={`draws-${person.id}`}
+                  value={picks[person.id] || ''}
+                  disabled={status === 'locked'}
+                  onChange={(event) => pick(person.id, event.target.value)}
+                >
+                  <option value="">Choose…</option>
+                  {freeReceivers(roster, picks, person.id).map((other) => (
+                    <option key={other.id} value={other.id}>{other.name}</option>
+                  ))}
+                </select>
+                {manual.errors[person.id] && <small className="form-error">{manual.errors[person.id]}</small>}
+              </li>
+            ))}
+          </ol>
+          {manual.problems.map((line) => <p key={line} className="dim">{line}</p>)}
+          <p className="offline-progress">{manual.pairs.length} of {roster.length} set</p>
+          <button className="btn primary big" type="button" disabled={busy || status === 'locked' || !manual.complete} onClick={saveManual}>
+            {busy ? 'Saving…' : 'Save these pairings'}
+          </button>
+          <p className="dim">Saved pairings show below so you can check them, then lock. Each person only ever sees their own name.</p>
+        </section>
+      )}
+
+      {mode === 'draw' && (
       <label className="check-line">
         <input
           type="checkbox"
@@ -205,15 +306,21 @@ export default function SecretSanta() {
         />
         <span>Don’t draw someone in your own household</span>
       </label>
+      )}
+      {mode === 'draw' && (
       <p className="dim">Andrew and Megan are one household. With only the two of them, turn this off or invite another household first.</p>
+      )}
 
       <div className="stack-links">
-        <button className="btn primary big" type="button" disabled={busy || status === 'locked'} onClick={draw}>
-          {status === 'draft' ? 'Re-roll' : 'Draw names'}
-        </button>
+        {mode === 'draw' && (
+          <button className="btn primary big" type="button" disabled={busy || status === 'locked'} onClick={draw}>
+            {status === 'draft' ? 'Re-roll' : 'Draw names'}
+          </button>
+        )}
         <button className="btn big" type="button" disabled={busy || status !== 'draft'} onClick={lock}>
           Lock the drawing
         </button>
+        <Link className="btn big" to="/gifts/people">Family list and link</Link>
         <Link className="btn big" to="/gifts/assignment">Your person</Link>
       </div>
 

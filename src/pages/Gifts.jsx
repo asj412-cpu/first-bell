@@ -169,6 +169,9 @@ export default function Gifts() {
             )}
           </div>
           <div className="stack-links">
+            <Link className="btn big primary" to="/gifts/people">
+              Family list and link
+            </Link>
             <Link className="btn big" to="/gifts/santa">
               Secret Santa
             </Link>
