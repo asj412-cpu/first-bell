@@ -5,6 +5,7 @@ import { isStarterItem } from '../lib/exchange.js'
 import { findListBySlug, listUsesLocalCatalog, presentItems, publicPayloadToList } from '../lib/gifts.js'
 import { useBell } from '../lib/store.jsx'
 import { supabase } from '../lib/supabase.js'
+import { managedLabel } from '../lib/managed.js'
 
 export default function PublicGift() {
   const { slug } = useParams()
@@ -16,6 +17,21 @@ export default function PublicGift() {
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [managedBy, setManagedBy] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    if (!supabase) return undefined
+    // "Managed by Sarah" for a husband or kid added under an invited member.
+    supabase
+      .rpc('get_managed_label', { p_slug: slug })
+      .then(({ data }) => {
+        if (!cancelled) setManagedBy(data && data.manager_name ? data : null)
+      }, () => {})
+    return () => {
+      cancelled = true
+    }
+  }, [slug])
 
   useEffect(() => {
     let cancelled = false
@@ -106,8 +122,9 @@ export default function PublicGift() {
         <img className="bell" src="/icons/icon-192.png" alt="" />
         <div className="kicker">{list.occasion}</div>
         <h1>{list.displayName}’s list</h1>
+        {managedBy && <p className="kicker managed-by">{managedLabel(managedBy)}</p>}
         <p className="lede">
-          Pick something to buy. Once you mark it, the next person will see that it is taken.
+          Pick something to buy. Once you mark it, the next person will see that it is taken.{' '}
           {list.displayName} does not see these marks on their own list.
         </p>
         {listUsesLocalCatalog(list) && (

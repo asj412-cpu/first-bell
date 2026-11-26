@@ -147,6 +147,7 @@ export function BellProvider({ children }) {
         let memberRole = null
         let giftLists = null
         let eventAccess = []
+        let managedMembers = []
         if (user) {
           const { data: membership, error: memErr } = await supabase.rpc('ensure_host_membership')
           if (memErr) throw memErr
@@ -185,6 +186,14 @@ export function BellProvider({ children }) {
           }
         }
 
+        if (user && householdId) {
+          // Family members added under an invited member (husband, kids). Older
+          // databases without the RPC simply return nothing.
+          managedMembers = await supabase
+            .rpc('get_managed_members')
+            .then((result) => (Array.isArray(result.data) ? result.data : []), () => [])
+        }
+
         if (!current()) return
         patch({
           backend: 'live',
@@ -193,6 +202,7 @@ export function BellProvider({ children }) {
           householdId,
           memberRole,
           eventAccess,
+          managedMembers,
           ...(giftLists ? { giftLists } : {}),
           session: user
             ? sessionFromUser(user, { householdId, role: memberRole })
@@ -719,6 +729,84 @@ export function BellProvider({ children }) {
         patch({ authStep: 'email', authError: null, authNotice: null, authLinkFailed: false, pendingEmail: '' })
       },
       /** Re-read household / gift / event access after an invite is accepted. */
+      async addManagedMember({ name, relationship, age }) {
+        if (!(live && supabase)) throw new Error('Adding family members needs the live family list.')
+        const { data, error } = await supabase.rpc('add_managed_member', {
+          p_name: String(name || '').trim(),
+          p_relationship: String(relationship || '').trim() || null,
+          p_age: String(age || '').trim() || null,
+        })
+        if (error) throw error
+        const { data: auth } = await supabase.auth.getUser()
+        await bootstrapLive(auth?.user ?? null)
+        if (data?.list_id) {
+          // Household owners load lists separately; make sure the new one shows.
+          setState((prev) => {
+            if (prev.giftLists.some((list) => list.id === data.list_id)) return prev
+            return {
+              ...prev,
+              giftLists: [
+                ...prev.giftLists,
+                {
+                  id: data.list_id,
+                  kidKey: data.kid_key,
+                  displayName: data.display_name,
+                  occasion: data.occasion,
+                  shareSlug: data.share_slug,
+                  listKind: 'exchange',
+                  items: [],
+                },
+              ],
+            }
+          })
+        }
+        return data
+      },
+      async updateManagedMember(listId, { name, relationship, age }) {
+        if (!(live && supabase)) throw new Error('Editing family members needs the live family list.')
+        const { data, error } = await supabase.rpc('update_managed_member', {
+          p_list: listId,
+          p_name: String(name || '').trim(),
+          p_relationship: String(relationship || '').trim() || null,
+          p_age: String(age || '').trim() || null,
+        })
+        if (error) throw error
+        setState((prev) => ({
+          ...prev,
+          giftLists: prev.giftLists.map((list) => (list.id === listId ? { ...list, displayName: data.display_name } : list)),
+          managedMembers: (prev.managedMembers || []).map((row) => (row.list_id === listId ? { ...row, ...data } : row)),
+        }))
+        return data
+      },
+      async removeManagedMember(listId) {
+        if (!(live && supabase)) throw new Error('Removing family members needs the live family list.')
+        const { error } = await supabase.rpc('remove_managed_member', { p_list: listId })
+        if (error) throw error
+        setState((prev) => ({
+          ...prev,
+          giftLists: prev.giftLists.filter((list) => list.id !== listId),
+          managedMembers: (prev.managedMembers || []).filter((row) => row.list_id !== listId),
+        }))
+      },
+      async saveManagedItems(listId, items) {
+        if (!(live && supabase)) throw new Error('Saving needs the live family list.')
+        const { error } = await supabase.rpc('save_managed_member_items', {
+          p_list: listId,
+          p_items: items.map((item) => ({
+            id: isUuid(item.id) ? item.id : null,
+            description: item.description,
+            url: item.url,
+            image: item.image,
+          })),
+        })
+        if (error) throw error
+        if (state.memberRole === 'gift') {
+          const { data: auth } = await supabase.auth.getUser()
+          await bootstrapLive(auth?.user ?? null)
+        } else {
+          applyVnext({ type: 'save-own-items', listId, items })
+        }
+      },
       async refreshAccess() {
         if (!supabase) return
         const { data } = await supabase.auth.getUser()

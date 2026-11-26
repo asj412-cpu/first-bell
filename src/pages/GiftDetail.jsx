@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
-import { Link, Navigate, useParams } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import GiftItemFields from '../components/GiftItemFields.jsx'
 import { IconBack } from '../components/Icons.jsx'
 import WishCard from '../components/WishCard.jsx'
 import { blankGiftItem, categoryLabel, PRICE_AS_OF, validateGiftItems, withGiftImages } from '../lib/exchange.js'
 import { isUuid, listUsesLocalCatalog, presentItems } from '../lib/gifts.js'
+import { cleanManagedRows, managedFor, managedLabel } from '../lib/managed.js'
 import { useBell } from '../lib/store.jsx'
 import { supabase } from '../lib/supabase.js'
 
@@ -19,8 +20,15 @@ function matchesFilter(item, filter, dollSize) {
 
 export default function GiftDetail() {
   const { kidKey } = useParams()
-  const { state, toggleKidMode, releaseClaim, saveOwnItems } = useBell()
+  const { state, toggleKidMode, releaseClaim, saveOwnItems, saveManagedItems, updateManagedMember, removeManagedMember, notify } = useBell()
+  const navigate = useNavigate()
+  const [search] = useSearchParams()
   const list = state.giftLists.find((row) => row.kidKey === kidKey)
+  const managed = list ? managedFor(state.managedMembers, list.id) : null
+  const [saveError, setSaveError] = useState('')
+  const [details, setDetails] = useState(null)
+  const [detailsError, setDetailsError] = useState('')
+  const [busy, setBusy] = useState(false)
   const [filter, setFilter] = useState('All')
   const [dollSize, setDollSize] = useState('')
   const [query, setQuery] = useState('')
@@ -41,6 +49,16 @@ export default function GiftDetail() {
       return `${item.title} ${item.retailer} ${item.notes}`.toLowerCase().includes(q)
     })
   }, [items, filter, dollSize, query])
+  const openEditor = search.get('add') === '1'
+  useEffect(() => {
+    // Opened right after "Add a family member": go straight to adding gifts.
+    if (openEditor && managed?.can_edit && !editing) {
+      setRows([blankGiftItem()])
+      setRowErrors({})
+      setEditing(true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openEditor, managed?.can_edit])
   if (!list || ['santa', 'assignment', 'reminders'].includes(kidKey)) {
     if (kidKey && ['santa', 'assignment', 'reminders'].includes(kidKey)) return <Navigate to={`/gifts/${kidKey}`} replace />
     return <Navigate to="/gifts" replace />
@@ -58,7 +76,9 @@ export default function GiftDetail() {
   }
 
   const catalog = items.some((item) => item.category && item.category !== 'Idea')
-  const canEdit = list.listKind === 'exchange' && (guest || state.session?.demo || state.memberRole === 'owner')
+  const canEdit = managed
+    ? Boolean(managed.can_edit)
+    : list.listKind === 'exchange' && (guest || state.session?.demo || state.memberRole === 'owner')
 
   function startEdit() {
     const ideas = items.filter((item) => !item.sourceSlug)
@@ -78,12 +98,22 @@ export default function GiftDetail() {
 
   async function saveEdits(event) {
     event.preventDefault()
-    const result = validateGiftItems(rows)
+    const result = managed ? cleanManagedRows(rows, validateGiftItems) : validateGiftItems(rows)
     setRowErrors(result.errors)
-    if (!result.ok) return
+    setSaveError('')
+    if (!result.ok) {
+      setSaveError(result.errors.items || 'Check the highlighted rows.')
+      return
+    }
     setSaving(true)
     try {
       const stored = await withGiftImages(result.items)
+      if (managed) {
+        await saveManagedItems(list.id, stored)
+        notify(`Saved ${list.displayName}’s list`)
+        setEditing(false)
+        return
+      }
       saveOwnItems(list.id, stored)
       if (supabase && state.backend === 'live' && isUuid(list.id)) {
         await supabase.rpc('save_my_gift_items', {
@@ -97,8 +127,43 @@ export default function GiftDetail() {
         })
       }
       setEditing(false)
+    } catch (err) {
+      setSaveError(err?.message || 'Could not save. Try again.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function saveDetails(event) {
+    event.preventDefault()
+    if (!details.name.trim()) {
+      setDetailsError('Enter their name.')
+      return
+    }
+    setBusy(true)
+    setDetailsError('')
+    try {
+      await updateManagedMember(list.id, details)
+      notify('Saved')
+      setDetails(null)
+    } catch (err) {
+      setDetailsError(err?.message || 'Could not save. Try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function removeMember() {
+    if (!window.confirm(`Remove ${list.displayName} and their gift list?`)) return
+    setBusy(true)
+    setDetailsError('')
+    try {
+      await removeManagedMember(list.id)
+      notify(`${list.displayName} was removed`)
+      navigate('/gifts', { replace: true })
+    } catch (err) {
+      setDetailsError(err?.message || 'Could not remove them. Try again.')
+      setBusy(false)
     }
   }
 
@@ -107,7 +172,18 @@ export default function GiftDetail() {
       <Link to="/gifts" className="back-link"><IconBack /> Gift lists</Link>
       <div className="kicker">{list.occasion}</div>
       <h1>{list.displayName}</h1>
-      {list.kidKey === 'drew' ? (
+      {managed && (
+        <p className="managed-by chip-row" style={{ margin: '4px 0 0' }}>
+          <span className="chip">{managedLabel(managed)}</span>
+        </p>
+      )}
+      {managed ? (
+        <p className="lede">
+          {managed.can_edit
+            ? `${list.displayName} doesn’t need an account. Add, change, or remove their gift ideas here any time.`
+            : `${list.displayName}’s gift ideas, kept by ${managed.manager_name}.`}
+        </p>
+      ) : list.kidKey === 'drew' ? (
         <p className="lede">Drew was born in February 2026. There are no catalog ideas for him yet. Add one when you think of it.</p>
       ) : (
         <p className="lede">
@@ -193,7 +269,7 @@ export default function GiftDetail() {
       )}
       {canEdit && editing && (
         <form className="card pad" onSubmit={saveEdits}>
-          <h2>Your items</h2>
+          <h2>{managed ? `${list.displayName}’s items` : 'Your items'}</h2>
           <GiftItemFields
             items={rows}
             errors={rowErrors}
@@ -208,6 +284,7 @@ export default function GiftDetail() {
               setRows(next.length ? next : [blankGiftItem()])
             }}
           />
+          {saveError && <p className="form-error" role="alert">{saveError}</p>}
           <div className="meta-row">
             <button className="btn primary" type="submit" disabled={saving}>
               {saving ? 'Saving…' : 'Save items'}
@@ -218,6 +295,42 @@ export default function GiftDetail() {
           </div>
         </form>
       )}
+      {managed?.can_edit && !editing && !details && (
+        <div className="meta-row" style={{ marginTop: 12 }}>
+          <button
+            className="btn"
+            type="button"
+            onClick={() => setDetails({ name: list.displayName, relationship: managed.relationship || '', age: managed.age_label || '' })}
+          >
+            Edit {list.displayName}’s details
+          </button>
+          <button className="btn ghost" type="button" onClick={removeMember} disabled={busy}>
+            Remove {list.displayName}
+          </button>
+        </div>
+      )}
+      {managed?.can_edit && details && (
+        <form className="card pad" onSubmit={saveDetails}>
+          <h2 style={{ marginTop: 0 }}>Details</h2>
+          <label className="field">
+            <span>Name</span>
+            <input value={details.name} maxLength={80} onChange={(event) => setDetails({ ...details, name: event.target.value })} />
+          </label>
+          <label className="field">
+            <span>Who they are (optional)</span>
+            <input value={details.relationship} maxLength={40} onChange={(event) => setDetails({ ...details, relationship: event.target.value })} />
+          </label>
+          <label className="field">
+            <span>Age (optional)</span>
+            <input value={details.age} maxLength={20} inputMode="numeric" onChange={(event) => setDetails({ ...details, age: event.target.value })} />
+          </label>
+          <div className="meta-row">
+            <button className="btn primary" type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
+            <button className="btn ghost" type="button" onClick={() => setDetails(null)}>Cancel</button>
+          </div>
+        </form>
+      )}
+      {detailsError && <p className="form-error" role="alert">{detailsError}</p>}
     </div>
   )
 }

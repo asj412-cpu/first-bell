@@ -4,6 +4,7 @@ import { IconBack } from '../components/Icons.jsx'
 import WishCard from '../components/WishCard.jsx'
 import { myAssignment } from '../lib/exchange.js'
 import { fromDbItem } from '../lib/gifts.js'
+import { managedDrawLines } from '../lib/managed.js'
 import { useBell } from '../lib/store.jsx'
 import { supabase } from '../lib/supabase.js'
 
@@ -15,6 +16,7 @@ export default function Assignment() {
   const [name, setName] = useState(state.session?.name || 'Andrew')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [family, setFamily] = useState([])
 
   useEffect(() => {
     if (demo) return undefined
@@ -23,6 +25,12 @@ export default function Assignment() {
       if (cancelled) return
       if (rpcError) setError(rpcError.message)
       else setRemote(data)
+    })
+    // Who the people you manage (say your husband or kids) drew. Older databases
+    // without this function just show nothing extra.
+    supabase.rpc('get_managed_assignments').then(({ data, error: rpcError }) => {
+      if (cancelled || rpcError || !Array.isArray(data)) return
+      setFamily(managedDrawLines(data))
     })
     return () => {
       cancelled = true
@@ -99,6 +107,26 @@ export default function Assignment() {
           </div>
           {items.length === 0 && <p className="lede">{receiverName} has not added ideas yet.</p>}
         </>
+      )}
+      {family.length > 0 && (
+        <section className="managed-draw" aria-labelledby="family-draw" style={{ marginTop: 28 }}>
+          <h2 className="section-label" id="family-draw">Your family’s people</h2>
+          <p className="dim" style={{ marginTop: 0 }}>
+            Who the family members you added are buying for. Only you and Andrew, who runs the drawing, can see these.
+          </p>
+          <div className="gift-index">
+            {family.map((line) => (
+              <div key={line.key} className="card pad">
+                <p style={{ margin: 0 }}><strong>{line.text}</strong></p>
+                {line.slug && (
+                  <p className="dim" style={{ margin: '6px 0 0' }}>
+                    <Link to={`/g/${line.slug}`}>Open {line.receiver}’s list</Link> to mark a gift as bought.
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
       )}
     </div>
   )
