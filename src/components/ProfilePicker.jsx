@@ -50,7 +50,7 @@ export default function ProfilePicker({ token, label, onNotListed }) {
       const sent = await sendOtp(email.trim(), window.location.href)
       if (sent?.mode === 'otp') {
         setWaiting(true)
-        setMessage('Check your email for a 6-digit code.')
+        setMessage('Check your email for a sign-in code.')
       }
     } catch (err) {
       setMessage(friendlyAuthError(err?.message) || 'Could not start sign-in.')
@@ -62,7 +62,7 @@ export default function ProfilePicker({ token, label, onNotListed }) {
   async function confirmCode(event) {
     event.preventDefault()
     if (!code.replace(/\D/g, '')) {
-      setMessage('Type the 6-digit code from the email.')
+      setMessage('Type the code from the email.')
       return
     }
     setBusy(true)
@@ -122,7 +122,7 @@ export default function ProfilePicker({ token, label, onNotListed }) {
           </label>
           {waiting && (
             <label className="field">
-              <span>6-digit code</span>
+              <span>Code from the email</span>
               <input
                 className="otp"
                 value={code}

@@ -246,7 +246,7 @@ export default function JoinList() {
         return
       }
       setWaiting(true)
-      setMessage('Check your email for a 6-digit code, or open the link. The link works in any browser. The code keeps your place in this form.')
+      setMessage('Check your email for a sign-in code, or open the link. The link works in any browser. The code keeps your place in this form.')
     } catch (err) {
       setMessage(friendlyAuthError(err?.message) || 'Could not start sign-in.')
     } finally {
@@ -265,7 +265,7 @@ export default function JoinList() {
       return
     }
     if (!code.replace(/\D/g, '')) {
-      setMessage('Type the 6-digit code from the email.')
+      setMessage('Type the code from the email.')
       return
     }
     setSaving(true)
@@ -309,7 +309,7 @@ export default function JoinList() {
       const sent = await sendOtp(address, window.location.href)
       if (sent?.mode === 'otp') {
         setWaiting(true)
-        setMessage('Check your email for a 6-digit code, or open the link. The link works in any browser.')
+        setMessage('Check your email for a sign-in code, or open the link. The link works in any browser.')
       }
     } catch (err) {
       setMessage(friendlyAuthError(err?.message) || 'Could not start sign-in.')
