@@ -145,6 +145,7 @@ export function fromDbItem(row) {
     claimedByName: row.claimed_by_name || '',
     claimedAt: row.claimed_at || null,
     purchased,
+    markedByMe: Boolean(row.marked_by_me),
   }
 }
 

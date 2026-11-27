@@ -4,6 +4,7 @@ import { IconBack } from '../components/Icons.jsx'
 import WishCard from '../components/WishCard.jsx'
 import { myAssignment } from '../lib/exchange.js'
 import { fromDbItem } from '../lib/gifts.js'
+import { canPutBack } from '../lib/purchases.js'
 import { managedDrawLines } from '../lib/managed.js'
 import { useBell } from '../lib/store.jsx'
 import { supabase } from '../lib/supabase.js'
@@ -71,6 +72,23 @@ export default function Assignment() {
     }
   }
 
+  const admin = state.memberRole === 'owner'
+
+  async function putBack(item) {
+    setBusy(true)
+    setError('')
+    try {
+      const { error: rpcError } = await supabase.rpc('release_gift_purchase', { p_item_id: item.id })
+      if (rpcError) throw rpcError
+      const { data } = await supabase.rpc('get_my_assignment')
+      if (data) setRemote(data)
+    } catch (err) {
+      setError(err.message || 'Could not put that gift back')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <div>
       <Link to="/gifts" className="back-link"><IconBack /> Gift lists</Link>
@@ -102,6 +120,7 @@ export default function Assignment() {
                 onStart={() => setNaming(item.id)}
                 onCancel={() => setNaming(null)}
                 onConfirm={() => confirm(item)}
+                onRelease={!demo && canPutBack(item, { admin }) ? () => putBack(item) : null}
               />
             ))}
           </div>
