@@ -6,6 +6,7 @@ import { findListBySlug, listUsesLocalCatalog, presentItems, publicPayloadToList
 import { useBell } from '../lib/store.jsx'
 import { supabase } from '../lib/supabase.js'
 import { managedLabel } from '../lib/managed.js'
+import { canPutBack } from '../lib/purchases.js'
 
 export default function PublicGift() {
   const { slug } = useParams()
@@ -90,6 +91,23 @@ export default function PublicGift() {
 
   const conceal = mode === 'remote' && list.purchasesVisible === false
   const items = presentItems(list, { conceal })
+  const signedIn = Boolean(state.session && state.backend === 'live')
+  const admin = state.memberRole === 'owner'
+
+  async function putBack(item) {
+    setBusy(true)
+    setError('')
+    try {
+      const { error: rpcError } = await supabase.rpc('release_gift_purchase', { p_item_id: item.id })
+      if (rpcError) throw rpcError
+      const { data } = await supabase.rpc('get_shared_gift_list', { p_slug: slug })
+      if (data) setRemote(publicPayloadToList(data))
+    } catch (err) {
+      setError(err.message || 'Could not put that gift back')
+    } finally {
+      setBusy(false)
+    }
+  }
 
   async function confirm(item) {
     setBusy(true)
@@ -130,6 +148,11 @@ export default function PublicGift() {
         {listUsesLocalCatalog(list) && (
           <div className="banner">On this preview, a mark stays on this phone until the database update is approved.</div>
         )}
+        {conceal && !signedIn && (
+          <div className="banner">
+            <Link to="/enter">Sign in</Link> to see what’s already taken and to mark a gift.
+          </div>
+        )}
         {error && <p className="form-error">{error}</p>}
       </header>
       <div className="wish-grid guest-grid">
@@ -148,6 +171,7 @@ export default function PublicGift() {
             }}
             onCancel={() => setNaming(null)}
             onConfirm={() => confirm(item)}
+            onRelease={mode === 'remote' && supabase && canPutBack(item, { admin }) ? () => putBack(item) : null}
           />
         ))}
       </div>
