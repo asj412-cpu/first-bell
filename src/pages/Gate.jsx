@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import BackendBanner from '../components/BackendBanner.jsx'
 import { friendlyLinkError } from '../lib/authLink.js'
+import { pendingJoin } from '../lib/pendingJoin.js'
 import { useBell } from '../lib/store.jsx'
 
 export default function Gate() {
@@ -50,6 +51,10 @@ export default function Gate() {
   if (entered) return <Navigate to="/" replace />
 
   const signedInNoHouse = Boolean(state.session && configured && !state.householdId)
+  // Signed in but not in the house yet, and they opened the family link earlier
+  // on this browser: take them back to "Who are you on the list?".
+  const joinToken = signedInNoHouse ? pendingJoin() : null
+  if (joinToken) return <Navigate to={`/join/${joinToken}`} replace />
   const digits = code.replace(/\D/g, '')
   const address = (email.trim() || state.pendingEmail || '').trim()
 
