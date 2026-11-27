@@ -7,6 +7,7 @@ import { blankGiftItem, validateJoin, withGiftImages } from '../lib/exchange.js'
 import { inviteStatusCopy, previewLocalInvite, rpcMissing } from '../lib/invites.js'
 import { friendlyAuthError } from '../lib/authLink.js'
 import { useBell } from '../lib/store.jsx'
+import { rememberJoin } from '../lib/pendingJoin.js'
 import { supabase } from '../lib/supabase.js'
 
 const DRAFT_KEY = 'micasa-join-draft'
@@ -58,6 +59,12 @@ export default function JoinList() {
       cancelled = true
     }
   }, [demo, token, state.exchange])
+
+  useEffect(() => {
+    // Remember this family link on this browser, so signing in from the main
+    // screen (or an email link) still comes back here.
+    if (preview?.status === 'active' && preview.kind !== 'event') rememberJoin(token)
+  }, [preview, token])
 
   useEffect(() => {
     if (demo || !supabase) return undefined

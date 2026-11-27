@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Avatar from './Avatar.jsx'
 import { friendlyAuthError } from '../lib/authLink.js'
 import { useBell } from '../lib/store.jsx'
+import { clearJoin } from '../lib/pendingJoin.js'
 import { supabase } from '../lib/supabase.js'
 
 /**
@@ -87,6 +88,7 @@ export default function ProfilePicker({ token, label, onNotListed }) {
       await loadNames()
       return
     }
+    clearJoin()
     await refreshAccess()
     setBusy(false)
     navigate(data?.kid_key ? `/gifts/${data.kid_key}` : '/gifts')

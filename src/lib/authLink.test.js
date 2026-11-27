@@ -97,3 +97,21 @@ test('email templates carry the code and a token_hash link', () => {
     assert.doesNotMatch(html, /\{\{\s*\.ConfirmationURL\s*\}\}/)
   }
 })
+
+test('email link is held on open and only verified on tap (scanner-safe)', async () => {
+  const { holdEmailLink, heldEmailLink, releaseHeldEmailLink, resetEmailLinkForTests } = await import('./authLink.js')
+  resetEmailLinkForTests()
+  const calls = []
+  const client = { auth: { verifyOtp: async (p) => { calls.push(p); return { data: { session: null }, error: null } } } }
+  const hash = 'a'.repeat(56)
+  holdEmailLink(`https://x.test/auth/confirm?next=%2Fjoin%2Fabcdefgh12&token_hash=${hash}&type=email`)
+  await new Promise((r) => setTimeout(r, 10))
+  assert.equal(calls.length, 0)
+  assert.equal(heldEmailLink().link.next, '/join/abcdefgh12')
+  const started = releaseHeldEmailLink(client)
+  await started.promise
+  assert.equal(calls.length, 1)
+  assert.equal(calls[0].token_hash, hash)
+  assert.equal(heldEmailLink(), null)
+  resetEmailLinkForTests()
+})

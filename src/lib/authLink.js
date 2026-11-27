@@ -2,11 +2,34 @@ import { rememberDevice } from './reentry.js'
 const OTP_TYPES = new Set(['email', 'signup', 'magiclink', 'invite', 'recovery', 'email_change'])
 
 let confirmation = null
+let held = null
 const verifications = new Map()
 
 export function resetEmailLinkForTests() {
   confirmation = null
+  held = null
   verifications.clear()
+}
+
+// Email security scanners open links (and run their JavaScript) before the
+// person does. Verifying on page load let a scanner use up the one-time token,
+// which also kills the 6-digit code in the same email. So an email link is only
+// held when the page opens, and verified when the person taps "Finish signing in".
+export function holdEmailLink(href) {
+  const link = readEmailLink(href)
+  if (link.tokenHash) held = { href, link }
+  return held
+}
+
+export function heldEmailLink() {
+  return held
+}
+
+export function releaseHeldEmailLink(client) {
+  if (!held) return null
+  const started = startEmailLinkConfirmation(held.href, client)
+  held = null
+  return started
 }
 
 export function isPlausibleTokenHash(value) {
