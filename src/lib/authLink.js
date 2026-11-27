@@ -13,7 +13,7 @@ export function resetEmailLinkForTests() {
 
 // Email security scanners open links (and run their JavaScript) before the
 // person does. Verifying on page load let a scanner use up the one-time token,
-// which also kills the 6-digit code in the same email. So an email link is only
+// which also kills the code in the same email. So an email link is only
 // held when the page opens, and verified when the person taps "Finish signing in".
 export function holdEmailLink(href) {
   const link = readEmailLink(href)
@@ -107,7 +107,7 @@ export function friendlyLinkError(message) {
   if (/only request this after|for security purposes|too many requests|rate limit/i.test(message || '')) {
     return 'Wait a minute, then ask for another email.'
   }
-  return 'That sign-in link didn’t work. It may have expired, or it was already used. Send a new link, or type the 6-digit code from the email.'
+  return 'That sign-in link didn’t work. It may have expired, or it was already used. Send a new link, or type the code from the email.'
 }
 
 export function friendlyAuthError(message) {

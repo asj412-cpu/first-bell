@@ -105,11 +105,11 @@ export default function Gate() {
           </p>
         ) : configured && !signedInNoHouse && onCodeStep ? (
           <p className="lede">
-            We emailed <strong>{state.pendingEmail}</strong>. Type the 6-digit code, or open the link.
+            We emailed <strong>{state.pendingEmail}</strong>. Type the code from the email, or open the link.
             The link works even if Mail opens a different browser.
           </p>
         ) : configured && !signedInNoHouse && haveCode ? (
-          <p className="lede">Type the 6-digit code from the email, and the address it was sent to.</p>
+          <p className="lede">Type the code from the email, and the address it was sent to.</p>
         ) : configured && !signedInNoHouse ? (
           <p className="lede">
             If you have signed in with this email before, we’ll open the house. A new email still gets a code.
@@ -182,7 +182,7 @@ export default function Gate() {
               I have a code
             </button>
             <p className="gate-note">
-              No password. A returning email opens the house on this phone. A new email gets a 6-digit code and a link — either one works in any browser. On a home-screen app, type the code so you stay in Mi Casa.
+              No password. A returning email opens the house on this phone. A new email gets a sign-in code and a link — either one works in any browser. On a home-screen app, type the code so you stay in Mi Casa.
             </p>
           </form>
         )}
@@ -213,7 +213,7 @@ export default function Gate() {
               </div>
             )}
             <div className="field">
-              <label htmlFor="otp">6-digit code</label>
+              <label htmlFor="otp">Code from the email</label>
               <input
                 ref={codeRef}
                 id="otp"
