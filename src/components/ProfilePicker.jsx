@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Avatar from './Avatar.jsx'
 import { friendlyAuthError } from '../lib/authLink.js'
+import { codeInputProps, emailInputProps, readAuthForm } from '../lib/authFields.js'
 import { useBell } from '../lib/store.jsx'
 import { clearJoin } from '../lib/pendingJoin.js'
 import { supabase } from '../lib/supabase.js'
@@ -41,13 +42,21 @@ export default function ProfilePicker({ token, label, onNotListed }) {
     loadNames().catch(() => setMessage('Could not load the names. Try again.'))
   }, [signedIn, token])
 
+  function syncFromForm(event) {
+    const name = event.target?.name
+    if (name === 'email') setEmail(event.target.value)
+    if (name === 'one-time-code') setCode(event.target.value)
+  }
+
   async function begin(event) {
     event.preventDefault()
-    if (!email.trim()) return
+    const live = readAuthForm(event, { email, code })
+    if (live.email) setEmail(live.email)
+    if (!live.email) return
     setBusy(true)
     setMessage('')
     try {
-      const sent = await sendOtp(email.trim(), window.location.href)
+      const sent = await sendOtp(live.email, window.location.href)
       if (sent?.mode === 'otp') {
         setWaiting(true)
         setMessage('Check your email for a sign-in code.')
@@ -61,13 +70,16 @@ export default function ProfilePicker({ token, label, onNotListed }) {
 
   async function confirmCode(event) {
     event.preventDefault()
-    if (!code.replace(/\D/g, '')) {
+    const live = readAuthForm(event, { email, code })
+    if (live.email) setEmail(live.email)
+    if (live.code) setCode(live.code)
+    if (!live.code) {
       setMessage('Type the code from the email.')
       return
     }
     setBusy(true)
     try {
-      await verifyOtp(code, email.trim())
+      await verifyOtp(live.code, live.email)
       setMessage('')
     } catch (err) {
       setMessage(friendlyAuthError(err?.message) || 'That code did not work. Try again.')
@@ -107,17 +119,17 @@ export default function ProfilePicker({ token, label, onNotListed }) {
       </header>
 
       {!signedIn && (
-        <form className="picker-card" onSubmit={waiting ? confirmCode : begin}>
+        <form className="picker-card" onSubmit={waiting ? confirmCode : begin} noValidate onInput={syncFromForm}>
           <div className="picker-step">Step 1 of 2 · Sign in</div>
           <label className="field">
             <span>Email</span>
             <input
+              {...emailInputProps}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              type="email"
-              autoComplete="email"
+              onBlur={(event) => setEmail(event.target.value.trim())}
               placeholder="name@email.com"
-              disabled={waiting}
+              readOnly={waiting}
             />
           </label>
           {waiting && (
@@ -125,10 +137,9 @@ export default function ProfilePicker({ token, label, onNotListed }) {
               <span>Code from the email</span>
               <input
                 className="otp"
+                {...codeInputProps}
                 value={code}
                 onChange={(event) => setCode(event.target.value)}
-                inputMode="numeric"
-                autoComplete="one-time-code"
               />
             </label>
           )}
