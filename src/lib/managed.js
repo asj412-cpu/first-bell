@@ -1,3 +1,4 @@
+import { giftItemRowBlank } from './exchange.js'
 /** The managed-member record for a list (a husband or kid added under an invited member), if any. */
 export function managedFor(managedMembers, listId) {
   return (managedMembers || []).find((row) => row.list_id === listId) || null
@@ -13,7 +14,7 @@ export function managedLabel(managed, { mine = false } = {}) {
 
 /** Gift rows for a managed person. Unlike validateGiftItems, an empty list is allowed. */
 export function cleanManagedRows(rows, validate) {
-  const blank = (rows || []).every((row) => !String(row?.description || '').trim() && !String(row?.url || '').trim())
+  const blank = (rows || []).every(giftItemRowBlank)
   if (blank) return { ok: true, errors: {}, items: [] }
   const result = validate(rows)
   const errors = { ...result.errors }

@@ -89,6 +89,7 @@ export default function GiftDetail() {
             id: item.id,
             description: item.title,
             url: item.url || '',
+            notes: item.notes || '',
           }))
         : [blankGiftItem()],
     )
@@ -123,6 +124,7 @@ export default function GiftDetail() {
             description: item.description,
             url: item.url,
             image: item.image,
+            notes: item.notes || '',
           })),
         })
       }

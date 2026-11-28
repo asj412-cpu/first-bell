@@ -824,6 +824,7 @@ export function BellProvider({ children }) {
             description: item.description,
             url: item.url,
             image: item.image,
+            notes: item.notes || '',
           })),
         })
         if (error) throw error
