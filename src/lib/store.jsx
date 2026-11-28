@@ -6,6 +6,7 @@ import { mergeEvents } from './events.js'
 import { fromDbRsvp, hostDisplayName, toDbStatus } from './rsvps.js'
 import { newInviteToken } from './invites.js'
 import { forgetDevice, rememberDevice, requestReentry } from './reentry.js'
+import { pinLogin, rememberPinEmail } from './pin.js'
 import { authConfirmUrl, friendlyAuthError, friendlyLinkError } from './authLink.js'
 import { authCallback, clearAuthCallbackParams, isSupabaseConfigured, supabase } from './supabase.js'
 import { hydrateVnext, mergeLearning, vnextReducer } from './vnextReducer.js'
@@ -433,6 +434,28 @@ export function BellProvider({ children }) {
         }))
         if (error) throw error
         return { mode: 'otp' }
+      },
+      async pinSignIn(email, pin) {
+        if (!supabase) throw new Error('Supabase is not configured')
+        const address = String(email || '').trim().toLowerCase()
+        patch({ authBusy: true, authError: null, authNotice: null, pendingEmail: address })
+        const got = await pinLogin(address, pin)
+        if (got.mode !== 'session') {
+          patch({ authBusy: false })
+          return got
+        }
+        const { error } = await supabase.auth.setSession({
+          access_token: got.access_token,
+          refresh_token: got.refresh_token,
+        })
+        if (!error) rememberPinEmail(address)
+        patch({
+          authBusy: false,
+          authError: error ? friendlyAuthError(error.message) : null,
+          authLinkFailed: false,
+          authStep: 'email',
+        })
+        return error ? { mode: 'error' } : { mode: 'session' }
       },
       async verifyOtp(token, email) {
         if (!supabase) throw new Error('Supabase is not configured')
