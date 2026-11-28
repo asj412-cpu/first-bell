@@ -7,7 +7,7 @@ import { blankGiftItem, validateJoin, withGiftImages } from '../lib/exchange.js'
 import { inviteStatusCopy, previewLocalInvite, rpcMissing } from '../lib/invites.js'
 import { friendlyAuthError } from '../lib/authLink.js'
 import { useBell } from '../lib/store.jsx'
-import { codeInputProps, emailInputProps, nameInputProps, phoneInputProps, readAuthForm } from '../lib/authFields.js'
+import { codeInputProps, emailInputProps, nameInputProps, phoneInputProps, readAuthForm, useLiveField } from '../lib/authFields.js'
 import { rememberJoin } from '../lib/pendingJoin.js'
 import { supabase } from '../lib/supabase.js'
 
@@ -23,7 +23,8 @@ export default function JoinList() {
   const { state, joinExchange, sendOtp, verifyOtp, notify, markInviteUsed, addOrUpdateRsvp, refreshAccess } = useBell()
   const [form, setForm] = useState(emptyForm)
   const [errors, setErrors] = useState({})
-  const [code, setCode] = useState('')
+  const [code, setCode, codeRef] = useLiveField('')
+  const [emailLive, setEmailLive, emailRef] = useLiveField('')
   const [waiting, setWaiting] = useState(false)
   const [message, setMessage] = useState('')
   const [saving, setSaving] = useState(false)
@@ -392,9 +393,10 @@ export default function JoinList() {
             <span>Email</span>
             <input
               {...emailInputProps}
-              value={form.email}
-              onChange={(event) => update({ email: event.target.value })}
-              onBlur={(event) => update({ email: event.target.value.trim() })}
+              ref={emailRef}
+              defaultValue={form.email}
+              onInput={(event) => { setEmailLive(event.target.value); update({ email: event.target.value }) }}
+              onBlur={(event) => { setEmailLive(event.target.value.trim()); update({ email: event.target.value.trim() }) }}
             />
           </label>
         )}
@@ -462,7 +464,7 @@ export default function JoinList() {
         {waiting && needsSignIn && (
           <label className="field">
             <span>Code from the email</span>
-            <input className="otp" {...codeInputProps} value={code} onChange={(event) => setCode(event.target.value)} />
+            <input className="otp" {...codeInputProps} ref={codeRef} defaultValue="" autoFocus />
           </label>
         )}
         {waiting && needsSignIn ? (

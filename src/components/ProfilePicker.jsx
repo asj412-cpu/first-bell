@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Avatar from './Avatar.jsx'
 import { friendlyAuthError } from '../lib/authLink.js'
-import { codeInputProps, emailInputProps, readAuthForm } from '../lib/authFields.js'
+import { codeInputProps, emailInputProps, readAuthForm, useLiveField } from '../lib/authFields.js'
 import { useBell } from '../lib/store.jsx'
 import { clearJoin } from '../lib/pendingJoin.js'
 import { supabase } from '../lib/supabase.js'
@@ -16,8 +16,8 @@ export default function ProfilePicker({ token, label, onNotListed }) {
   const navigate = useNavigate()
   const { state, sendOtp, verifyOtp, refreshAccess } = useBell()
   const signedIn = Boolean(state.session)
-  const [email, setEmail] = useState('')
-  const [code, setCode] = useState('')
+  const [email, setEmail, emailRef] = useLiveField('')
+  const [code, setCode, codeRef] = useLiveField('')
   const [waiting, setWaiting] = useState(false)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
@@ -125,8 +125,8 @@ export default function ProfilePicker({ token, label, onNotListed }) {
             <span>Email</span>
             <input
               {...emailInputProps}
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              ref={emailRef}
+              defaultValue=""
               onBlur={(event) => setEmail(event.target.value.trim())}
               placeholder="name@email.com"
               readOnly={waiting}
@@ -138,8 +138,9 @@ export default function ProfilePicker({ token, label, onNotListed }) {
               <input
                 className="otp"
                 {...codeInputProps}
-                value={code}
-                onChange={(event) => setCode(event.target.value)}
+                ref={codeRef}
+                defaultValue=""
+                autoFocus
               />
             </label>
           )}
