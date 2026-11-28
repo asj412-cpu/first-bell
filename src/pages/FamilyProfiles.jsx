@@ -21,6 +21,8 @@ export default function FamilyProfiles() {
   const [busy, setBusy] = useState(false)
   const [form, setForm] = useState({ name: '', group: '', email: '' })
   const [moving, setMoving] = useState(null)
+  const [editing, setEditing] = useState(null)
+  const [edit, setEdit] = useState({ name: '', group: '', email: '' })
 
   async function load() {
     const { data: rows, error: rpcError } = await supabase.rpc('admin_list_profiles')
@@ -84,6 +86,41 @@ export default function FamilyProfiles() {
     setMoving(null)
   }
 
+  function startEdit(profile) {
+    setMoving(null)
+    setError('')
+    setEdit({ name: profile.name || '', group: profile.group_label || '', email: profile.email || '' })
+    setEditing(profile.participant_id)
+  }
+
+  async function saveEdit(event, profile) {
+    event.preventDefault()
+    if (!edit.name.trim()) {
+      setError('Enter a name')
+      return
+    }
+    const out = await run(
+      () => supabase.rpc('admin_update_profile', {
+        p_participant: profile.participant_id,
+        p_name: edit.name,
+        p_group: edit.group || null,
+        p_email: edit.email || null,
+      }),
+      `${edit.name.trim()} saved`,
+    )
+    if (out) {
+      setEditing(null)
+      await refreshAccess()
+    }
+  }
+
+  async function keepList(profile, keep) {
+    await run(
+      () => supabase.rpc('admin_set_wont_sign_up', { p_participant: profile.participant_id, p_wont: keep }),
+      keep ? `You’ll keep ${profile.name}’s list` : `${profile.name} is back in the name picker`,
+    )
+  }
+
   async function remove(profile) {
     if (!window.confirm(`Remove ${profile.name} and their list?`)) return
     await run(() => supabase.rpc('admin_remove_profile', { p_participant: profile.participant_id }), `${profile.name} removed`)
@@ -102,7 +139,7 @@ export default function FamilyProfiles() {
 
   const profiles = data?.profiles || []
   const counts = profileCounts(profiles)
-  const unclaimed = profiles.filter((p) => !p.claimed)
+  const unclaimed = profiles.filter((p) => !p.claimed && !p.wont_sign_up)
 
   return (
     <div className="people-page">
@@ -117,6 +154,7 @@ export default function FamilyProfiles() {
           <span><strong>{counts.total}</strong> people</span>
           <span><strong>{counts.claimed}</strong> claimed</span>
           <span><strong>{counts.waiting}</strong> waiting</span>
+          {counts.kept > 0 && <span><strong>{counts.kept}</strong> you keep</span>}
         </div>
       </header>
 
@@ -174,6 +212,10 @@ export default function FamilyProfiles() {
       </form>
 
       <h2 className="section-label">People</h2>
+      <p className="dim people-help">
+        Someone who won’t sign up? Tap <strong>They won’t sign up</strong> to keep their list yourself. They drop off the
+        “Who are you on the list?” names, and you can put them back any time.
+      </p>
       {data && profiles.length === 0 && <p className="dim">Nobody yet. Add the first person above.</p>}
       <ul className="people-list" role="list">
         {profiles.map((profile) => {
@@ -196,6 +238,9 @@ export default function FamilyProfiles() {
                 <button className="btn small" type="button" onClick={() => navigate(`/gifts/${profile.kid_key}`)}>
                   {profile.claimed ? 'View list' : 'Edit list'}
                 </button>
+                <button className="btn small" type="button" disabled={busy} onClick={() => (editing === profile.participant_id ? setEditing(null) : startEdit(profile))}>
+                  Edit details
+                </button>
                 {profile.claimed ? (
                   <>
                     <button className="btn small" type="button" disabled={busy} onClick={() => setMoving(moving === profile.participant_id ? null : profile.participant_id)}>
@@ -204,9 +249,39 @@ export default function FamilyProfiles() {
                     <button className="btn small ghost" type="button" disabled={busy} onClick={() => unclaim(profile)}>Undo claim</button>
                   </>
                 ) : (
-                  <button className="btn small ghost" type="button" disabled={busy} onClick={() => remove(profile)}>Remove</button>
+                  <>
+                    <button className="btn small" type="button" disabled={busy} onClick={() => keepList(profile, !profile.wont_sign_up)}>
+                      {profile.wont_sign_up ? 'Put back in the picker' : 'They won’t sign up'}
+                    </button>
+                    <button className="btn small ghost" type="button" disabled={busy} onClick={() => remove(profile)}>Remove</button>
+                  </>
                 )}
               </div>
+              {editing === profile.participant_id && (
+                <form className="people-edit" onSubmit={(event) => saveEdit(event, profile)}>
+                  <label className="field">
+                    <span>Name</span>
+                    <input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} maxLength={80} />
+                  </label>
+                  <label className="field">
+                    <span>Household</span>
+                    <input
+                      value={edit.group}
+                      onChange={(e) => setEdit({ ...edit, group: e.target.value })}
+                      list="people-groups"
+                      placeholder="e.g. The Smiths"
+                    />
+                  </label>
+                  <label className="field">
+                    <span>Email (optional, only you see it)</span>
+                    <input value={edit.email} onChange={(e) => setEdit({ ...edit, email: e.target.value })} type="email" />
+                  </label>
+                  <div className="meta-row">
+                    <button className="btn primary" type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
+                    <button className="btn ghost" type="button" onClick={() => setEditing(null)}>Cancel</button>
+                  </div>
+                </form>
+              )}
               {moving === profile.participant_id && (
                 <label className="field people-move">
                   <span>{profile.claimed_email || 'This person'} is really…</span>

@@ -6,6 +6,7 @@ import { myAssignment } from '../lib/exchange.js'
 import { fromDbItem } from '../lib/gifts.js'
 import { canPutBack } from '../lib/purchases.js'
 import { managedDrawLines } from '../lib/managed.js'
+import { notInDrawing } from '../lib/profiles.js'
 import { useBell } from '../lib/store.jsx'
 import { supabase } from '../lib/supabase.js'
 
@@ -73,6 +74,7 @@ export default function Assignment() {
   }
 
   const admin = state.memberRole === 'owner'
+  const outOfDrawing = !demo && notInDrawing(state.giftAccess) && !receiverName
 
   async function putBack(item) {
     setBusy(true)
@@ -94,7 +96,18 @@ export default function Assignment() {
       <Link to="/gifts" className="back-link"><IconBack /> Gift lists</Link>
       <div className="kicker">Secret Santa</div>
       <h1>Your person</h1>
-      {!receiverName && (
+      {outOfDrawing && (
+        <>
+          <p className="lede">
+            You’re not in this year’s Secret Santa, so there’s nobody to buy for here. You can still keep your own wish list
+            and shop from anyone’s list.
+          </p>
+          <div className="stack-links">
+            <Link className="btn big primary" to="/gifts/family">Everyone’s lists</Link>
+          </div>
+        </>
+      )}
+      {!receiverName && !outOfDrawing && (
         <p className="lede">
           {status === 'locked' || status === 'draft'
             ? 'Your name is not in this drawing.'

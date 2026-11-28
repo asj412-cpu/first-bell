@@ -59,8 +59,8 @@ export default function GiftDetail() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openEditor, managed?.can_edit])
-  if (!list || ['santa', 'assignment', 'reminders'].includes(kidKey)) {
-    if (kidKey && ['santa', 'assignment', 'reminders'].includes(kidKey)) return <Navigate to={`/gifts/${kidKey}`} replace />
+  if (!list || ['santa', 'assignment', 'reminders', 'people', 'family'].includes(kidKey)) {
+    if (kidKey && ['santa', 'assignment', 'reminders', 'people', 'family'].includes(kidKey)) return <Navigate to={`/gifts/${kidKey}`} replace />
     return <Navigate to="/gifts" replace />
   }
   const link = `${window.location.origin}/g/${list.shareSlug}`
@@ -196,8 +196,13 @@ export default function GiftDetail() {
               : `Prices say “about” because they were checked on ${PRICE_AS_OF}, not today.`}
         </p>
       )}
-      {!guest && (
+      {(!guest || canEdit) && (
         <div className="share-box">
+          {guest && (
+            <p className="dim" style={{ margin: '0 0 8px' }}>
+              Send this link so family can see {managed ? `${list.displayName}’s` : 'your'} list and mark what they’re buying.
+            </p>
+          )}
           <label className="field" htmlFor="share-link">
             <span>Link for family</span>
             <input id="share-link" readOnly value={link} onFocus={(event) => event.target.select()} />

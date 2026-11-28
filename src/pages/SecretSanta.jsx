@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { IconBack } from '../components/Icons.jsx'
 import { ideaCount } from '../lib/exchange.js'
-import { checkManualPairs, freeReceivers } from '../lib/profiles.js'
+import { checkManualPairs, freeReceivers, notInDrawing } from '../lib/profiles.js'
 import { useBell } from '../lib/store.jsx'
 import { supabase } from '../lib/supabase.js'
 
@@ -71,8 +71,19 @@ export default function SecretSanta() {
       <div>
         <Link to="/gifts" className="back-link"><IconBack /> Gift lists</Link>
         <h1>Secret Santa</h1>
-        <p className="lede">Andrew or Megan runs the drawing. You only see the person you are assigned.</p>
-        <Link className="btn primary big" to="/gifts/assignment">Your person</Link>
+        {notInDrawing(state.giftAccess) ? (
+          <>
+            <p className="lede">
+              Andrew or Megan runs the drawing. You’re not in this year’s Secret Santa, but you can still keep your own wish list and shop from anyone’s list.
+            </p>
+            <Link className="btn primary big" to="/gifts/family">Everyone’s lists</Link>
+          </>
+        ) : (
+          <>
+            <p className="lede">Andrew or Megan runs the drawing. You only see the person you are assigned.</p>
+            <Link className="btn primary big" to="/gifts/assignment">Your person</Link>
+          </>
+        )}
       </div>
     )
   }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { IconBack } from '../components/Icons.jsx'
 import WishCard from '../components/WishCard.jsx'
 import { isStarterItem } from '../lib/exchange.js'
 import { findListBySlug, listUsesLocalCatalog, presentItems, publicPayloadToList } from '../lib/gifts.js'
@@ -137,6 +138,11 @@ export default function PublicGift() {
   return (
     <div className="guest-page gift-guest">
       <header className="gift-guest-head">
+        {signedIn && (state.memberRole === 'gift' || admin) && (
+          <Link to={admin ? '/gifts' : '/gifts/family'} className="back-link">
+            <IconBack /> {admin ? 'Gift lists' : 'Everyone’s lists'}
+          </Link>
+        )}
         <img className="bell" src="/icons/icon-192.png" alt="" />
         <div className="kicker">{list.occasion}</div>
         <h1>{list.displayName}’s list</h1>

@@ -389,6 +389,11 @@ export default function JoinList() {
             ? 'Sign in with your email, then tell us your name and whether you can come. You can also add something to bring once you are in.'
             : 'Sign in with your email, then add your name and phone. You will get your own list. Bought gifts stay hidden from the person they are for.'}
         </p>
+        {!eventInvite && preview.drawing_locked && (
+          <p className="dim" role="note">
+            Secret Santa names are already drawn, so you won’t be in this year’s drawing. You still get your own list and can shop from everyone else’s.
+          </p>
+        )}
 
         {needsSignIn && (
           <label className="field">
