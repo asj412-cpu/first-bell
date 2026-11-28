@@ -1,20 +1,113 @@
+import { useEffect, useState } from 'react'
 import { safeHttp } from '../lib/gifts.js'
+import { faviconUrlFor, isFallbackGiftImage, linkPreviewDomain } from '../lib/giftPreview.js'
+import { useBell } from '../lib/store.jsx'
+
+const previewCache = new Map()
+const previewInflight = new Map()
+
+async function fetchGiftPreview(url, signal) {
+  const key = String(url || '').trim()
+  if (!key) return null
+  if (previewCache.has(key)) return previewCache.get(key)
+  if (previewInflight.has(key)) return previewInflight.get(key)
+  const job = (async () => {
+    const response = await fetch(`/api/gift-image?url=${encodeURIComponent(key)}`, { signal })
+    if (!response.ok) return null
+    const data = await response.json()
+    const image = safeHttp(data?.image)
+    const preview = image
+      ? { image, source: data?.source || '', domain: data?.domain || linkPreviewDomain(key) }
+      : null
+    if (preview) previewCache.set(key, preview)
+    return preview
+  })().finally(() => {
+    previewInflight.delete(key)
+  })
+  previewInflight.set(key, job)
+  return job
+}
+
+function LinkTile({ url, logoUrl }) {
+  const [logoFailed, setLogoFailed] = useState(false)
+  const domain = linkPreviewDomain(url)
+  const logo = logoUrl || faviconUrlFor(url)
+  const initial = (domain || '?').charAt(0).toUpperCase()
+  return (
+    <div className="wish-photo wish-photo-link">
+      <div className="wish-link-tile">
+        <div className="wish-link-logo-wrap" aria-hidden="true">
+          {logo && !logoFailed ? (
+            <img className="wish-link-logo" src={logo} alt="" onError={() => setLogoFailed(true)} />
+          ) : (
+            <span className="wish-link-initial">{initial}</span>
+          )}
+        </div>
+        {domain ? <span className="wish-link-domain">{domain}</span> : null}
+      </div>
+    </div>
+  )
+}
+
+function WishPhoto({ item }) {
+  const { fillMissingGiftImage } = useBell()
+  const stored = item.image || ''
+  const [failed, setFailed] = useState(false)
+  const [liveImage, setLiveImage] = useState('')
+
+  useEffect(() => {
+    setFailed(false)
+    setLiveImage('')
+  }, [item.id, stored])
+
+  useEffect(() => {
+    if (!item.url || stored) return
+    let cancelled = false
+    const controller = new AbortController()
+    fetchGiftPreview(item.url, controller.signal)
+      .then((preview) => {
+        if (cancelled || !preview?.image) return
+        if (!isFallbackGiftImage(preview.image)) setLiveImage(preview.image)
+        fillMissingGiftImage?.(item.id, preview.image)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+      controller.abort()
+    }
+  }, [fillMissingGiftImage, item.id, item.url, stored])
+
+  const candidate = stored || liveImage
+  const useTile = Boolean(item.url) && (!candidate || failed || isFallbackGiftImage(candidate))
+  if (useTile) {
+    const logo = isFallbackGiftImage(candidate) ? candidate : ''
+    return <LinkTile url={item.url} logoUrl={logo} />
+  }
+  if (candidate) {
+    return (
+      <div className="wish-photo">
+        <img src={candidate} alt="" onError={() => setFailed(true)} />
+      </div>
+    )
+  }
+  return (
+    <div className="wish-photo wish-photo-empty">
+      <div className="wish-placeholder">
+        <span className="wish-emoji" aria-hidden="true">
+          🎁
+        </span>
+        <span>No photo</span>
+      </div>
+    </div>
+  )
+}
 
 export default function WishCard({ item, conceal, busy, naming, name, onName, onStart, onCancel, onConfirm, onRelease }) {
   const bought = !conceal && Boolean(item.claimedAt || item.purchased)
   const buyer = item.claimedByName
   return (
     <article className="wish-card">
-      <div className={`wish-photo ${item.image ? '' : 'wish-photo-empty'}`}>
-        {item.image ? (
-          <img src={item.image} alt="" />
-        ) : (
-          <div className="wish-placeholder">
-            <span className="wish-emoji" aria-hidden="true">🎁</span>
-            <span>No photo</span>
-          </div>
-        )}
-      </div>
+      <WishPhoto item={item} />
       <div className="wish-body">
         {item.category ? <div className="kicker">{item.category === 'Doll Clothes' ? 'Doll clothes' : item.category}</div> : null}
         <h3>{item.title}</h3>

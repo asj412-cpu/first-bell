@@ -1,4 +1,4 @@
-import { lookupGiftImage } from './api/giftImage.js'
+import { lookupGiftPreview } from './api/giftImage.js'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -9,14 +9,18 @@ function giftImageDev() {
       server.middlewares.use('/api/gift-image', async (req, res) => {
         const target = new URL(req.url || '/', 'http://localhost').searchParams.get('url') || ''
         try {
-          const image = await lookupGiftImage(target)
+          const preview = await lookupGiftPreview(target)
           res.setHeader('Content-Type', 'application/json')
           res.setHeader('Cache-Control', 'public, max-age=86400')
-          res.end(JSON.stringify({ image: image || null }))
+          res.end(JSON.stringify({
+            image: preview.image || null,
+            source: preview.source || null,
+            domain: preview.domain || null,
+          }))
         } catch {
           res.statusCode = 400
           res.setHeader('Content-Type', 'application/json')
-          res.end(JSON.stringify({ image: null }))
+          res.end(JSON.stringify({ image: null, source: null, domain: null }))
         }
       })
     },

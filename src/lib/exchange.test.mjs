@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { assertPublicHttpUrl, extractPreviewImage } from '../../api/giftImage.js'
+import { assertPublicHttpUrl, extractPageIcon, extractPreviewImage } from '../../api/giftImage.js'
 import { drawAssignments, presentItems, validateJoin } from './exchange.js'
 import { sendReminder } from './reminderAdapter.js'
 import { readFileSync } from 'node:fs'
@@ -122,4 +122,20 @@ test('seeded lists match the age rules and leave Drew empty', () => {
   assert.ok(byKey.chloe.items.some((item) => item.category === 'Doll Clothes'))
   assert.equal(byKey.andrew.items.length, 0)
   assert.equal(byKey.megan.items.length, 0)
+})
+
+test('twitter:image and relative og:image:url are resolved against the page', () => {
+  const twitter = '<meta name="twitter:image" content="https://cdn.example/hat.png">'
+  assert.equal(extractPreviewImage(twitter, 'https://shop.example/hat'), 'https://cdn.example/hat.png')
+  const ogUrl = '<meta property="og:image:url" content="../pics/mug.jpg">'
+  assert.equal(extractPreviewImage(ogUrl, 'https://shop.example/aisle/item'), 'https://shop.example/pics/mug.jpg')
+})
+
+test('a page without a product photo can still yield a large site icon', () => {
+  const html = `
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+  `
+  assert.equal(extractPageIcon(html, 'https://shop.example/item'), 'https://shop.example/icons/apple-touch-icon.png')
+  assert.equal(extractPageIcon('<p>No icons</p>', 'https://example.com'), '')
 })

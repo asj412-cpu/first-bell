@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { mergeProfiles } from '../data/profiles.js'
-import { isUuid, mergeGiftLists, publicPayloadToList } from './gifts.js'
+import { isUuid, mergeGiftLists, publicPayloadToList, safeHttp } from './gifts.js'
 import { freshState, HOUSEHOLD, PARTY } from '../data/seed.js'
 import { mergeEvents } from './events.js'
 import { fromDbRsvp, hostDisplayName, toDbStatus } from './rsvps.js'
@@ -604,6 +604,31 @@ export function BellProvider({ children }) {
       },
       saveOwnItems(listId, items) {
         applyVnext({ type: 'save-own-items', listId, items })
+      },
+      async fillMissingGiftImage(itemId, image) {
+        const next = safeHttp(image)
+        if (!next || !itemId) return
+        update((prev) => {
+          let changed = false
+          const giftLists = (prev.giftLists || []).map((list) => ({
+            ...list,
+            items: (list.items || []).map((item) => {
+              if (item.id !== itemId || item.image) return item
+              changed = true
+              return { ...item, image: next }
+            }),
+          }))
+          return changed ? { ...prev, giftLists } : prev
+        })
+        if (!(live && isUuid(itemId))) return
+        const { error } = await supabase
+          .from('gift_items')
+          .update({ image: next })
+          .eq('id', itemId)
+          .or('image.is.null,image.eq.')
+        if (error) {
+          /* signed-out viewers and non-members cannot write; the card still shows the preview */
+        }
       },
       setInDraw(participantId, inDraw) {
         applyVnext({ type: 'set-in-draw', participantId, inDraw })
