@@ -7,6 +7,8 @@ import { blankGiftItem, categoryLabel, PRICE_AS_OF, validateGiftItems, withGiftI
 import { isUuid, listUsesLocalCatalog, presentItems } from '../lib/gifts.js'
 import { cleanManagedRows, managedFor, managedLabel } from '../lib/managed.js'
 import { useBell } from '../lib/store.jsx'
+import { canPutBack, overlayMarks } from '../lib/purchases.js'
+import { usePurchaseMarks } from '../lib/usePurchaseMarks.js'
 import { supabase } from '../lib/supabase.js'
 
 const FILTERS = ['All', 'Toys', 'Doll clothes', 'Clothes', 'Learning']
@@ -39,8 +41,15 @@ export default function GiftDetail() {
   const [saving, setSaving] = useState(false)
   const guest = state.memberRole === 'gift'
   const ownExchange = Boolean(list && list.listKind === 'exchange' && (guest || (state.session?.demo && list.kidKey === 'andrew')))
-  const conceal = state.kidMode || ownExchange || guest
-  const items = presentItems(list, { conceal })
+  // Live lists seen by the household admin: ask the database what this person may see.
+  // If their email is the list owner's, it answers "hidden" and nothing shows here.
+  const marks = usePurchaseMarks(
+    list?.shareSlug,
+    state.backend === 'live' && Boolean(state.session) && state.memberRole === 'owner' && isUuid(list?.id) && !listUsesLocalCatalog(list || {}),
+  )
+  const hiddenByServer = Boolean(marks.active && marks.list && marks.list.purchasesVisible === false)
+  const conceal = state.kidMode || ownExchange || guest || hiddenByServer
+  const items = conceal ? presentItems(list, { conceal }) : overlayMarks(presentItems(list, { conceal }), marks.active ? marks.list : null)
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     return items.filter((item) => {
@@ -264,10 +273,26 @@ export default function GiftDetail() {
             key={item.id}
             item={item}
             conceal={conceal}
-            onRelease={conceal ? null : () => releaseClaim(list.id, item.id)}
+            busy={marks.busy}
+            naming={marks.naming === item.id}
+            name={marks.name}
+            onName={marks.setName}
+            onStart={marks.active && !conceal && marks.list ? () => marks.start(item.id) : undefined}
+            onCancel={() => marks.setNaming(null)}
+            onConfirm={() => marks.mark(item.id, marks.name)}
+            onRelease={
+              conceal
+                ? null
+                : marks.active && marks.list
+                  ? canPutBack(item, { admin: true })
+                    ? () => marks.release(item.id)
+                    : null
+                  : () => releaseClaim(list.id, item.id)
+            }
           />
         ))}
       </div>
+      {marks.error && <p className="form-error" role="alert">{marks.error}</p>}
       {filtered.length === 0 && items.length > 0 && <p className="lede">Nothing in this filter. Try another one.</p>}
       {canEdit && !editing && (
         <button className="btn big" type="button" onClick={startEdit}>

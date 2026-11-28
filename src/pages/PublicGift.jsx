@@ -20,6 +20,7 @@ export default function PublicGift() {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [managedBy, setManagedBy] = useState(null)
+  const [myName, setMyName] = useState('')
 
   useEffect(() => {
     let cancelled = false
@@ -34,6 +35,21 @@ export default function PublicGift() {
       cancelled = true
     }
   }, [slug])
+
+  useEffect(() => {
+    let cancelled = false
+    if (!supabase || !state.session) return undefined
+    // The name on this person's own family profile, so one tap marks a gift as theirs.
+    supabase.rpc('get_my_gift_access').then(
+      ({ data }) => {
+        if (!cancelled) setMyName(data?.display_name || '')
+      },
+      () => {},
+    )
+    return () => {
+      cancelled = true
+    }
+  }, [state.session])
 
   useEffect(() => {
     let cancelled = false
@@ -110,7 +126,7 @@ export default function PublicGift() {
     }
   }
 
-  async function confirm(item) {
+  async function confirm(item, typedName = name) {
     setBusy(true)
     setError('')
     try {
@@ -118,13 +134,13 @@ export default function PublicGift() {
         const { error: rpcError } = await supabase.rpc('mark_gift_purchased', {
           p_slug: slug,
           p_item_id: item.id,
-          p_name: name.trim() || null,
+          p_name: (typedName || '').trim() || null,
         })
         if (rpcError) throw rpcError
         const { data } = await supabase.rpc('get_shared_gift_list', { p_slug: slug })
         if (data) setRemote(publicPayloadToList(data))
       } else {
-        claimGift({ slug, itemId: item.id, name })
+        claimGift({ slug, itemId: item.id, name: typedName })
       }
       setNaming(null)
       setName('')
@@ -148,8 +164,9 @@ export default function PublicGift() {
         <h1>{list.displayName}’s list</h1>
         {managedBy && <p className="kicker managed-by">{managedLabel(managedBy)}</p>}
         <p className="lede">
-          Pick something to buy. Once you mark it, the next person will see that it is taken.{' '}
-          {list.displayName} does not see these marks on their own list.
+          {conceal && signedIn
+            ? 'This is a gift list. What people have picked out stays a surprise.'
+            : `Got one of these? Mark it as purchased so nobody doubles up. The rest of the family can see what’s been picked and by whom. ${list.displayName} can’t.`}
         </p>
         {listUsesLocalCatalog(list) && (
           <div className="banner">On this preview, a mark stays on this phone until the database update is approved.</div>
@@ -172,8 +189,9 @@ export default function PublicGift() {
             name={name}
             onName={setName}
             onStart={() => {
-              setNaming(item.id)
               setError('')
+              if (myName && mode === 'remote') confirm(item, '')
+              else setNaming(item.id)
             }}
             onCancel={() => setNaming(null)}
             onConfirm={() => confirm(item)}
