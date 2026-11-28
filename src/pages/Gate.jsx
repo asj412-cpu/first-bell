@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import BackendBanner from '../components/BackendBanner.jsx'
 import { friendlyLinkError } from '../lib/authLink.js'
+import { codeInputProps, emailInputProps, normalizeCode, readAuthForm } from '../lib/authFields.js'
 import { pendingJoin } from '../lib/pendingJoin.js'
 import { useBell } from '../lib/store.jsx'
 
@@ -55,14 +56,23 @@ export default function Gate() {
   // on this browser: take them back to "Who are you on the list?".
   const joinToken = signedInNoHouse ? pendingJoin() : null
   if (joinToken) return <Navigate to={`/join/${joinToken}`} replace />
-  const digits = code.replace(/\D/g, '')
-  const address = (email.trim() || state.pendingEmail || '').trim()
+  const digits = normalizeCode(code)
+  const address = (email.trim() || state.pendingEmail || '').trim().toLowerCase()
 
-  async function onSend(e) {
-    e.preventDefault()
-    if (!address || state.authBusy) return
+  function syncFromForm(event) {
+    const name = event.target?.name
+    if (name === 'email') setEmail(event.target.value)
+    if (name === 'one-time-code') setCode(event.target.value)
+  }
+
+  async function onSend(e, liveEmail) {
+    e.preventDefault?.()
+    const nextEmail = typeof liveEmail === 'string' && liveEmail
+      ? liveEmail
+      : readAuthForm(e, { email: address }).email
+    if (!nextEmail || state.authBusy) return
     try {
-      await sendOtp(address)
+      await sendOtp(nextEmail)
       setCode('')
       setHaveCode(false)
     } catch {
@@ -70,14 +80,24 @@ export default function Gate() {
     }
   }
 
-  async function onVerify(e) {
-    e.preventDefault()
-    if (digits.length < 6 || !address || state.authBusy) return
+  async function onVerify(e, live) {
+    e.preventDefault?.()
+    const got = live || readAuthForm(e, { email: address, code })
+    if (got.code.length < 6 || !got.email || state.authBusy) return
     try {
-      await verifyOtp(digits, address)
+      await verifyOtp(got.code, got.email)
     } catch {
       /* authError is set on the store */
     }
+  }
+
+  async function onAuthSubmit(e) {
+    e.preventDefault()
+    const live = readAuthForm(e, { email: address, code })
+    if (live.email) setEmail(live.email)
+    if (live.code) setCode(live.code)
+    if (live.code.length >= 6) await onVerify(e, live)
+    else await onSend(e, live.email)
   }
 
   function useDifferentEmail() {
@@ -153,21 +173,16 @@ export default function Gate() {
         )}
 
         {configured && !signedInNoHouse && !showCode && (
-          <form onSubmit={onSend}>
+          <form onSubmit={onAuthSubmit} noValidate onInput={syncFromForm}>
             <div className="field">
               <label htmlFor="host-email">Email</label>
               <input
                 id="host-email"
-                type="email"
-                autoComplete="email"
-                inputMode="email"
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck="false"
+                {...emailInputProps}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onBlur={(e) => setEmail(e.target.value.trim())}
                 placeholder="name@email.com"
-                required
               />
             </div>
             {state.authError && (
@@ -188,7 +203,7 @@ export default function Gate() {
         )}
 
         {configured && !signedInNoHouse && showCode && (
-          <form onSubmit={digits.length >= 6 ? onVerify : onSend}>
+          <form onSubmit={onAuthSubmit} noValidate onInput={syncFromForm}>
             {onCodeStep && (
               <p className="gate-hint">
                 On a home-screen app, type the code so you stay in Mi Casa. The link opens Safari, and that session stays in Safari.
@@ -199,16 +214,11 @@ export default function Gate() {
                 <label htmlFor="host-email">Email</label>
                 <input
                   id="host-email"
-                  type="email"
-                  autoComplete="email"
-                  inputMode="email"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck="false"
+                  {...emailInputProps}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onBlur={(e) => setEmail(e.target.value.trim())}
                   placeholder="name@email.com"
-                  required
                 />
               </div>
             )}
@@ -218,14 +228,9 @@ export default function Gate() {
                 ref={codeRef}
                 id="otp"
                 className="otp"
-                name="one-time-code"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                enterKeyHint="done"
-                pattern="[0-9]*"
-                maxLength={10}
-                value={digits}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                {...codeInputProps}
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
               />
             </div>
             {state.authError && (

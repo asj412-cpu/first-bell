@@ -7,6 +7,7 @@ import { blankGiftItem, validateJoin, withGiftImages } from '../lib/exchange.js'
 import { inviteStatusCopy, previewLocalInvite, rpcMissing } from '../lib/invites.js'
 import { friendlyAuthError } from '../lib/authLink.js'
 import { useBell } from '../lib/store.jsx'
+import { codeInputProps, emailInputProps, nameInputProps, phoneInputProps, readAuthForm } from '../lib/authFields.js'
 import { rememberJoin } from '../lib/pendingJoin.js'
 import { supabase } from '../lib/supabase.js'
 
@@ -201,8 +202,17 @@ export default function JoinList() {
 
   async function save(event) {
     event?.preventDefault()
+    const live = readAuthForm(event, form)
+    const nextForm = {
+      ...form,
+      email: live.email || form.email,
+      name: live.name || form.name,
+      phone: live.phone || form.phone,
+      group: live.group || form.group,
+    }
+    update(nextForm)
     if (preview?.kind === 'event') {
-      if (form.name.trim().length < 2) {
+      if (nextForm.name.trim().length < 2) {
         setErrors({ name: 'Enter your name.' })
         setMessage('Enter your name.')
         return
@@ -213,7 +223,7 @@ export default function JoinList() {
       }
       setSaving(true)
       try {
-        await persistEvent(form.name.trim(), form.rsvp || 'yes')
+        await persistEvent(nextForm.name.trim(), nextForm.rsvp || form.rsvp || 'yes')
       } catch (err) {
         setMessage(err?.message || 'Could not save your RSVP. Try again.')
       } finally {
@@ -221,7 +231,7 @@ export default function JoinList() {
       }
       return
     }
-    const result = validateJoin({ ...form, email: signedInEmail || form.email })
+    const result = validateJoin({ ...nextForm, email: signedInEmail || nextForm.email })
     setErrors(result.errors)
     if (!result.ok) {
       const first = Object.values(result.errors || {}).find(Boolean)
@@ -239,7 +249,7 @@ export default function JoinList() {
         await persistGift(result.value)
         return
       }
-      sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ token, form, value: result.value }))
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ token, form: nextForm, value: result.value }))
       const sent = await sendOtp(result.value.email, window.location.href)
       if (sent?.mode === 'session') {
         await persistGift(result.value)
@@ -254,6 +264,15 @@ export default function JoinList() {
     }
   }
 
+  function syncFromForm(event) {
+    const name = event.target?.name
+    if (name === 'email') update({ email: event.target.value })
+    if (name === 'one-time-code') setCode(event.target.value)
+    if (name === 'name') update({ name: event.target.value })
+    if (name === 'phone') update({ phone: event.target.value })
+    if (name === 'group') update({ group: event.target.value })
+  }
+
   async function confirmCode(event) {
     event?.preventDefault()
     // Already signed in (for example the email link opened in another tab):
@@ -264,13 +283,16 @@ export default function JoinList() {
       setMessage('')
       return
     }
-    if (!code.replace(/\D/g, '')) {
+    const live = readAuthForm(event, { email: form.email, code })
+    if (live.email) update({ email: live.email })
+    if (live.code) setCode(live.code)
+    if (!live.code) {
       setMessage('Type the code from the email.')
       return
     }
     setSaving(true)
     try {
-      await verifyOtp(code)
+      await verifyOtp(live.code, live.email)
       setWaiting(false)
       setCode('')
       let draft = null
@@ -281,7 +303,7 @@ export default function JoinList() {
       }
       if (preview?.kind === 'event') {
         if (form.name.trim().length >= 2) {
-          await persistEvent(form.name.trim(), form.rsvp || 'yes')
+          await persistEvent(nextForm.name.trim(), nextForm.rsvp || form.rsvp || 'yes')
           return
         }
         setMessage('You are signed in. Add your name and RSVP, then tap Save my RSVP.')
@@ -301,7 +323,9 @@ export default function JoinList() {
 
   async function beginSignIn(event) {
     event.preventDefault()
-    const address = form.email.trim()
+    const live = readAuthForm(event, { email: form.email, code })
+    if (live.email) update({ email: live.email })
+    const address = live.email
     if (!address) return
     setSaving(true)
     setMessage('')
@@ -353,7 +377,7 @@ export default function JoinList() {
 
   return (
     <div className="guest-page gift-guest">
-      <form className="gift-guest-head" onSubmit={needsSignIn ? (waiting ? confirmCode : beginSignIn) : save}>
+      <form className="gift-guest-head" noValidate onInput={syncFromForm} onSubmit={needsSignIn ? (waiting ? confirmCode : beginSignIn) : save}>
         <img className="bell" src="/icons/icon-192.png" alt="" />
         <div className="kicker">{preview.label || 'Johnson family'}</div>
         <h1>{eventInvite ? 'You are invited' : 'Join the family list'}</h1>
@@ -367,12 +391,10 @@ export default function JoinList() {
           <label className="field">
             <span>Email</span>
             <input
+              {...emailInputProps}
               value={form.email}
               onChange={(event) => update({ email: event.target.value })}
-              type="email"
-              autoComplete="email"
-              inputMode="email"
-              required
+              onBlur={(event) => update({ email: event.target.value.trim() })}
             />
           </label>
         )}
@@ -381,7 +403,7 @@ export default function JoinList() {
           <>
             <label className="field">
               <span>Your name</span>
-              <input value={form.name} onChange={(event) => update({ name: event.target.value })} autoComplete="name" />
+              <input {...nameInputProps} value={form.name} onChange={(event) => update({ name: event.target.value })} />
             </label>
             {errors.name && <p className="form-error">{errors.name}</p>}
             {eventInvite ? (
@@ -397,26 +419,27 @@ export default function JoinList() {
               <>
                 <label className="field">
                   <span>Phone</span>
-                  <input value={form.phone} onChange={(event) => update({ phone: event.target.value })} inputMode="tel" autoComplete="tel" placeholder="(713) 555-0100" />
+                  <input {...phoneInputProps} value={form.phone} onChange={(event) => update({ phone: event.target.value })} placeholder="(713) 555-0100" />
                 </label>
                 {errors.phone && <p className="form-error">{errors.phone}</p>}
                 <label className="field">
                   <span>Email</span>
                   <input
+                    {...emailInputProps}
                     value={signedInEmail || form.email}
                     readOnly={Boolean(signedInEmail)}
                     onChange={(event) => {
                       if (!signedInEmail) update({ email: event.target.value })
                     }}
-                    type="email"
-                    autoComplete="email"
-                    inputMode="email"
+                    onBlur={(event) => {
+                      if (!signedInEmail) update({ email: event.target.value.trim() })
+                    }}
                   />
                 </label>
                 {errors.email && <p className="form-error">{errors.email}</p>}
                 <label className="field">
                   <span>Your household</span>
-                  <input value={form.group} onChange={(event) => update({ group: event.target.value })} placeholder="The Garcias" />
+                  <input name="group" autoComplete="organization" value={form.group} onChange={(event) => update({ group: event.target.value })} placeholder="The Garcias" />
                 </label>
                 {errors.group && <p className="form-error">{errors.group}</p>}
                 <h2>Gift ideas</h2>
@@ -439,7 +462,7 @@ export default function JoinList() {
         {waiting && needsSignIn && (
           <label className="field">
             <span>Code from the email</span>
-            <input value={code} onChange={(event) => setCode(event.target.value)} inputMode="numeric" autoComplete="one-time-code" />
+            <input className="otp" {...codeInputProps} value={code} onChange={(event) => setCode(event.target.value)} />
           </label>
         )}
         {waiting && needsSignIn ? (
