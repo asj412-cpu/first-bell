@@ -21,3 +21,10 @@ export function overlayMarks(items, remoteList) {
     }
   })
 }
+
+// What a taken gift says. Everyone but the person who marked it sees "Purchased (by X)".
+export function purchaseLabel(item) {
+  if (!item) return ''
+  if (item.markedByMe) return 'Purchased (by you)'
+  return item.claimedByName ? `Purchased (by ${item.claimedByName})` : 'Purchased'
+}

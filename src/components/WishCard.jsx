@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { safeHttp } from '../lib/gifts.js'
 import { faviconUrlFor, isFallbackGiftImage, linkPreviewDomain } from '../lib/giftPreview.js'
+import { purchaseLabel } from '../lib/purchases.js'
 import { useBell } from '../lib/store.jsx'
 
 const previewCache = new Map()
@@ -104,7 +105,6 @@ function WishPhoto({ item }) {
 
 export default function WishCard({ item, conceal, busy, naming, name, onName, onStart, onCancel, onConfirm, onRelease }) {
   const bought = !conceal && Boolean(item.claimedAt || item.purchased)
-  const buyer = item.claimedByName
   return (
     <article className="wish-card">
       <WishPhoto item={item} />
@@ -127,7 +127,7 @@ export default function WishCard({ item, conceal, busy, naming, name, onName, on
         {bought ? (
           <div className="row-between">
             <span className="chip yes">
-              {item.markedByMe ? 'Bought by you' : buyer ? `Bought by ${buyer}` : 'Already bought'}
+              {purchaseLabel(item)}
             </span>
             {onRelease ? (
               <button className="btn small ghost" type="button" disabled={busy} onClick={onRelease}>
