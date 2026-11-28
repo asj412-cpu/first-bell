@@ -23,6 +23,7 @@ import Meals from './pages/Meals.jsx'
 import Parties from './pages/Parties.jsx'
 import PartyDetail from './pages/PartyDetail.jsx'
 import PublicGift from './pages/PublicGift.jsx'
+import FamilyDirectory from './pages/FamilyDirectory.jsx'
 import FamilyProfiles from './pages/FamilyProfiles.jsx'
 import Settings from './pages/Settings.jsx'
 
@@ -97,6 +98,7 @@ export default function App() {
         <Route path="/gifts" element={<Gifts />} />
         <Route path="/gifts/santa" element={<SecretSanta />} />
         <Route path="/gifts/people" element={<FamilyProfiles />} />
+        <Route path="/gifts/family" element={<FamilyDirectory />} />
         <Route path="/gifts/assignment" element={<Assignment />} />
         <Route path="/gifts/reminders" element={<Reminders />} />
         <Route path="/gifts/:kidKey" element={<GiftDetail />} />

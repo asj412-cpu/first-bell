@@ -72,6 +72,7 @@ export function BellProvider({ children }) {
     authStep: 'email',
     pendingEmail: '',
     eventAccess: [],
+    giftAccess: null,
     toast: '',
   }))
   const toastTimer = useRef(null)
@@ -148,6 +149,7 @@ export function BellProvider({ children }) {
         let giftLists = null
         let eventAccess = []
         let managedMembers = []
+        let giftAccess = null
         if (user) {
           const { data: membership, error: memErr } = await supabase.rpc('ensure_host_membership')
           if (memErr) throw memErr
@@ -162,6 +164,8 @@ export function BellProvider({ children }) {
             if (access?.household_id) {
               householdId = access.household_id
               memberRole = 'gift'
+              // Is this person in the drawing? Is it locked? (undefined on older databases.)
+              giftAccess = { inDraw: access.in_draw, drawingLocked: access.drawing_locked }
               const lists = await supabase.rpc('get_my_gift_lists').then((result) => result.data, () => null)
               if (!current()) return
               if (Array.isArray(lists)) {
@@ -203,6 +207,7 @@ export function BellProvider({ children }) {
           memberRole,
           eventAccess,
           managedMembers,
+          giftAccess,
           ...(giftLists ? { giftLists } : {}),
           session: user
             ? sessionFromUser(user, { householdId, role: memberRole })
@@ -465,6 +470,7 @@ export function BellProvider({ children }) {
           session: null,
           householdId: null,
           memberRole: null,
+          giftAccess: null,
           eventAccess: [],
           authStep: 'email',
           pendingEmail: '',

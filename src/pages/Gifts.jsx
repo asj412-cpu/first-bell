@@ -6,6 +6,7 @@ import { ideaCount } from '../lib/exchange.js'
 import { exchangeLists, listUsesLocalCatalog, presentItems, wishLists } from '../lib/gifts.js'
 import { inviteCopy, inviteUrl, rpcMissing } from '../lib/invites.js'
 import { managedFor, managedLabel } from '../lib/managed.js'
+import { notInDrawing, yourFamilyCopy } from '../lib/profiles.js'
 import { useBell } from '../lib/store.jsx'
 
 export default function Gifts() {
@@ -22,6 +23,7 @@ export default function Gifts() {
   const kids = wishLists(state.giftLists)
   const grownups = exchangeLists(state.giftLists)
   const guest = state.memberRole === 'gift'
+  const outOfDrawing = guest && notInDrawing(state.giftAccess)
   const localCatalog = kids.some(listUsesLocalCatalog)
   const share = invite ? inviteCopy(invite.kind || 'gift_list', invite.label) : null
   const myLists = guest ? state.giftLists.filter((list) => !managedFor(managedMembers, list.id)) : []
@@ -78,7 +80,9 @@ export default function Gifts() {
       <h1>Gift lists</h1>
       <p className="lede">
         {guest
-          ? 'Your ideas, and the person you are buying for once names are drawn.'
+          ? outOfDrawing
+            ? 'Your own ideas, and everyone else’s lists to shop from.'
+            : 'Your ideas, the person you are buying for once names are drawn, and everyone else’s lists.'
           : 'Claire, Chloe, and Drew each have a list. Share a link so family can claim a gift without telling the kids.'}
       </p>
       {guest && (
@@ -87,6 +91,13 @@ export default function Gifts() {
           <button className="btn small ghost" type="button" onClick={() => signOut()}>
             Sign out
           </button>
+        </div>
+      )}
+      {guest && (
+        <div className="stack-links" style={{ margin: '14px 0' }}>
+          <Link className="btn big primary" to="/gifts/family">
+            Everyone’s lists
+          </Link>
         </div>
       )}
       {!guest && (
@@ -189,7 +200,7 @@ export default function Gifts() {
         <section className="managed-family" aria-labelledby="your-family">
           <h2 className="section-label" id="your-family">Your family</h2>
           <p className="dim" style={{ marginTop: 0 }}>
-            Add your husband, wife, or kids here. They don’t need an email or their own invite. You keep their lists, they’re in Secret Santa too, and you’ll see who they draw.
+            {yourFamilyCopy(state.giftAccess)}
           </p>
           {myFamily.length > 0 && (
             <div className="gift-index">
@@ -276,12 +287,20 @@ export default function Gifts() {
         </section>
       )}
 
-      {guest && (
+      {guest && !outOfDrawing && (
         <div className="stack-links" style={{ marginTop: 16 }}>
           <Link className="btn big primary" to="/gifts/assignment">
             See who you are buying for
           </Link>
         </div>
+      )}
+      {outOfDrawing && (
+        <section className="card pad not-in-drawing" style={{ marginTop: 16 }} aria-labelledby="not-in-drawing">
+          <h2 id="not-in-drawing" style={{ marginTop: 0 }}>You’re not in this year’s Secret Santa</h2>
+          <p className="muted" style={{ marginBottom: 0 }}>
+            That’s fine. Keep your own wish list up to date, and shop from anyone’s list in <Link to="/gifts/family">Everyone’s lists</Link>.
+          </p>
+        </section>
       )}
     </div>
   )

@@ -11,13 +11,15 @@ export function profileStatus(profile) {
   if (profile.claimed) {
     return { tone: 'yes', label: profile.claimed_email ? `Claimed · ${profile.claimed_email}` : 'Claimed' }
   }
+  if (profile.wont_sign_up) return { tone: 'keep', label: 'You keep this list · hidden from the name picker' }
   return { tone: 'wait', label: 'Waiting for them to pick their name' }
 }
 
 export function profileCounts(profiles) {
   const list = profiles || []
   const claimed = list.filter((p) => p.claimed).length
-  return { total: list.length, claimed, waiting: list.length - claimed }
+  const kept = list.filter((p) => !p.claimed && p.wont_sign_up).length
+  return { total: list.length, claimed, kept, waiting: list.length - claimed - kept }
 }
 
 /**
@@ -69,4 +71,45 @@ export function freeReceivers(roster, picks, giverId) {
       .map(([, receiver]) => receiver),
   )
   return (roster || []).filter((p) => p.id !== giverId && !taken.has(p.id))
+}
+
+/** Where a directory entry goes: your own list opens the editor, anyone else's opens the shopping page. */
+export function directoryLink(entry) {
+  if (!entry) return '/gifts'
+  return entry.mine ? `/gifts/${entry.kid_key}` : `/g/${entry.share_slug}`
+}
+
+/** One line under a name in the family directory. */
+export function directoryLine(entry) {
+  const count = Number(entry?.item_count) || 0
+  const ideas = `${count} ${count === 1 ? 'idea' : 'ideas'}`
+  if (entry?.mine) return `${ideas} · yours`
+  if (entry?.managed_by) return `${ideas} · kept by ${entry.managed_by}`
+  return ideas
+}
+
+/** Households in display order: yours first, then A to Z. */
+export function sortDirectoryGroups(groups, mineLabel) {
+  return [...(groups || [])].sort((a, b) => {
+    if (mineLabel && a.label === mineLabel && b.label !== mineLabel) return -1
+    if (mineLabel && b.label === mineLabel && a.label !== mineLabel) return 1
+    return String(a.label).localeCompare(String(b.label))
+  })
+}
+
+/**
+ * Secret Santa copy for someone who is signed in as a family member.
+ * inDraw === false means they are on the list but not in this year's drawing.
+ */
+export function notInDrawing(access) {
+  return access?.inDraw === false
+}
+
+/** The "Your family" blurb: what happens to people a parent adds. */
+export function yourFamilyCopy(access) {
+  const base = 'Add your husband, wife, or kids here. They don’t need an email or their own invite. You keep their lists.'
+  if (access?.drawingLocked) {
+    return `${base} The Secret Santa drawing is already locked, so they get a list of their own but aren’t in this year’s drawing.`
+  }
+  return `${base} They join Secret Santa too until Andrew locks the drawing, and you’ll see who they draw.`
 }

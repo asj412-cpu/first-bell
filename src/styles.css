@@ -1512,3 +1512,11 @@ h3 { font-size: 18px; }
 .roster-details > summary::after { content: '▾'; float: right; color: var(--gold); }
 .roster-details[open] > summary { margin-bottom: 10px; }
 .roster-details[open] > summary::after { content: '▴'; }
+
+/* Extended family: directory, edit details, kept lists */
+.people-help { margin: -4px 0 12px; }
+.people-edit { margin-top: 12px; display: grid; gap: 4px; }
+.chip.keep { color: var(--terracotta); border-color: var(--terracotta); }
+.directory-group .section-label { margin-top: 18px; }
+.directory-card h3 { font-family: var(--font-display); font-size: 19px; }
+.not-in-drawing h2 { font-family: var(--font-display); }
