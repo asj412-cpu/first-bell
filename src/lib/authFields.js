@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from 'react'
+
 // Shared helpers for sign-in, family-link and join forms.
 // Phone autofill often fills a field without keystrokes (and sometimes
 // without a React change event), can add spaces or capitals, and may
@@ -81,4 +83,45 @@ export const phoneInputProps = {
   name: 'phone',
   autoComplete: 'tel',
   inputMode: 'tel',
+}
+
+// Uncontrolled field that still tells React when the value changes, including
+// phone autofill that may not fire input/change until later. The DOM is the
+// source of truth so a re-render cannot wipe an autofilled value.
+export function useLiveField(initial = '') {
+  const ref = useRef(null)
+  const [value, setValue] = useState(initial)
+  const latest = useRef(value)
+  latest.current = value
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return undefined
+    const sync = () => {
+      if (el.value !== latest.current) {
+        latest.current = el.value
+        setValue(el.value)
+      }
+    }
+    const id = setInterval(sync, 200)
+    el.addEventListener('input', sync)
+    el.addEventListener('change', sync)
+    el.addEventListener('blur', sync)
+    sync()
+    return () => {
+      clearInterval(id)
+      el.removeEventListener('input', sync)
+      el.removeEventListener('change', sync)
+      el.removeEventListener('blur', sync)
+    }
+  })
+
+  function setBoth(next) {
+    const v = next == null ? '' : String(next)
+    latest.current = v
+    setValue(v)
+    if (ref.current) ref.current.value = v
+  }
+
+  return [value, setBoth, ref]
 }

@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import BackendBanner from '../components/BackendBanner.jsx'
 import { friendlyLinkError } from '../lib/authLink.js'
-import { codeInputProps, emailInputProps, normalizeCode, readAuthForm } from '../lib/authFields.js'
+import { codeInputProps, emailInputProps, normalizeCode, readAuthForm, useLiveField } from '../lib/authFields.js'
 import { pendingJoin } from '../lib/pendingJoin.js'
 import { useBell } from '../lib/store.jsx'
 
@@ -18,10 +18,9 @@ export default function Gate() {
     resetAuthForm,
     state,
   } = useBell()
-  const [email, setEmail] = useState(state.pendingEmail || '')
-  const [code, setCode] = useState('')
+  const [email, setEmail, emailRef] = useLiveField(state.pendingEmail || '')
+  const [code, setCode, codeRef] = useLiveField('')
   const [haveCode, setHaveCode] = useState(false)
-  const codeRef = useRef(null)
 
   useEffect(() => {
     setEmail(state.pendingEmail || '')
@@ -179,8 +178,8 @@ export default function Gate() {
               <input
                 id="host-email"
                 {...emailInputProps}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                ref={emailRef}
+                defaultValue={email}
                 onBlur={(e) => setEmail(e.target.value.trim())}
                 placeholder="name@email.com"
               />
@@ -215,8 +214,8 @@ export default function Gate() {
                 <input
                   id="host-email"
                   {...emailInputProps}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  ref={emailRef}
+                  defaultValue={email}
                   onBlur={(e) => setEmail(e.target.value.trim())}
                   placeholder="name@email.com"
                 />
@@ -225,12 +224,11 @@ export default function Gate() {
             <div className="field">
               <label htmlFor="otp">Code from the email</label>
               <input
-                ref={codeRef}
                 id="otp"
                 className="otp"
                 {...codeInputProps}
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
+                ref={codeRef}
+                defaultValue=""
               />
             </div>
             {state.authError && (
