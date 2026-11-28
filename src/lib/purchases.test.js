@@ -15,3 +15,20 @@ test('signed-out plain list items never offer Put it back', () => {
   // A concealed payload has no purchased / marked_by_me fields at all.
   assert.equal(canPutBack({ id: 'a', title: 'Socks' }, { admin: true }), false)
 })
+
+import { overlayMarks } from './purchases.js'
+
+test('overlayMarks puts the database marks on the screen items', () => {
+  const items = [{ id: 'a', title: 'Socks' }, { id: 'b', title: 'Mug' }]
+  const remote = { purchasesVisible: true, items: [{ id: 'a', purchased: true, claimedByName: 'Debbie', claimedAt: 't', markedByMe: false }, { id: 'b', purchased: false }] }
+  const out = overlayMarks(items, remote)
+  assert.equal(out[0].purchased, true)
+  assert.equal(out[0].claimedByName, 'Debbie')
+  assert.equal(out[1].purchased, false)
+})
+
+test('overlayMarks never adds marks when the database says they are hidden', () => {
+  const items = [{ id: 'a', title: 'Socks' }]
+  assert.deepEqual(overlayMarks(items, { purchasesVisible: false, items: [{ id: 'a', purchased: true, claimedByName: 'X' }] }), items)
+  assert.deepEqual(overlayMarks(items, null), items)
+})

@@ -126,10 +126,12 @@ export default function WishCard({ item, conceal, busy, naming, name, onName, on
         </div>
         {bought ? (
           <div className="row-between">
-            <span className="chip yes">Already taken{buyer ? ` · ${buyer}` : ''}</span>
+            <span className="chip yes">
+              {item.markedByMe ? 'Bought by you' : buyer ? `Bought by ${buyer}` : 'Already bought'}
+            </span>
             {onRelease ? (
-              <button className="btn small ghost" type="button" onClick={onRelease}>
-                Put it back
+              <button className="btn small ghost" type="button" disabled={busy} onClick={onRelease}>
+                Undo
               </button>
             ) : null}
           </div>
@@ -143,11 +145,17 @@ export default function WishCard({ item, conceal, busy, naming, name, onName, on
           >
             <label className="field">
               <span>Your name</span>
-              <input value={name} onChange={(event) => onName(event.target.value)} placeholder="So the family knows" autoComplete="name" />
+              <input
+                value={name}
+                onChange={(event) => onName(event.target.value)}
+                placeholder="So the family knows who bought it"
+                autoComplete="name"
+                maxLength={80}
+              />
             </label>
             <div className="meta-row">
               <button className="btn primary" type="submit" disabled={busy}>
-                {busy ? 'Saving…' : "I'll get this"}
+                {busy ? 'Saving…' : 'Mark as purchased'}
               </button>
               <button className="btn ghost" type="button" onClick={onCancel}>
                 Cancel
@@ -157,7 +165,7 @@ export default function WishCard({ item, conceal, busy, naming, name, onName, on
         ) : null}
         {!bought && !conceal && !naming && onStart ? (
           <button className="btn primary big" type="button" onClick={onStart}>
-            I'll get this
+            Mark as purchased
           </button>
         ) : null}
       </div>
