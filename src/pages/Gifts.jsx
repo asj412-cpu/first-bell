@@ -140,7 +140,7 @@ export default function Gifts() {
 
       {!guest && (
         <>
-          <h2 className="section-label">Grown-up lists</h2>
+          <h2 className="section-label">Gift lists</h2>
           <div className="gift-index">
             {grownups.map((list) => (
               <Link key={list.id} to={`/gifts/${list.kidKey}`} className="card pad gift-kid">
