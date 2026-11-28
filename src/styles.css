@@ -1520,3 +1520,18 @@ h3 { font-size: 18px; }
 .directory-group .section-label { margin-top: 18px; }
 .directory-card h3 { font-family: var(--font-display); font-size: 19px; }
 .not-in-drawing h2 { font-family: var(--font-display); }
+
+/* PIN sign-in */
+.pin-input { font-size: 22px; letter-spacing: 0.5em; text-align: center; font-variant-numeric: tabular-nums; }
+.pin-form { display: grid; gap: 10px; width: 100%; min-width: 0; box-sizing: border-box; text-align: left; }
+.pin-form .field input { width: 100%; min-width: 0; box-sizing: border-box; }
+.pin-pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+.pin-pair .field { margin: 0; }
+.pin-sheet-card { box-sizing: border-box; width: min(100%, 560px); margin: 0 auto; min-width: 0; }
+.pin-badge { width: 56px; height: 56px; border-radius: 18px; display: grid; place-items: center; font-size: 26px; background: rgba(200, 100, 59, 0.12); }
+.pin-copy { margin: 0; max-width: 34ch; }
+.pin-settings .pin-form { margin-top: 6px; }
+.gate-links { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.gate-links .btn { flex: 1 1 auto; }
+.field input.pin-input, .gate-card .field input.pin-input { font-size: 22px; letter-spacing: 0.5em; text-align: center; }
+.pin-help { font-size: 12px !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--muted, #8a7a70) !important; font-weight: 400 !important; }

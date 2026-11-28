@@ -11,6 +11,7 @@ function roleLabel(role, demo) {
 import { ageLabel } from '../lib/planner.js'
 import { hostDisplayName } from '../lib/rsvps.js'
 import { useBell } from '../lib/store.jsx'
+import { PinSettings } from '../components/PinSetup.jsx'
 
 export default function Settings() {
   const { state, signOut, resetDemo, configured, updateProfile } = useBell()
@@ -71,6 +72,8 @@ export default function Settings() {
           </div>
         </div>
       </div>
+
+      <PinSettings />
 
       <div className="section-head">
         <h2>Birthdays and meals</h2>

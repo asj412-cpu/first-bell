@@ -15,3 +15,7 @@ content_path = "./supabase/templates/magic_link.html"
 [auth.email.template.confirmation]
 subject = "{{ .Token }} is your Mi Casa sign-in code"
 content_path = "./supabase/templates/confirmation.html"
+
+# PIN sign-in. The function checks tokens itself; login has no session yet.
+[functions.pin-auth]
+verify_jwt = false

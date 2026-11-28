@@ -1,6 +1,7 @@
 import { NavLink, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useBell } from '../lib/store.jsx'
 import BackendBanner from './BackendBanner.jsx'
+import { PinPrompt } from './PinSetup.jsx'
 import { IconCal, IconGear, IconGift, IconHistory, IconHome, IconInbox, IconLearn, IconMeal, IconParty } from './Icons.jsx'
 
 const HOUSEHOLD = [
@@ -113,6 +114,7 @@ export default function AppShell() {
         <BackendBanner />
         <Outlet />
       </main>
+      <PinPrompt />
       <nav className="bottom-nav" aria-label="Primary">
         {bottom.map((link) => (
           <Item key={link.to} link={link} pathname={loc.pathname} />
