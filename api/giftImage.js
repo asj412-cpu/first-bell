@@ -1,14 +1,32 @@
 import { lookup } from 'node:dns/promises'
 import { isIP } from 'node:net'
+import { faviconUrlFor, linkPreviewDomain } from '../src/lib/giftPreview.js'
 
 const CACHE_MS = 24 * 60 * 60 * 1000
 const MISS_MS = 10 * 60 * 1000
 const MAX_BYTES = 500_000
 const HOP_TIMEOUT_MS = 4500
-const MAX_HOPS = 3
+const MICROLINK_TIMEOUT_MS = 4000
+const MAX_HOPS = 5
 const cache = new Map()
 
-const IMAGE_KEYS = new Set(['og:image', 'og:image:secure_url', 'twitter:image', 'twitter:image:src'])
+const IMAGE_KEYS = new Set([
+  'og:image',
+  'og:image:url',
+  'og:image:secure_url',
+  'twitter:image',
+  'twitter:image:src',
+])
+
+const BROWSER_UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+
+const PAGE_HEADERS = {
+  accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+  'accept-language': 'en-US,en;q=0.9',
+  'user-agent': BROWSER_UA,
+  'upgrade-insecure-requests': '1',
+}
 
 export function assertPublicHttpUrl(value) {
   let parsed
@@ -95,6 +113,13 @@ export function extractPreviewImage(html, pageUrl) {
     const image = resolveImage(metaContent(tag, 'content'), pageUrl)
     if (image) return image
   }
+  const links = String(html || '').match(/<link\b[^>]*>/gi) || []
+  for (const tag of links) {
+    const rel = metaContent(tag, 'rel').toLowerCase()
+    if (rel !== 'image_src') continue
+    const image = resolveImage(metaContent(tag, 'href'), pageUrl)
+    if (image) return image
+  }
   const blocks = String(html || '').match(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi) || []
   for (const block of blocks) {
     const json = block.replace(/^[\s\S]*?>/, '').replace(/<\/script>$/i, '')
@@ -110,6 +135,25 @@ export function extractPreviewImage(html, pageUrl) {
     }
   }
   return ''
+}
+
+export function extractPageIcon(html, pageUrl) {
+  const tags = String(html || '').match(/<link\b[^>]*>/gi) || []
+  const icons = []
+  for (const tag of tags) {
+    const rel = metaContent(tag, 'rel').toLowerCase().trim()
+    const apple = /\bapple-touch-icon(?:-precomposed)?\b/.test(rel)
+    const icon = /\bicon\b/.test(rel) || rel === 'shortcut icon'
+    if (!apple && !icon) continue
+    if (/\bmask-icon\b/.test(rel)) continue
+    const href = resolveImage(metaContent(tag, 'href'), pageUrl)
+    if (!href) continue
+    const sizes = metaContent(tag, 'sizes').toLowerCase()
+    const size = sizes === 'any' ? 1024 : Math.max(0, ...[...sizes.matchAll(/(\d+)/g)].map((match) => Number(match[1])))
+    icons.push({ href, size, apple })
+  }
+  icons.sort((a, b) => Number(b.apple) - Number(a.apple) || b.size - a.size)
+  return icons[0]?.href || ''
 }
 
 function collectImages(node, found) {
@@ -166,10 +210,7 @@ async function fetchPage(target) {
     await assertResolvedHost(current.hostname)
     const response = await fetch(current, {
       redirect: 'manual',
-      headers: {
-        accept: 'text/html,application/xhtml+xml',
-        'user-agent': 'Mozilla/5.0 (compatible; MiCasaGiftPreview/1.0)',
-      },
+      headers: PAGE_HEADERS,
       signal: AbortSignal.timeout(HOP_TIMEOUT_MS),
     })
     if (response.status >= 300 && response.status < 400) {
@@ -187,21 +228,84 @@ async function fetchPage(target) {
   return { finalUrl: current.href, html: '' }
 }
 
-export async function lookupGiftImage(pageUrl) {
+function firstMicrolinkUrl(value) {
+  if (!value) return ''
+  if (typeof value === 'string') return value
+  if (typeof value.url === 'string') return value.url
+  return ''
+}
+
+async function lookupMicrolink(pageUrl) {
+  try {
+    const endpoint = new URL('https://api.microlink.io')
+    endpoint.searchParams.set('url', pageUrl)
+    const response = await fetch(endpoint, {
+      headers: { accept: 'application/json', 'user-agent': BROWSER_UA },
+      signal: AbortSignal.timeout(MICROLINK_TIMEOUT_MS),
+    })
+    if (!response.ok) return ''
+    const payload = await response.json()
+    if (payload?.status !== 'success') return ''
+    const raw = firstMicrolinkUrl(payload.data?.image) || firstMicrolinkUrl(payload.data?.logo)
+    const image = resolveImage(raw, pageUrl)
+    if (!image) return ''
+    assertPublicHttpUrl(image)
+    return image
+  } catch {
+    return ''
+  }
+}
+
+function previewFrom(image, source, url) {
+  return {
+    image: image || '',
+    source: image ? source : '',
+    domain: linkPreviewDomain(url),
+  }
+}
+
+export async function lookupGiftPreview(pageUrl) {
   const target = assertPublicHttpUrl(pageUrl)
   const key = target.href
   const hit = cache.get(key)
-  if (hit && hit.expires > Date.now()) return hit.image
-  let image = ''
+  if (hit && hit.expires > Date.now()) return hit.preview
+  let preview = previewFrom('', '', target.href)
   try {
     const page = await fetchPage(target)
-    image = page.image || extractPreviewImage(page.html, page.finalUrl)
-    if (image) assertPublicHttpUrl(image)
+    const domainUrl = page.finalUrl || target.href
+    if (page.image) {
+      assertPublicHttpUrl(page.image)
+      preview = previewFrom(page.image, 'direct', domainUrl)
+    } else {
+      const og = extractPreviewImage(page.html, page.finalUrl)
+      if (og) {
+        assertPublicHttpUrl(og)
+        preview = previewFrom(og, 'og', domainUrl)
+      } else {
+        const icon = extractPageIcon(page.html, page.finalUrl)
+        if (icon) {
+          assertPublicHttpUrl(icon)
+          preview = previewFrom(icon, 'icon', domainUrl)
+        }
+      }
+    }
   } catch (error) {
     if (error.status === 400) throw error
-    image = ''
+  }
+  if (!preview.image) {
+    const micro = await lookupMicrolink(target.href)
+    if (micro) preview = previewFrom(micro, 'microlink', target.href)
+  }
+  if (!preview.image) {
+    preview = previewFrom(faviconUrlFor(target.href), 'favicon', target.href)
   }
   if (cache.size > 200) cache.clear()
-  cache.set(key, { image, expires: Date.now() + (image ? CACHE_MS : MISS_MS) })
-  return image
+  const ttl = preview.source && preview.source !== 'favicon' ? CACHE_MS : MISS_MS
+  cache.set(key, { preview, expires: Date.now() + ttl })
+  return preview
+}
+
+export async function lookupGiftImage(pageUrl) {
+  const preview = await lookupGiftPreview(pageUrl)
+  return preview.image || ''
 }
