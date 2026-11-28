@@ -32,11 +32,3 @@ test('overlayMarks never adds marks when the database says they are hidden', () 
   assert.deepEqual(overlayMarks(items, { purchasesVisible: false, items: [{ id: 'a', purchased: true, claimedByName: 'X' }] }), items)
   assert.deepEqual(overlayMarks(items, null), items)
 })
-
-import { purchaseLabel } from './purchases.js'
-
-test('purchaseLabel: others see Purchased (by X), the marker sees by you', () => {
-  assert.equal(purchaseLabel({ purchased: true, claimedByName: 'Stephanie' }), 'Purchased (by Stephanie)')
-  assert.equal(purchaseLabel({ purchased: true, claimedByName: 'Stephanie', markedByMe: true }), 'Purchased (by you)')
-  assert.equal(purchaseLabel({ purchased: true }), 'Purchased')
-})

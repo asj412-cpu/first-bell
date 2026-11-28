@@ -41,17 +41,14 @@ export default function GiftDetail() {
   const [saving, setSaving] = useState(false)
   const guest = state.memberRole === 'gift'
   const ownExchange = Boolean(list && list.listKind === 'exchange' && (guest || (state.session?.demo && list.kidKey === 'andrew')))
-  // Live lists: ask the database what this person may see. If their email (or account) is the
-  // list owner's it answers "hidden" and nothing shows here. Parents and family who manage a
-  // list (Claire, Chloe, Drew, a husband or a kid) are not its owner, so they see the marks.
-  const admin = state.memberRole === 'owner'
+  // Live lists seen by the household admin: ask the database what this person may see.
+  // If their email is the list owner's, it answers "hidden" and nothing shows here.
   const marks = usePurchaseMarks(
     list?.shareSlug,
-    state.backend === 'live' && Boolean(state.session) && (admin || guest) && isUuid(list?.id) && !listUsesLocalCatalog(list || {}),
+    state.backend === 'live' && Boolean(state.session) && state.memberRole === 'owner' && isUuid(list?.id) && !listUsesLocalCatalog(list || {}),
   )
   const hiddenByServer = Boolean(marks.active && marks.list && marks.list.purchasesVisible === false)
-  // While the database has not answered yet (or failed), show no marks at all.
-  const conceal = state.kidMode || (marks.active ? !marks.list || hiddenByServer : ownExchange || guest)
+  const conceal = state.kidMode || ownExchange || guest || hiddenByServer
   const items = conceal ? presentItems(list, { conceal }) : overlayMarks(presentItems(list, { conceal }), marks.active ? marks.list : null)
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -287,7 +284,7 @@ export default function GiftDetail() {
               conceal
                 ? null
                 : marks.active && marks.list
-                  ? canPutBack(item, { admin })
+                  ? canPutBack(item, { admin: true })
                     ? () => marks.release(item.id)
                     : null
                   : () => releaseClaim(list.id, item.id)
@@ -296,9 +293,6 @@ export default function GiftDetail() {
         ))}
       </div>
       {marks.error && <p className="form-error" role="alert">{marks.error}</p>}
-      {marks.active && !conceal && items.length > 0 && (
-        <p className="dim">Bought something? Tap Mark as purchased. The rest of the family sees it; {list.displayName} doesn’t.</p>
-      )}
       {filtered.length === 0 && items.length > 0 && <p className="lede">Nothing in this filter. Try another one.</p>}
       {canEdit && !editing && (
         <button className="btn big" type="button" onClick={startEdit}>
