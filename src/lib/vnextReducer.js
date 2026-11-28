@@ -282,7 +282,6 @@ export function vnextReducer(state, action) {
           const previous = list.items.find((item) => item.id === idea.id)
           return {
             ...wishFromIdea(idea, idea.id || previous?.id || `idea-${Date.now()}-${sort}`, sort),
-            notes: previous?.notes || '',
             claimedByName: previous?.claimedByName || '',
             claimedAt: previous?.claimedAt || null,
           }

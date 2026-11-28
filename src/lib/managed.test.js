@@ -24,6 +24,14 @@ test('cleanManagedRows allows an empty list but still checks real rows', () => {
   assert.equal(good.items.length, 1)
   const bad = cleanManagedRows([{ description: 'Socks', url: 'ftp://nope' }], validateGiftItems)
   assert.equal(bad.ok, false)
+  const withNote = cleanManagedRows(
+    [{ description: 'Fishing reel', url: '', notes: '  Left-handed  ' }],
+    validateGiftItems,
+  )
+  assert.equal(withNote.ok, true)
+  assert.equal(withNote.items[0].notes, 'Left-handed')
+  const noteOnly = cleanManagedRows([{ description: '', url: '', notes: 'Size M' }], validateGiftItems)
+  assert.equal(noteOnly.ok, false)
 })
 
 test('managedDrawLines shows who each managed person drew', () => {

@@ -205,9 +205,15 @@ export function buildPreview(reminder, exchange, previewedAt) {
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+export const GIFT_NOTES_MAX = 500
+
 export function blankGiftItem() {
   const key = globalThis.crypto?.randomUUID?.() || `row-${Date.now()}-${Math.random().toString(16).slice(2)}`
-  return { key, description: '', url: '' }
+  return { key, description: '', url: '', notes: '' }
+}
+
+export function cleanGiftNotes(value) {
+  return String(value || '').trim()
 }
 
 export function giftUrl(value) {
@@ -223,19 +229,28 @@ export function giftUrl(value) {
   }
 }
 
+export function giftItemRowBlank(item) {
+  return !String(item?.description || '').trim() && !String(item?.url || '').trim() && !String(item?.notes || '').trim()
+}
+
 export function validateGiftItems(items) {
   const errors = {}
   const clean = []
   ;(items || []).forEach((item, index) => {
     const description = String(item.description || '').trim()
     const urlRaw = String(item.url || '').trim()
-    if (!description && !urlRaw) return
+    const notes = cleanGiftNotes(item.notes)
+    if (!description && !urlRaw && !notes) return
     if (!description) {
       errors[`item-${index}`] = 'Add a description, or remove this row.'
       return
     }
     if (description.length > 160) {
       errors[`item-${index}`] = 'Keep the description under 160 characters.'
+      return
+    }
+    if (notes.length > GIFT_NOTES_MAX) {
+      errors[`notes-${index}`] = `Keep notes under ${GIFT_NOTES_MAX} characters.`
       return
     }
     const url = giftUrl(urlRaw)
@@ -248,6 +263,7 @@ export function validateGiftItems(items) {
       description,
       url: url || '',
       image: item.image || '',
+      notes,
     })
   })
   if (!clean.length) errors.items = 'Add at least one gift.'
@@ -278,7 +294,7 @@ export function wishFromIdea(idea, id, sort) {
   return {
     id,
     title: idea.description,
-    notes: '',
+    notes: cleanGiftNotes(idea.notes),
     url: idea.url || '',
     urlSecondary: '',
     image: idea.image || '',
@@ -301,7 +317,7 @@ export function digits(value) {
 
 function ideasOrEmpty(items) {
   const result = validateGiftItems(items)
-  const blank = (items || []).every((item) => !String(item?.description || '').trim() && !String(item?.url || '').trim())
+  const blank = (items || []).every(giftItemRowBlank)
   if (blank) {
     const errors = { ...result.errors }
     delete errors.items
@@ -329,7 +345,7 @@ export function validateJoin(input) {
         name: (person.name || '').trim(),
         items: ideas.items,
         itemErrors: ideas.errors,
-        touched: Boolean((person.name || '').trim() || (person.items || []).some((item) => item.description || item.url)),
+        touched: Boolean((person.name || '').trim() || (person.items || []).some((item) => item.description || item.url || item.notes)),
       }
     })
     .filter((person) => person.touched)

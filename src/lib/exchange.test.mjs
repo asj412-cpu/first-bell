@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { assertPublicHttpUrl, extractPageIcon, extractPreviewImage } from '../../api/giftImage.js'
-import { drawAssignments, presentItems, validateJoin } from './exchange.js'
+import { drawAssignments, presentItems, validateGiftItems, validateJoin, wishFromIdea } from './exchange.js'
 import { sendReminder } from './reminderAdapter.js'
 import { readFileSync } from 'node:fs'
 
@@ -139,3 +139,35 @@ test('a page without a product photo can still yield a large site icon', () => {
   assert.equal(extractPageIcon(html, 'https://shop.example/item'), 'https://shop.example/icons/apple-touch-icon.png')
   assert.equal(extractPageIcon('<p>No icons</p>', 'https://example.com'), '')
 })
+
+test('gift items keep an optional note and reject a long one', () => {
+  const ok = validateGiftItems([
+    { description: 'Wool scarf', url: 'https://example.com/s', notes: '  Size medium, navy  ' },
+  ])
+  assert.equal(ok.ok, true)
+  assert.equal(ok.items[0].notes, 'Size medium, navy')
+  const tooLong = validateGiftItems([{ description: 'Scarf', url: '', notes: 'x'.repeat(501) }])
+  assert.equal(tooLong.ok, false)
+  assert.match(tooLong.errors['notes-0'], /500/)
+  const noteOnly = validateGiftItems([{ description: '', url: '', notes: 'Size medium' }])
+  assert.equal(noteOnly.ok, false)
+  assert.match(noteOnly.errors['item-0'], /description/)
+  const idea = wishFromIdea({ description: 'Wool scarf', url: '', notes: ' Size medium ' }, 'id-1', 0)
+  assert.equal(idea.title, 'Wool scarf')
+  assert.equal(idea.notes, 'Size medium')
+})
+
+test('joining keeps notes on your gifts and a family member\'s gifts', () => {
+  const fixed = validateJoin({
+    name: 'Rosa',
+    phone: '(713) 555-0136',
+    email: 'rosa@example.com',
+    group: 'Quiroga',
+    items: [{ description: 'A wool scarf', url: 'https://example.com/scarf', notes: 'Navy, size M' }],
+    others: [{ name: 'Luis', items: [{ description: 'Coffee', url: '', notes: 'Whole bean' }] }],
+  })
+  assert.equal(fixed.ok, true)
+  assert.equal(fixed.value.items[0].notes, 'Navy, size M')
+  assert.equal(fixed.value.others[0].items[0].notes, 'Whole bean')
+})
+

@@ -25,6 +25,23 @@ export default function GiftItemFields({ items, errors, onChange, onAdd, onRemov
             />
           </label>
           {errors?.[`url-${index}`] && <p className="form-error">{errors[`url-${index}`]}</p>}
+          <label className="field">
+            <span>Notes (size, color, anything else)</span>
+            <textarea
+              value={item.notes || ''}
+              maxLength={500}
+              rows={3}
+              name="gift-notes"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="sentences"
+              spellCheck="true"
+              enterKeyHint="done"
+              placeholder="Size medium, navy if they have it"
+              onChange={(event) => onChange(index, { notes: event.target.value })}
+            />
+          </label>
+          {errors?.[`notes-${index}`] && <p className="form-error">{errors[`notes-${index}`]}</p>}
           <button className="btn small ghost" type="button" onClick={() => onRemove(index)}>
             Remove
           </button>

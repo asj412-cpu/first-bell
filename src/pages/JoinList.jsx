@@ -148,6 +148,7 @@ export default function JoinList() {
         description: item.description,
         url: item.url,
         image: item.image,
+        notes: item.notes || '',
       })),
       p_others: ready.others.map((person) => ({
         name: person.name,
@@ -155,6 +156,7 @@ export default function JoinList() {
           description: item.description,
           url: item.url,
           image: item.image,
+          notes: item.notes || '',
         })),
       })),
     })
